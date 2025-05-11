@@ -1,0 +1,673 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/components/ui/use-toast"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { createUser, updateUser, fetchUserById, getPresignedUrl } from "@/lib/api/users-api"
+import { fetchInstitutions } from "@/lib/api/institutions-api"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ImageCropper } from "@/components/users/image-cropper"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const userFormSchema = z.object({
+  institutionId: z.string({
+    required_error: "Selecione uma instituição.",
+  }),
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
+  identifier: z.string().min(1, {
+    message: "Identificador é obrigatório.",
+  }),
+  email: z.string().email({
+    message: "Email inválido.",
+  }),
+  phone: z.string().min(1, {
+    message: "Telefone é obrigatório.",
+  }),
+  observations: z.string().optional(),
+  password: z.string().min(6, {
+    message: "Senha deve ter pelo menos 6 caracteres.",
+  }),
+  role: z.enum(["admin", "client"], {
+    required_error: "Selecione um cargo.",
+  }),
+  fatherName: z.string().optional(),
+  fatherPhone: z.string().optional(),
+  motherName: z.string().optional(),
+  motherPhone: z.string().optional(),
+  driveLink: z.string().optional(),
+  creditValue: z.coerce.number().optional(),
+  status: z.enum(["active", "inactive"], {
+    required_error: "Selecione um status.",
+  }),
+})
+
+type UserFormValues = z.infer<typeof userFormSchema>
+
+interface UserFormProps {
+  userId?: string
+}
+
+export function UserForm({ userId }: UserFormProps) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const isEditing = !!userId
+  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [institutionOpen, setInstitutionOpen] = useState(false)
+  const [isCropping, setIsCropping] = useState(false)
+  const [profileImageFilename, setProfileImageFilename] = useState<string | null>(null)
+
+  const steps = ["basic", "additional", "profile"]
+
+  const { data: user, isLoading: isLoadingUser } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => fetchUserById(userId!),
+    enabled: isEditing,
+  })
+
+  const { data: institutions = [], isLoading: isLoadingInstitutions } = useQuery({
+    queryKey: ["institutions"],
+    queryFn: fetchInstitutions,
+  })
+
+  const isLoading = isLoadingUser || isLoadingInstitutions
+
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      institutionId: "",
+      name: "",
+      identifier: "",
+      email: "",
+      phone: "",
+      observations: "",
+      password: "",
+      role: "client",
+      fatherName: "",
+      fatherPhone: "",
+      motherName: "",
+      motherPhone: "",
+      driveLink: "",
+      creditValue: undefined,
+      status: "active",
+    },
+  })
+
+  useEffect(() => {
+    if (user && isEditing) {
+      form.reset({
+        institutionId: user.institutionId,
+        name: user.name,
+        identifier: user.identifier,
+        email: user.email,
+        phone: user.phone,
+        observations: user.observations || "",
+        password: "********", // Placeholder for password
+        role: user.role,
+        fatherName: user.fatherName || "",
+        fatherPhone: user.fatherPhone || "",
+        motherName: user.motherName || "",
+        motherPhone: user.motherPhone || "",
+        driveLink: user.driveLink || "",
+        creditValue: user.creditValue,
+        status: user.status,
+      })
+      setProfileImage(user.profileImage || null)
+      setProfileImageFilename(user.profileImage || null)
+    }
+  }, [user, form, isEditing])
+
+  // Mutation para obter URL presigned
+  const presignedUrlMutation = useMutation({
+    mutationFn: getPresignedUrl,
+    onSuccess: async (data) => {
+      if (profileImageFile && data.uploadUrl) {
+        try {
+          // Upload da imagem para a URL presigned
+          await fetch(data.uploadUrl, {
+            method: "PUT",
+            body: profileImageFile,
+            headers: {
+              "Content-Type": profileImageFile.type,
+            },
+          })
+
+          // Salvar o nome do arquivo para usar no cadastro/atualização
+          setProfileImageFilename(data.filename)
+
+          // Continuar com a criação/atualização do usuário
+          if (isEditing) {
+            updateMutation.mutate({
+              ...form.getValues(),
+              profileImage: data.filename,
+            })
+          } else {
+            createMutation.mutate({
+              ...form.getValues(),
+              profileImage: data.filename,
+            })
+          }
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao fazer upload da imagem",
+            description: "Não foi possível fazer o upload da imagem. Tente novamente.",
+          })
+        }
+      } else {
+        // Se não houver imagem, continuar com a criação/atualização do usuário
+        if (isEditing) {
+          updateMutation.mutate({
+            ...form.getValues(),
+            profileImage: profileImageFilename,
+          })
+        } else {
+          createMutation.mutate({
+            ...form.getValues(),
+            profileImage: profileImageFilename,
+          })
+        }
+      }
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao obter URL para upload",
+        description: "Não foi possível obter a URL para upload da imagem. Tente novamente.",
+      })
+    },
+  })
+
+  const createMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] })
+      toast({
+        title: "Usuário criado",
+        description: "O usuário foi criado com sucesso.",
+      })
+      router.push("/users")
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar",
+        description: "Não foi possível criar o usuário. Tente novamente.",
+      })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: updateUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] })
+      queryClient.invalidateQueries({ queryKey: ["user", userId] })
+      toast({
+        title: "Usuário atualizado",
+        description: "O usuário foi atualizado com sucesso.",
+      })
+      router.push("/users")
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o usuário. Tente novamente.",
+      })
+    },
+  })
+
+  function onSubmit(data: UserFormValues) {
+    // Se tiver uma nova imagem, obter URL presigned primeiro
+    if (profileImageFile) {
+      presignedUrlMutation.mutate({
+        contentType: profileImageFile.type,
+      })
+    } else {
+      // Se não tiver nova imagem, continuar com a criação/atualização
+      if (isEditing) {
+        // Don't update password if it's the placeholder
+        const updatedData = { ...data }
+        if (updatedData.password === "********") {
+          delete updatedData.password
+        }
+
+        updateMutation.mutate({
+          ...updatedData,
+          profileImage: profileImageFilename,
+        })
+      } else {
+        createMutation.mutate({
+          ...data,
+          profileImage: profileImageFilename,
+        })
+      }
+    }
+  }
+
+  const nextStep = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const getInstitutionLabel = (id: string) => {
+    const institution = institutions.find((inst) => inst.id === id)
+    return institution ? `${institution.contractNumber} - ${institution.name}` : "Selecione uma instituição"
+  }
+
+  const handleImageCropped = (imageUrl: string | null, file: File | null) => {
+    setProfileImage(imageUrl)
+    setProfileImageFile(file)
+    setIsCropping(false)
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-[200px]" />
+          <Skeleton className="h-4 w-[300px]" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-[100px]" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{isEditing ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
+        <CardDescription>
+          {isEditing
+            ? "Atualize as informações do usuário existente."
+            : "Preencha as informações para criar um novo usuário."}
+        </CardDescription>
+      </CardHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          {/* Tabs visíveis mas não clicáveis */}
+          <Tabs value={steps[currentStep]} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 pointer-events-none">
+              <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
+              <TabsTrigger value="additional">Informações Adicionais</TabsTrigger>
+              <TabsTrigger value="profile">Foto de Perfil</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* Etapa 1: Informações Básicas */}
+          {currentStep === 0 && (
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="institutionId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Instituição</FormLabel>
+                      <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={institutionOpen}
+                              className="justify-between w-full h-10"
+                            >
+                              {field.value ? getInstitutionLabel(field.value) : "Selecione uma instituição"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar instituição..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhuma instituição encontrada.</CommandEmpty>
+                              <CommandGroup className="max-h-[300px] overflow-y-auto">
+                                {institutions.map((institution) => (
+                                  <CommandItem
+                                    key={institution.id}
+                                    value={`${institution.contractNumber} ${institution.name}`}
+                                    onSelect={() => {
+                                      form.setValue("institutionId", institution.id)
+                                      setInstitutionOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === institution.id ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {institution.contractNumber} - {institution.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do usuário" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="identifier"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Identificador</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Identificador único" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="email@exemplo.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(00) 00000-0000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Senha</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="******" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cargo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="client">Cliente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Ativo</SelectItem>
+                          <SelectItem value="inactive">Inativo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="observations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Observações sobre o usuário" className="min-h-[100px]" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end mt-4">
+                <Button type="button" onClick={nextStep} className="bg-yellow-500 text-black hover:bg-yellow-400">
+                  Próximo
+                </Button>
+              </div>
+            </CardContent>
+          )}
+
+          {/* Etapa 2: Informações Adicionais */}
+          {currentStep === 1 && (
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="fatherName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Pai</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do pai (opcional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="fatherPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone do Pai</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(00) 00000-0000 (opcional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="motherName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome da Mãe</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome da mãe (opcional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="motherPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone da Mãe</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(00) 00000-0000 (opcional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="driveLink"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link do Drive</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://drive.google.com/... (opcional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="creditValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor de Crédito</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0.00 (opcional)"
+                          {...field}
+                          value={field.value === undefined ? "" : field.value}
+                          onChange={(e) => {
+                            const value = e.target.value === "" ? undefined : Number.parseFloat(e.target.value)
+                            field.onChange(value)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-between mt-4">
+                <Button type="button" variant="outline" onClick={prevStep}>
+                  Voltar
+                </Button>
+                <Button type="button" onClick={nextStep} className="bg-yellow-500 text-black hover:bg-yellow-400">
+                  Próximo
+                </Button>
+              </div>
+            </CardContent>
+          )}
+
+          {/* Etapa 3: Foto de Perfil */}
+          {currentStep === 2 && (
+            <CardContent className="space-y-4 pt-6">
+              <div className="flex flex-col items-center space-y-6">
+                <div className="flex flex-col items-center gap-4">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={profileImage || "/placeholder.svg"} alt="Foto de perfil" />
+                    <AvatarFallback>{form.getValues("name")?.charAt(0) || "U"}</AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm text-muted-foreground">Foto de perfil atual</p>
+                </div>
+
+                <ImageCropper onImageCropped={handleImageCropped} onCroppingChange={setIsCropping} />
+              </div>
+
+              <div className="flex justify-between mt-4">
+                <Button type="button" variant="outline" onClick={prevStep}>
+                  Voltar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending || presignedUrlMutation.isPending || isCropping
+                  }
+                  className="bg-yellow-500 text-black hover:bg-yellow-400"
+                >
+                  {createMutation.isPending || updateMutation.isPending || presignedUrlMutation.isPending
+                    ? "Salvando..."
+                    : isEditing
+                      ? "Atualizar"
+                      : "Cadastrar"}
+                </Button>
+              </div>
+            </CardContent>
+          )}
+        </form>
+      </Form>
+    </Card>
+  )
+}

@@ -1,0 +1,266 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+  type SortingState,
+  getSortedRowModel,
+  type ColumnFiltersState,
+  getFilteredRowModel,
+} from "@tanstack/react-table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, ArrowUpDown, Pencil, Trash2, Users } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { fetchInstitutions, deleteInstitution } from "@/lib/api/institutions-api"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/components/ui/use-toast"
+
+type Institution = {
+  id: string
+  contractNumber: string
+  name: string
+  observations: string
+  events: string[]
+  userCount: number
+  createdAt: string
+}
+
+export function InstitutionsTable() {
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [deleteInstitutionId, setDeleteInstitutionId] = useState<string | null>(null)
+  const router = useRouter()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+
+  const { data: institutions = [], isLoading } = useQuery({
+    queryKey: ["institutions"],
+    queryFn: fetchInstitutions,
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteInstitution,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["institutions"] })
+      toast({
+        title: "Instituição excluída",
+        description: "A instituição foi excluída com sucesso.",
+      })
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir a instituição. Tente novamente.",
+      })
+    },
+  })
+
+  const handleDelete = (id: string) => {
+    setDeleteInstitutionId(id)
+  }
+
+  const confirmDelete = () => {
+    if (deleteInstitutionId) {
+      deleteMutation.mutate(deleteInstitutionId)
+      setDeleteInstitutionId(null)
+    }
+  }
+
+  const columns: ColumnDef<Institution>[] = [
+    {
+      accessorKey: "contractNumber",
+      header: ({ column }) => {
+        return (
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+            Nº do Contrato
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+            Nome
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    },
+    {
+      accessorKey: "userCount",
+      header: "Usuários",
+      cell: ({ row }) => {
+        const userCount = row.getValue<number>("userCount")
+        return (
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-yellow-500" />
+            <span>{userCount}</span>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "events",
+      header: "Eventos",
+      cell: ({ row }) => {
+        const events = row.getValue<string[]>("events")
+        return <Badge variant="outline">{events.length} eventos</Badge>
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Data de Criação",
+      cell: ({ row }) => {
+        return new Date(row.getValue<string>("createdAt")).toLocaleDateString("pt-BR")
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const institution = row.original
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Abrir menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => router.push(`/institutions/${institution.id}/edit`)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => handleDelete(institution.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
+
+  const table = useReactTable({
+    data: institutions,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      sorting,
+      columnFilters,
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border">
+        <div className="h-24 flex items-center justify-center">
+          <Skeleton className="h-8 w-[200px]" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Nenhum resultado encontrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+          Anterior
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          Próximo
+        </Button>
+      </div>
+
+      <AlertDialog open={!!deleteInstitutionId} onOpenChange={() => setDeleteInstitutionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente a instituição do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
