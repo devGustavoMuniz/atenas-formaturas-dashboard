@@ -12,8 +12,9 @@ export type Institution = {
 }
 
 // API functions
-export async function fetchInstitutions(): Promise<Institution[]> {
-  const response = await api.get("/v2/institution")
+// Modificar a função fetchInstitutions para incluir parâmetros de paginação
+export async function fetchInstitutions(page = 1, limit = 10): Promise<Institution[]> {
+  const response = await api.get(`/v2/institution?page=${page}&limit=${limit}`)
   return response.data.data
 }
 

@@ -33,8 +33,9 @@ export type UserStats = {
 }
 
 // API functions
-export async function fetchUsers(): Promise<User[]> {
-  const response = await api.get("/v2/user")
+// Modificar a função fetchUsers para incluir parâmetros de paginação
+export async function fetchUsers(page = 1, limit = 10): Promise<User[]> {
+  const response = await api.get(`/v2/user?page=${page}&limit=${limit}`)
   return response.data.data
 }
 
