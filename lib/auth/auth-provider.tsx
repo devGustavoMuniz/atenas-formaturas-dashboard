@@ -40,16 +40,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (token) {
         try {
-          // In a real app, you would validate the token with your backend
-          // For demo purposes, we'll just simulate a successful auth check
-          setUser({
-            id: "1",
-            name: "Admin User",
-            email: "admin@example.com",
-            role: "admin",
-          })
+          // Set token in axios headers for future requests
+          api.defaults.headers.common["Authorization"] = `Bearer ${token}`
+
+          // Você pode adicionar uma chamada para verificar o token, se o backend tiver um endpoint para isso
+          // const response = await api.get("/api/auth/me")
+          // setUser(response.data)
+
+          // Como alternativa, podemos extrair as informações do usuário do token JWT
+          // Para simplificar, estamos usando o usuário armazenado no localStorage
+          const userData = JSON.parse(localStorage.getItem("user") || "null")
+          if (userData) {
+            setUser(userData)
+          } else {
+            localStorage.removeItem("token")
+          }
         } catch (error) {
           localStorage.removeItem("token")
+          localStorage.removeItem("user")
         }
       }
 
@@ -74,49 +82,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      // In a real app, you would make an API call to authenticate
-      // For demo purposes, we'll simulate a successful login
-
-      // Simulate API call
-      // const response = await api.post("/auth/login", { email, password })
-      // const { token, user } = response.data
-
-      // Simulate successful response
-      const token = "fake-jwt-token"
-      const userData = {
-        id: "1",
-        name: "Admin User",
-        email,
-        role: "admin",
-      }
+      const response = await api.post("/api/auth/login", { email, password })
+      const { token, user } = response.data
 
       // Store token in localStorage
       localStorage.setItem("token", token)
+      localStorage.setItem("user", JSON.stringify(user))
 
       // Set token in axios headers for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
       // Update user state
-      setUser(userData)
+      setUser(user)
 
-      return userData
+      return user
     } catch (error) {
       throw new Error("Authentication failed")
     }
   }
 
-  const logout = () => {
-    // Remove token from localStorage
-    localStorage.removeItem("token")
+  const logout = async () => {
+    try {
+      // Chamar o endpoint de logout, se disponível
+      await api.post("/api/auth/logout")
+    } catch (error) {
+      console.error("Error during logout:", error)
+    } finally {
+      // Remove token from localStorage
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
 
-    // Remove token from axios headers
-    delete api.defaults.headers.common["Authorization"]
+      // Remove token from axios headers
+      delete api.defaults.headers.common["Authorization"]
 
-    // Clear user state
-    setUser(null)
+      // Clear user state
+      setUser(null)
 
-    // Redirect to login
-    router.push("/login")
+      // Redirect to login
+      router.push("/login")
+    }
   }
 
   return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>
