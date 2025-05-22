@@ -53,13 +53,15 @@ export function InstitutionsTable() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [deleteInstitutionId, setDeleteInstitutionId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
   const { data: institutions = [], isLoading } = useQuery({
-    queryKey: ["institutions"],
-    queryFn: fetchInstitutions,
+    queryKey: ["institutions", currentPage, pageSize],
+    queryFn: () => fetchInstitutions({ page: currentPage, limit: pageSize }),
   })
 
   const deleteMutation = useMutation({
@@ -237,10 +239,20 @@ export function InstitutionsTable() {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
           Anterior
         </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+          disabled={institutions.length < pageSize}
+        >
           Próximo
         </Button>
       </div>

@@ -32,10 +32,28 @@ export type UserStats = {
   inactiveGrowthRate: number
 }
 
+// Tipo para parâmetros de paginação
+export type PaginationParams = {
+  page?: number
+  limit?: number
+  search?: string
+}
+
 // API functions
-// Modificar a função fetchUsers para incluir parâmetros de paginação
-export async function fetchUsers(page = 1, limit = 10): Promise<User[]> {
-  const response = await api.get(`/v2/user?page=${page}&limit=${limit}`)
+// Modificar a função fetchUsers para usar parâmetros de paginação corretamente
+export async function fetchUsers(params: PaginationParams = {}): Promise<User[]> {
+  const { page = 1, limit = 10, search } = params
+
+  // Construir os parâmetros de consulta
+  const queryParams = new URLSearchParams()
+  queryParams.append("page", page.toString())
+  queryParams.append("limit", limit.toString())
+
+  if (search) {
+    queryParams.append("search", search)
+  }
+
+  const response = await api.get(`/v2/user?${queryParams.toString()}`)
   return response.data.data
 }
 

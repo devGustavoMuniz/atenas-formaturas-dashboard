@@ -65,18 +65,20 @@ export function UsersTable() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
+    queryKey: ["users", currentPage, pageSize],
+    queryFn: () => fetchUsers({ page: currentPage, limit: pageSize }),
   })
 
   const { data: institutions = [], isLoading: isLoadingInstitutions } = useQuery({
     queryKey: ["institutions"],
-    queryFn: fetchInstitutions,
+    queryFn: () => fetchInstitutions(),
   })
 
   const isLoading = isLoadingUsers || isLoadingInstitutions
@@ -268,10 +270,20 @@ export function UsersTable() {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
           Anterior
         </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+          disabled={users.length < pageSize}
+        >
           Próximo
         </Button>
       </div>

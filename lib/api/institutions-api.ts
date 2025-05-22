@@ -1,4 +1,5 @@
 import { api } from "./axios-config"
+import type { PaginationParams } from "./users-api"
 
 // Types
 export type Institution = {
@@ -12,9 +13,20 @@ export type Institution = {
 }
 
 // API functions
-// Modificar a função fetchInstitutions para incluir parâmetros de paginação
-export async function fetchInstitutions(page = 1, limit = 10): Promise<Institution[]> {
-  const response = await api.get(`/v2/institution?page=${page}&limit=${limit}`)
+// Modificar a função fetchInstitutions para usar parâmetros de paginação corretamente
+export async function fetchInstitutions(params: PaginationParams = {}): Promise<Institution[]> {
+  const { page = 1, limit = 10, search } = params
+
+  // Construir os parâmetros de consulta
+  const queryParams = new URLSearchParams()
+  queryParams.append("page", page.toString())
+  queryParams.append("limit", limit.toString())
+
+  if (search) {
+    queryParams.append("search", search)
+  }
+
+  const response = await api.get(`/v2/institution?${queryParams.toString()}`)
   return response.data.data
 }
 
