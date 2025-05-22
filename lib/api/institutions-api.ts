@@ -26,27 +26,27 @@ export async function fetchInstitutions(params: PaginationParams = {}): Promise<
     queryParams.append("search", search)
   }
 
-  const response = await api.get(`/v2/institution?${queryParams.toString()}`)
+  const response = await api.get(`/v2/institutions?${queryParams.toString()}`)
   return response.data.data
 }
 
 export async function fetchInstitutionById(id: string): Promise<Institution> {
-  const response = await api.get(`/v2/institution/${id}`)
+  const response = await api.get(`/v2/institutions/${id}`)
   return response.data
 }
 
 export async function createInstitution(
   institutionData: Omit<Institution, "id" | "createdAt" | "userCount">,
 ): Promise<Institution> {
-  const response = await api.post("/v2/institution", institutionData)
+  const response = await api.post("/v2/institutions", institutionData)
   return response.data
 }
 
 export async function updateInstitution(id: string, institutionData: Partial<Institution>): Promise<Institution> {
-  const response = await api.put(`/v2/institution/${id}`, institutionData)
+  const response = await api.put(`/v2/institutions/${id}`, institutionData)
   return response.data
 }
 
 export async function deleteInstitution(id: string): Promise<void> {
-  await api.delete(`/v2/institution/${id}`)
+  await api.delete(`/v2/institutions/${id}`)
 }

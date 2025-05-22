@@ -53,36 +53,36 @@ export async function fetchUsers(params: PaginationParams = {}): Promise<User[]>
     queryParams.append("search", search)
   }
 
-  const response = await api.get(`/v2/user?${queryParams.toString()}`)
+  const response = await api.get(`/v2/users?${queryParams.toString()}`)
   return response.data.data
 }
 
 export async function fetchUserById(id: string): Promise<User> {
-  const response = await api.get(`/v2/user/${id}`)
+  const response = await api.get(`/v2/users/${id}`)
   return response.data
 }
 
 export async function createUser(userData: Omit<User, "id" | "createdAt">): Promise<User> {
-  const response = await api.post("/v2/user", userData)
+  const response = await api.post("/v2/users", userData)
   return response.data
 }
 
 export async function updateUser(id: string, userData: Partial<User>): Promise<User> {
-  const response = await api.put(`/v2/user/${id}`, userData)
+  const response = await api.put(`/v2/users/${id}`, userData)
   return response.data
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  await api.delete(`/v2/user/${id}`)
+  await api.delete(`/v2/users/${id}`)
 }
 
 export async function fetchRecentUsers(): Promise<User[]> {
-  const response = await api.get("/v2/user/recent")
+  const response = await api.get("/v2/users/recent")
   return response.data
 }
 
 export async function fetchUserStats(): Promise<UserStats> {
-  const response = await api.get("/v2/user/stats")
+  const response = await api.get("/v2/users/stats")
   return response.data
 }
 
