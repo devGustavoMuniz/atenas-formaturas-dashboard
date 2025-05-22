@@ -82,7 +82,8 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
         "email": "usuario@exemplo.com",
         "phone": "(11) 98765-4321",
         "role": "admin",
-        "institutionId": "inst-1"
+        "institutionId": "inst-1",
+        "userContract": "CONT-1001"
       }
     ],
     "pagination": {
@@ -110,6 +111,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "observations": "Observações sobre o usuário",
     "role": "admin",
     "institutionId": "inst-1",
+    "userContract": "CONT-1001",
     "fatherName": "Nome do Pai",
     "fatherPhone": "(11) 91234-5678",
     "motherName": "Nome da Mãe",
@@ -117,7 +119,6 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "driveLink": "https://drive.google.com/...",
     "creditValue": 1000,
     "profileImage": "user-123.jpg",
-    "status": "active",
     "createdAt": "2023-01-01T00:00:00Z"
   }
   \`\`\`
@@ -144,8 +145,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "motherPhone": "(11) 98765-4321",
     "driveLink": "https://drive.google.com/...",
     "creditValue": 1000,
-    "profileImage": "user-123.jpg",
-    "status": "active"
+    "profileImage": "user-123.jpg"
   }
   \`\`\`
 - **Resposta de Sucesso**:
@@ -159,6 +159,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "observations": "Observações sobre o usuário",
     "role": "admin",
     "institutionId": "inst-1",
+    "userContract": "CONT-1001",
     "fatherName": "Nome do Pai",
     "fatherPhone": "(11) 91234-5678",
     "motherName": "Nome da Mãe",
@@ -166,7 +167,6 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "driveLink": "https://drive.google.com/...",
     "creditValue": 1000,
     "profileImage": "user-123.jpg",
-    "status": "active",
     "createdAt": "2023-01-01T00:00:00Z"
   }
   \`\`\`
@@ -193,8 +193,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "motherPhone": "(11) 98765-4321",
     "driveLink": "https://drive.google.com/...",
     "creditValue": 1500,
-    "profileImage": "user-123-updated.jpg",
-    "status": "active"
+    "profileImage": "user-123-updated.jpg"
   }
   \`\`\`
 - **Resposta de Sucesso**:
@@ -208,6 +207,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "observations": "Observações atualizadas",
     "role": "admin",
     "institutionId": "inst-1",
+    "userContract": "CONT-1001",
     "fatherName": "Nome do Pai",
     "fatherPhone": "(11) 91234-5678",
     "motherName": "Nome da Mãe",
@@ -215,7 +215,6 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "driveLink": "https://drive.google.com/...",
     "creditValue": 1500,
     "profileImage": "user-123-updated.jpg",
-    "status": "active",
     "createdAt": "2023-01-01T00:00:00Z",
     "updatedAt": "2023-01-02T00:00:00Z"
   }
@@ -234,46 +233,9 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
   }
   \`\`\`
 
-### Obter Usuários Recentes
-
-- **URL**: `/v2/users/recent`
-- **Método**: `GET`
-- **Cabeçalhos**: `Authorization: Bearer {token}`
-- **Resposta de Sucesso**:
-  \`\`\`json
-  [
-    {
-      "id": "user-1",
-      "name": "Nome do Usuário",
-      "email": "usuario@exemplo.com",
-      "avatar": "user-123.jpg",
-      "createdAt": "2023-01-01T00:00:00Z"
-    }
-  ]
-  \`\`\`
-
-### Obter Estatísticas de Usuários
-
-- **URL**: `/v2/users/stats`
-- **Método**: `GET`
-- **Cabeçalhos**: `Authorization: Bearer {token}`
-- **Resposta de Sucesso**:
-  \`\`\`json
-  {
-    "total": 100,
-    "new": 10,
-    "active": 80,
-    "inactive": 20,
-    "growthRate": 5,
-    "newGrowthRate": 10,
-    "activeGrowthRate": 3,
-    "inactiveGrowthRate": -2
-  }
-  \`\`\`
-
 ### Obter URL Presigned para Upload de Imagem
 
-- **URL**: `/v2/presigned-url`
+- **URL**: `/v2/storage/presigned-url`
 - **Método**: `POST`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Corpo da Requisição**:

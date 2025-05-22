@@ -1,35 +1,53 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useQuery } from "@tanstack/react-query"
-import { fetchRecentUsers } from "@/lib/api/users-api"
-import { Skeleton } from "@/components/ui/skeleton"
+
+// Dados mockados para substituir a chamada de API
+const mockRecentUsers = [
+  {
+    id: "1",
+    name: "Maria Silva",
+    email: "maria.silva@exemplo.com",
+    avatar: "/placeholder.svg",
+    createdAt: "2023-05-15T10:30:00Z",
+  },
+  {
+    id: "2",
+    name: "João Santos",
+    email: "joao.santos@exemplo.com",
+    avatar: "/placeholder.svg",
+    createdAt: "2023-05-14T14:45:00Z",
+  },
+  {
+    id: "3",
+    name: "Ana Oliveira",
+    email: "ana.oliveira@exemplo.com",
+    avatar: "/placeholder.svg",
+    createdAt: "2023-05-13T09:15:00Z",
+  },
+  {
+    id: "4",
+    name: "Pedro Costa",
+    email: "pedro.costa@exemplo.com",
+    avatar: "/placeholder.svg",
+    createdAt: "2023-05-12T16:20:00Z",
+  },
+  {
+    id: "5",
+    name: "Carla Souza",
+    email: "carla.souza@exemplo.com",
+    avatar: "/placeholder.svg",
+    createdAt: "2023-05-11T11:10:00Z",
+  },
+]
 
 export function RecentUsers() {
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["recentUsers"],
-    queryFn: fetchRecentUsers,
-  })
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[150px]" />
-              <Skeleton className="h-4 w-[100px]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+  // Usar dados mockados em vez de fazer chamada de API
+  const users = mockRecentUsers
 
   return (
     <div className="space-y-8">
-      {users?.map((user) => (
+      {users.map((user) => (
         <div key={user.id} className="flex items-center">
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />

@@ -70,6 +70,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
         contractNumber: institution.contractNumber,
         name: institution.name,
         observations: institution.observations,
+        // Converter o array de strings para array de objetos com a propriedade name
         events: institution.events.map((event) => ({ name: event })),
       })
     }
@@ -77,10 +78,8 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<InstitutionFormValues, "id" | "createdAt" | "userCount">) => {
-      return createInstitution({
-        ...data,
-        events: data.events.map((event) => event.name),
-      })
+      // Não precisamos mais converter os eventos, pois já estão no formato correto
+      return createInstitution(data)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
@@ -101,10 +100,8 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
 
   const updateMutation = useMutation({
     mutationFn: (data: InstitutionFormValues) =>
-      updateInstitution(institutionId!, {
-        ...data,
-        events: data.events.map((event) => event.name),
-      }),
+      // Não precisamos mais converter os eventos, pois já estão no formato correto
+      updateInstitution(institutionId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
       queryClient.invalidateQueries({ queryKey: ["institution", institutionId] })

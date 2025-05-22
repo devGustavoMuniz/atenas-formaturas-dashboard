@@ -23,7 +23,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { IMaskInput } from "react-imask"
 
+// Remover o campo status do schema
 const userFormSchema = z.object({
   institutionId: z.string({
     required_error: "Selecione uma instituição.",
@@ -53,9 +55,6 @@ const userFormSchema = z.object({
   motherPhone: z.string().optional(),
   driveLink: z.string().optional(),
   creditValue: z.coerce.number().optional(),
-  status: z.enum(["active", "inactive"], {
-    required_error: "Selecione um status.",
-  }),
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
@@ -86,7 +85,7 @@ export function UserForm({ userId }: UserFormProps) {
 
   const { data: institutions = [], isLoading: isLoadingInstitutions } = useQuery({
     queryKey: ["institutions"],
-    queryFn: fetchInstitutions,
+    queryFn: () => fetchInstitutions(),
   })
 
   const isLoading = isLoadingUser || isLoadingInstitutions
@@ -108,7 +107,6 @@ export function UserForm({ userId }: UserFormProps) {
       motherPhone: "",
       driveLink: "",
       creditValue: undefined,
-      status: "active",
     },
   })
 
@@ -129,7 +127,6 @@ export function UserForm({ userId }: UserFormProps) {
         motherPhone: user.motherPhone || "",
         driveLink: user.driveLink || "",
         creditValue: user.creditValue,
-        status: user.status,
       })
       setProfileImage(user.profileImage || null)
       setProfileImageFilename(user.profileImage || null)
@@ -157,12 +154,12 @@ export function UserForm({ userId }: UserFormProps) {
           // Continuar com a criação/atualização do usuário
           if (isEditing) {
             updateMutation.mutate({
-              ...form.getValues(),
+              ...cleanFormData(form.getValues()),
               profileImage: data.filename,
             })
           } else {
             createMutation.mutate({
-              ...form.getValues(),
+              ...cleanFormData(form.getValues()),
               profileImage: data.filename,
             })
           }
@@ -177,12 +174,12 @@ export function UserForm({ userId }: UserFormProps) {
         // Se não houver imagem, continuar com a criação/atualização do usuário
         if (isEditing) {
           updateMutation.mutate({
-            ...form.getValues(),
+            ...cleanFormData(form.getValues()),
             profileImage: profileImageFilename,
           })
         } else {
           createMutation.mutate({
-            ...form.getValues(),
+            ...cleanFormData(form.getValues()),
             profileImage: profileImageFilename,
           })
         }
@@ -196,6 +193,33 @@ export function UserForm({ userId }: UserFormProps) {
       })
     },
   })
+
+  // Função para limpar campos vazios do formulário
+  const cleanFormData = (data: UserFormValues) => {
+    const cleanedData: Record<string, any> = { ...data }
+
+    // Remover campos opcionais vazios
+    Object.keys(cleanedData).forEach((key) => {
+      if (
+        cleanedData[key] === "" &&
+        ["observations", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink"].includes(key)
+      ) {
+        delete cleanedData[key]
+      }
+    })
+
+    // Não enviar o campo creditValue se for undefined
+    if (cleanedData.creditValue === undefined) {
+      delete cleanedData.creditValue
+    }
+
+    // Não enviar o campo password se for o placeholder
+    if (cleanedData.password === "********") {
+      delete cleanedData.password
+    }
+
+    return cleanedData
+  }
 
   const createMutation = useMutation({
     mutationFn: createUser,
@@ -245,19 +269,13 @@ export function UserForm({ userId }: UserFormProps) {
     } else {
       // Se não tiver nova imagem, continuar com a criação/atualização
       if (isEditing) {
-        // Don't update password if it's the placeholder
-        const updatedData = { ...data }
-        if (updatedData.password === "********") {
-          delete updatedData.password
-        }
-
         updateMutation.mutate({
-          ...updatedData,
+          ...cleanFormData(data),
           profileImage: profileImageFilename,
         })
       } else {
         createMutation.mutate({
-          ...data,
+          ...cleanFormData(data),
           profileImage: profileImageFilename,
         })
       }
@@ -285,6 +303,16 @@ export function UserForm({ userId }: UserFormProps) {
     setProfileImage(imageUrl)
     setProfileImageFile(file)
     setIsCropping(false)
+  }
+
+  // Formatador de moeda brasileira
+  const currencyFormatter = (value: string) => {
+    const numericValue = value.replace(/\D/g, "")
+    const floatValue = Number.parseInt(numericValue) / 100
+    return floatValue.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
   }
 
   if (isLoading) {
@@ -434,7 +462,14 @@ export function UserForm({ userId }: UserFormProps) {
                     <FormItem>
                       <FormLabel>Telefone</FormLabel>
                       <FormControl>
-                        <Input placeholder="(00) 00000-0000" {...field} />
+                        <IMaskInput
+                          mask="(00) 00000-0000"
+                          unmask={false}
+                          value={field.value}
+                          onAccept={(value) => field.onChange(value)}
+                          placeholder="(00) 00000-0000"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -470,28 +505,6 @@ export function UserForm({ userId }: UserFormProps) {
                         <SelectContent>
                           <SelectItem value="admin">Administrador</SelectItem>
                           <SelectItem value="client">Cliente</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="active">Ativo</SelectItem>
-                          <SelectItem value="inactive">Inativo</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -547,7 +560,14 @@ export function UserForm({ userId }: UserFormProps) {
                     <FormItem>
                       <FormLabel>Telefone do Pai</FormLabel>
                       <FormControl>
-                        <Input placeholder="(00) 00000-0000 (opcional)" {...field} />
+                        <IMaskInput
+                          mask="(00) 00000-0000"
+                          unmask={false}
+                          value={field.value}
+                          onAccept={(value) => field.onChange(value)}
+                          placeholder="(00) 00000-0000 (opcional)"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -575,7 +595,14 @@ export function UserForm({ userId }: UserFormProps) {
                     <FormItem>
                       <FormLabel>Telefone da Mãe</FormLabel>
                       <FormControl>
-                        <Input placeholder="(00) 00000-0000 (opcional)" {...field} />
+                        <IMaskInput
+                          mask="(00) 00000-0000"
+                          unmask={false}
+                          value={field.value}
+                          onAccept={(value) => field.onChange(value)}
+                          placeholder="(00) 00000-0000 (opcional)"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -603,15 +630,18 @@ export function UserForm({ userId }: UserFormProps) {
                     <FormItem>
                       <FormLabel>Valor de Crédito</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0.00 (opcional)"
-                          {...field}
-                          value={field.value === undefined ? "" : field.value}
-                          onChange={(e) => {
-                            const value = e.target.value === "" ? undefined : Number.parseFloat(e.target.value)
-                            field.onChange(value)
-                          }}
+                        <IMaskInput
+                          mask={Number}
+                          radix="."
+                          mapToRadix={[","]}
+                          thousandsSeparator="."
+                          scale={2}
+                          padFractionalZeros={true}
+                          normalizeZeros={true}
+                          value={field.value}
+                          onAccept={(value) => field.onChange(Number.parseFloat(value) || undefined)}
+                          placeholder="R$ 0,00 (opcional)"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                       </FormControl>
                       <FormMessage />

@@ -2,36 +2,22 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, UserPlus, UserMinus, UserCheck } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
-import { fetchUserStats } from "@/lib/api/users-api"
-import { Skeleton } from "@/components/ui/skeleton"
+
+// Dados mockados para substituir a chamada de API
+const mockStats = {
+  total: 256,
+  new: 24,
+  active: 210,
+  inactive: 46,
+  growthRate: 12,
+  newGrowthRate: 18,
+  activeGrowthRate: 8,
+  inactiveGrowthRate: -5,
+}
 
 export function DashboardCards() {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["userStats"],
-    queryFn: fetchUserStats,
-  })
-
-  if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                <Skeleton className="h-4 w-[100px]" />
-              </CardTitle>
-              <Skeleton className="h-4 w-4 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-[60px]" />
-              <Skeleton className="mt-2 h-4 w-[120px]" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
+  // Usar dados mockados em vez de fazer chamada de API
+  const stats = mockStats
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -41,8 +27,8 @@ export function DashboardCards() {
           <Users className="h-4 w-4 text-yellow-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats?.total || 0}</div>
-          <p className="text-xs text-muted-foreground">+{stats?.growthRate || 0}% desde o último mês</p>
+          <div className="text-2xl font-bold">{stats.total}</div>
+          <p className="text-xs text-muted-foreground">+{stats.growthRate}% desde o último mês</p>
         </CardContent>
       </Card>
       <Card>
@@ -51,8 +37,8 @@ export function DashboardCards() {
           <UserPlus className="h-4 w-4 text-yellow-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats?.new || 0}</div>
-          <p className="text-xs text-muted-foreground">+{stats?.newGrowthRate || 0}% desde o último mês</p>
+          <div className="text-2xl font-bold">{stats.new}</div>
+          <p className="text-xs text-muted-foreground">+{stats.newGrowthRate}% desde o último mês</p>
         </CardContent>
       </Card>
       <Card>
@@ -61,8 +47,8 @@ export function DashboardCards() {
           <UserCheck className="h-4 w-4 text-yellow-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats?.active || 0}</div>
-          <p className="text-xs text-muted-foreground">+{stats?.activeGrowthRate || 0}% desde o último mês</p>
+          <div className="text-2xl font-bold">{stats.active}</div>
+          <p className="text-xs text-muted-foreground">+{stats.activeGrowthRate}% desde o último mês</p>
         </CardContent>
       </Card>
       <Card>
@@ -71,8 +57,8 @@ export function DashboardCards() {
           <UserMinus className="h-4 w-4 text-yellow-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats?.inactive || 0}</div>
-          <p className="text-xs text-muted-foreground">{stats?.inactiveGrowthRate || 0}% desde o último mês</p>
+          <div className="text-2xl font-bold">{stats.inactive}</div>
+          <p className="text-xs text-muted-foreground">{stats.inactiveGrowthRate}% desde o último mês</p>
         </CardContent>
       </Card>
     </div>

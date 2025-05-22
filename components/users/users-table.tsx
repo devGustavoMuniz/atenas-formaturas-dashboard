@@ -27,7 +27,6 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { fetchUsers, deleteUser } from "@/lib/api/users-api"
-import { fetchInstitutions } from "@/lib/api/institutions-api"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -50,6 +49,7 @@ type User = {
   observations?: string
   role: "admin" | "client"
   institutionId: string
+  userContract: string // Adicionado o campo userContract
   fatherName?: string
   fatherPhone?: string
   motherName?: string
@@ -76,12 +76,7 @@ export function UsersTable() {
     queryFn: () => fetchUsers({ page: currentPage, limit: pageSize }),
   })
 
-  const { data: institutions = [], isLoading: isLoadingInstitutions } = useQuery({
-    queryKey: ["institutions"],
-    queryFn: () => fetchInstitutions(),
-  })
-
-  const isLoading = isLoadingUsers || isLoadingInstitutions
+  const isLoading = isLoadingUsers
 
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
@@ -112,18 +107,12 @@ export function UsersTable() {
     }
   }
 
-  const getInstitutionContractNumber = (institutionId: string) => {
-    const institution = institutions.find((i) => i.id === institutionId)
-    return institution?.contractNumber || "N/A"
-  }
-
   const columns: ColumnDef<User>[] = [
     {
-      accessorKey: "institutionId",
+      accessorKey: "userContract", // Usar o campo userContract diretamente
       header: "Nº do Contrato",
       cell: ({ row }) => {
-        const institutionId = row.getValue<string>("institutionId")
-        return <div>{getInstitutionContractNumber(institutionId)}</div>
+        return <div>{row.getValue("userContract")}</div>
       },
     },
     {
