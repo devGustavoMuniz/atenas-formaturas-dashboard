@@ -24,7 +24,6 @@ import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { IMaskInput } from "react-imask"
-import type { User } from "@/lib/types"
 
 // Remover o campo status do schema
 const userFormSchema = z.object({
@@ -134,71 +133,6 @@ export function UserForm({ userId }: UserFormProps) {
     }
   }, [user, form, isEditing])
 
-  // Mutation para obter URL presigned
-  const presignedUrlMutation = useMutation({
-    mutationFn: getPresignedUrl,
-    onSuccess: async (data) => {
-      if (profileImageFile && data.uploadUrl) {
-        try {
-          // Upload da imagem para a URL presigned
-          await fetch(data.uploadUrl, {
-            method: "PUT",
-            body: profileImageFile,
-            headers: {
-              "Content-Type": profileImageFile.type,
-            },
-          })
-
-          // Salvar o nome do arquivo para usar no cadastro/atualização
-          setProfileImageFilename(data.filename)
-
-          // Continuar com a criação/atualização do usuário
-          const cleanedData = cleanFormData(form.getValues())
-          if (isEditing) {
-            updateMutation.mutate({
-              id: userId!,
-              ...cleanedData,
-              profileImage: data.filename,
-            })
-          } else {
-            createMutation.mutate({
-              ...cleanedData,
-              profileImage: data.filename,
-            })
-          }
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            title: "Erro ao fazer upload da imagem",
-            description: "Não foi possível fazer o upload da imagem. Tente novamente.",
-          })
-        }
-      } else {
-        // Se não houver imagem, continuar com a criação/atualização do usuário
-        const cleanedData = cleanFormData(form.getValues())
-        if (isEditing) {
-          updateMutation.mutate({
-            id: userId!,
-            ...cleanedData,
-            profileImage: profileImageFilename,
-          })
-        } else {
-          createMutation.mutate({
-            ...cleanedData,
-            profileImage: profileImageFilename,
-          })
-        }
-      }
-    },
-    onError: () => {
-      toast({
-        variant: "destructive",
-        title: "Erro ao obter URL para upload",
-        description: "Não foi possível obter a URL para upload da imagem. Tente novamente.",
-      })
-    },
-  })
-
   // Função para limpar campos vazios do formulário
   const cleanFormData = (data: UserFormValues) => {
     const cleanedData: Record<string, any> = { ...data }
@@ -226,6 +160,7 @@ export function UserForm({ userId }: UserFormProps) {
     return cleanedData
   }
 
+  // Mutation para criar usuário
   const createMutation = useMutation({
     mutationFn: createUser,
     onSuccess: () => {
@@ -245,8 +180,9 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
+  // Mutation para atualizar usuário
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Partial<User>) => updateUser(id, data),
+    mutationFn: (data: { id: string } & Partial<any>) => updateUser(data.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
       queryClient.invalidateQueries({ queryKey: ["user", userId] })
@@ -265,15 +201,74 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
+  // Mutation para obter URL presigned
+  const presignedUrlMutation = useMutation({
+    mutationFn: getPresignedUrl,
+    onSuccess: async (data, variables, context) => {
+      if (profileImageFile && data.uploadUrl) {
+        try {
+          // Upload da imagem para a URL presigned
+          await fetch(data.uploadUrl, {
+            method: "PUT",
+            body: profileImageFile,
+            headers: {
+              "Content-Type": profileImageFile.type,
+            },
+          })
+
+          // Salvar o nome do arquivo para usar no cadastro/atualização
+          setProfileImageFilename(data.filename)
+
+          // Continuar com a criação/atualização do usuário usando o contexto
+          if (context) {
+            const { formData, isEditing } = context as { formData: UserFormValues; isEditing: boolean }
+            const cleanedData = cleanFormData(formData)
+
+            if (isEditing) {
+              updateMutation.mutate({
+                id: userId!,
+                ...cleanedData,
+                profileImage: data.filename,
+              })
+            } else {
+              createMutation.mutate({
+                ...cleanedData,
+                profileImage: data.filename,
+              })
+            }
+          }
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao fazer upload da imagem",
+            description: "Não foi possível fazer o upload da imagem. Tente novamente.",
+          })
+        }
+      }
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao obter URL para upload",
+        description: "Não foi possível obter a URL para upload da imagem. Tente novamente.",
+      })
+    },
+  })
+
+  // Função para lidar com o envio do formulário
   function onSubmit(data: UserFormValues) {
+    const cleanedData = cleanFormData(data)
+
     // Se tiver uma nova imagem, obter URL presigned primeiro
     if (profileImageFile) {
-      presignedUrlMutation.mutate({
-        contentType: profileImageFile.type,
-      })
+      presignedUrlMutation.mutate(
+        { contentType: profileImageFile.type },
+        {
+          context: { formData: data, isEditing },
+        },
+      )
     } else {
       // Se não tiver nova imagem, continuar com a criação/atualização
-      const cleanedData = cleanFormData(data)
       if (isEditing) {
         updateMutation.mutate({
           id: userId!,
@@ -306,6 +301,7 @@ export function UserForm({ userId }: UserFormProps) {
     return institution ? `${institution.contractNumber} - ${institution.name}` : "Selecione uma instituição"
   }
 
+  // Função para lidar com a imagem cortada
   const handleImageCropped = (imageUrl: string | null, file: File | null) => {
     setProfileImage(imageUrl)
     setProfileImageFile(file)
@@ -370,6 +366,7 @@ export function UserForm({ userId }: UserFormProps) {
                               role="combobox"
                               aria-expanded={institutionOpen}
                               className="justify-between w-full h-10"
+                              type="button"
                             >
                               {field.value ? getInstitutionLabel(field.value) : "Selecione uma instituição"}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

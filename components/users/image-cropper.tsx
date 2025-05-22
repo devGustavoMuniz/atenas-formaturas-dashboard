@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Upload } from "lucide-react"
@@ -27,11 +27,15 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
   const imgRef = useRef<HTMLImageElement | null>(null)
   const [originalFile, setOriginalFile] = useState<File | null>(null)
 
-  useEffect(() => {
-    if (onCroppingChange) {
-      onCroppingChange(!!src)
-    }
-  }, [src, onCroppingChange])
+  // Notificar o componente pai quando o estado de corte muda
+  const updateCroppingState = useCallback(
+    (isCropping: boolean) => {
+      if (onCroppingChange) {
+        onCroppingChange(isCropping)
+      }
+    },
+    [onCroppingChange],
+  )
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -49,6 +53,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
           x: 0,
           y: 0,
         })
+        updateCroppingState(true)
       })
       reader.readAsDataURL(file)
     }
@@ -92,13 +97,21 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
       })
 
       const croppedImageUrl = URL.createObjectURL(blob)
+
+      // Apenas atualiza o estado local com a imagem cortada
       onImageCropped(croppedImageUrl, croppedFile)
       setSrc(null) // Close the cropping interface
+      updateCroppingState(false)
     }, originalFile.type)
-  }, [completedCrop, onImageCropped, originalFile])
+  }, [completedCrop, onImageCropped, originalFile, updateCroppingState])
 
   const handleCropComplete = (crop: Crop) => {
     setCompletedCrop(crop)
+  }
+
+  const cancelCrop = () => {
+    setSrc(null)
+    updateCroppingState(false)
   }
 
   return (
@@ -117,9 +130,14 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
           </Label>
           <input id="picture" type="file" accept="image/*" onChange={onSelectFile} className="hidden" />
           {src && (
-            <Button onClick={generateCrop} className="bg-yellow-500 text-black hover:bg-yellow-400">
-              Aplicar Corte
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={generateCrop} type="button" className="bg-yellow-500 text-black hover:bg-yellow-400">
+                Aplicar Corte
+              </Button>
+              <Button onClick={cancelCrop} type="button" variant="outline">
+                Cancelar
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -127,7 +145,13 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
       {src && (
         <div className="mt-4 border rounded-md p-2 overflow-hidden max-w-md mx-auto">
           <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={handleCropComplete} aspect={1} circularCrop>
-            <img ref={imgRef} src={src || "/placeholder.svg"} alt="Imagem para corte" className="max-w-full h-auto" />
+            <img
+              ref={imgRef}
+              src={src || "/placeholder.svg"}
+              alt="Imagem para corte"
+              className="max-w-full h-auto"
+              crossOrigin="anonymous"
+            />
           </ReactCrop>
           <p className="text-xs text-muted-foreground mt-2 text-center">Arraste para ajustar o corte da imagem</p>
         </div>
