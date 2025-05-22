@@ -43,19 +43,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Set token in axios headers for future requests
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-          // Você pode adicionar uma chamada para verificar o token, se o backend tiver um endpoint para isso
-          // const response = await api.get("/v2/auth/me")
-          // setUser(response.data)
+          // Verificar o token usando o endpoint de refresh
+          const response = await api.post("/v2/auth/refresh")
+          const { user, token: newToken } = response.data
 
-          // Como alternativa, podemos extrair as informações do usuário do token JWT
-          // Para simplificar, estamos usando o usuário armazenado no localStorage
-          const userData = JSON.parse(localStorage.getItem("user") || "null")
-          if (userData) {
-            setUser(userData)
-          } else {
-            localStorage.removeItem("token")
+          // Atualizar o token se um novo for retornado
+          if (newToken) {
+            localStorage.setItem("token", newToken)
+            api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`
           }
+
+          // Atualizar o usuário
+          setUser(user)
+          localStorage.setItem("user", JSON.stringify(user))
         } catch (error) {
+          // Se o token for inválido ou expirado, limpar os dados de autenticação
           localStorage.removeItem("token")
           localStorage.removeItem("user")
         }
@@ -103,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // Chamar o endpoint de logout, se disponível
+      // Chamar o endpoint de logout
       await api.post("/v2/auth/logout")
     } catch (error) {
       console.error("Error during logout:", error)

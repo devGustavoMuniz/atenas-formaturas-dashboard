@@ -6,7 +6,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Login
 
-- **URL**: `/api/auth/login`
+- **URL**: `/v2/auth/login`
 - **Método**: `POST`
 - **Corpo da Requisição**:
   \`\`\`json
@@ -28,9 +28,27 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
   }
   \`\`\`
 
+### Refresh Token
+
+- **URL**: `/v2/auth/refresh`
+- **Método**: `POST`
+- **Cabeçalhos**: `Authorization: Bearer {token}`
+- **Resposta de Sucesso**:
+  \`\`\`json
+  {
+    "token": "novo-jwt-token-aqui",
+    "user": {
+      "id": "user-1",
+      "name": "Nome do Usuário",
+      "email": "usuario@exemplo.com",
+      "role": "admin"
+    }
+  }
+  \`\`\`
+
 ### Logout
 
-- **URL**: `/api/auth/logout`
+- **URL**: `/v2/auth/logout`
 - **Método**: `POST`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Resposta de Sucesso**:
@@ -45,7 +63,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Listar Usuários
 
-- **URL**: `/api/users`
+- **URL**: `/v2/user`
 - **Método**: `GET`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Parâmetros de Consulta**:
@@ -78,7 +96,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Obter Usuário por ID
 
-- **URL**: `/api/users/{id}`
+- **URL**: `/v2/user/{id}`
 - **Método**: `GET`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Resposta de Sucesso**:
@@ -106,7 +124,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Criar Usuário
 
-- **URL**: `/api/users`
+- **URL**: `/v2/user`
 - **Método**: `POST`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Corpo da Requisição**:
@@ -155,7 +173,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Atualizar Usuário
 
-- **URL**: `/api/users/{id}`
+- **URL**: `/v2/user/{id}`
 - **Método**: `PUT`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Corpo da Requisição**:
@@ -205,7 +223,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Excluir Usuário
 
-- **URL**: `/api/users/{id}`
+- **URL**: `/v2/user/{id}`
 - **Método**: `DELETE`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Resposta de Sucesso**:
@@ -216,9 +234,46 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
   }
   \`\`\`
 
+### Obter Usuários Recentes
+
+- **URL**: `/v2/user/recent`
+- **Método**: `GET`
+- **Cabeçalhos**: `Authorization: Bearer {token}`
+- **Resposta de Sucesso**:
+  \`\`\`json
+  [
+    {
+      "id": "user-1",
+      "name": "Nome do Usuário",
+      "email": "usuario@exemplo.com",
+      "avatar": "user-123.jpg",
+      "createdAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+  \`\`\`
+
+### Obter Estatísticas de Usuários
+
+- **URL**: `/v2/user/stats`
+- **Método**: `GET`
+- **Cabeçalhos**: `Authorization: Bearer {token}`
+- **Resposta de Sucesso**:
+  \`\`\`json
+  {
+    "total": 100,
+    "new": 10,
+    "active": 80,
+    "inactive": 20,
+    "growthRate": 5,
+    "newGrowthRate": 10,
+    "activeGrowthRate": 3,
+    "inactiveGrowthRate": -2
+  }
+  \`\`\`
+
 ### Obter URL Presigned para Upload de Imagem
 
-- **URL**: `/api/presigned-url`
+- **URL**: `/v2/presigned-url`
 - **Método**: `POST`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Corpo da Requisição**:
@@ -239,7 +294,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Listar Instituições
 
-- **URL**: `/api/institutions`
+- **URL**: `/v2/institution`
 - **Método**: `GET`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Parâmetros de Consulta**:
@@ -270,7 +325,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Obter Instituição por ID
 
-- **URL**: `/api/institutions/{id}`
+- **URL**: `/v2/institution/{id}`
 - **Método**: `GET`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Resposta de Sucesso**:
@@ -288,7 +343,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Criar Instituição
 
-- **URL**: `/api/institutions`
+- **URL**: `/v2/institution`
 - **Método**: `POST`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Corpo da Requisição**:
@@ -318,7 +373,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Atualizar Instituição
 
-- **URL**: `/api/institutions/{id}`
+- **URL**: `/v2/institution/{id}`
 - **Método**: `PUT`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Corpo da Requisição**:
@@ -350,7 +405,7 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
 
 ### Excluir Instituição
 
-- **URL**: `/api/institutions/{id}`
+- **URL**: `/v2/institution/{id}`
 - **Método**: `DELETE`
 - **Cabeçalhos**: `Authorization: Bearer {token}`
 - **Resposta de Sucesso**:
@@ -359,4 +414,3 @@ Este documento descreve os endpoints necessários para o backend da aplicação.
     "success": true,
     "message": "Instituição excluída com sucesso"
   }
-  \`\`\`
