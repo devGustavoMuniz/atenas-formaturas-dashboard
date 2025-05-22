@@ -24,6 +24,7 @@ import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { IMaskInput } from "react-imask"
+import type { User } from "@/lib/types"
 
 // Remover o campo status do schema
 const userFormSchema = z.object({
@@ -54,7 +55,7 @@ const userFormSchema = z.object({
   motherName: z.string().optional(),
   motherPhone: z.string().optional(),
   driveLink: z.string().optional(),
-  creditValue: z.coerce.number().optional(),
+  creditValue: z.number().optional(),
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
@@ -152,14 +153,16 @@ export function UserForm({ userId }: UserFormProps) {
           setProfileImageFilename(data.filename)
 
           // Continuar com a criação/atualização do usuário
+          const cleanedData = cleanFormData(form.getValues())
           if (isEditing) {
             updateMutation.mutate({
-              ...cleanFormData(form.getValues()),
+              id: userId!,
+              ...cleanedData,
               profileImage: data.filename,
             })
           } else {
             createMutation.mutate({
-              ...cleanFormData(form.getValues()),
+              ...cleanedData,
               profileImage: data.filename,
             })
           }
@@ -172,14 +175,16 @@ export function UserForm({ userId }: UserFormProps) {
         }
       } else {
         // Se não houver imagem, continuar com a criação/atualização do usuário
+        const cleanedData = cleanFormData(form.getValues())
         if (isEditing) {
           updateMutation.mutate({
-            ...cleanFormData(form.getValues()),
+            id: userId!,
+            ...cleanedData,
             profileImage: profileImageFilename,
           })
         } else {
           createMutation.mutate({
-            ...cleanFormData(form.getValues()),
+            ...cleanedData,
             profileImage: profileImageFilename,
           })
         }
@@ -241,7 +246,7 @@ export function UserForm({ userId }: UserFormProps) {
   })
 
   const updateMutation = useMutation({
-    mutationFn: updateUser,
+    mutationFn: ({ id, ...data }: { id: string } & Partial<User>) => updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
       queryClient.invalidateQueries({ queryKey: ["user", userId] })
@@ -268,14 +273,16 @@ export function UserForm({ userId }: UserFormProps) {
       })
     } else {
       // Se não tiver nova imagem, continuar com a criação/atualização
+      const cleanedData = cleanFormData(data)
       if (isEditing) {
         updateMutation.mutate({
-          ...cleanFormData(data),
+          id: userId!,
+          ...cleanedData,
           profileImage: profileImageFilename,
         })
       } else {
         createMutation.mutate({
-          ...cleanFormData(data),
+          ...cleanedData,
           profileImage: profileImageFilename,
         })
       }
@@ -303,16 +310,6 @@ export function UserForm({ userId }: UserFormProps) {
     setProfileImage(imageUrl)
     setProfileImageFile(file)
     setIsCropping(false)
-  }
-
-  // Formatador de moeda brasileira
-  const currencyFormatter = (value: string) => {
-    const numericValue = value.replace(/\D/g, "")
-    const floatValue = Number.parseInt(numericValue) / 100
-    return floatValue.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    })
   }
 
   if (isLoading) {
@@ -363,7 +360,7 @@ export function UserForm({ userId }: UserFormProps) {
                   control={form.control}
                   name="institutionId"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem>
                       <FormLabel>Instituição</FormLabel>
                       <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
                         <PopoverTrigger asChild>
@@ -630,18 +627,15 @@ export function UserForm({ userId }: UserFormProps) {
                     <FormItem>
                       <FormLabel>Valor de Crédito</FormLabel>
                       <FormControl>
-                        <IMaskInput
-                          mask={Number}
-                          radix="."
-                          mapToRadix={[","]}
-                          thousandsSeparator="."
-                          scale={2}
-                          padFractionalZeros={true}
-                          normalizeZeros={true}
-                          value={field.value}
-                          onAccept={(value) => field.onChange(Number.parseFloat(value) || undefined)}
-                          placeholder="R$ 0,00 (opcional)"
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00 (opcional)"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const value = e.target.value === "" ? undefined : Number.parseFloat(e.target.value)
+                            field.onChange(value)
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
