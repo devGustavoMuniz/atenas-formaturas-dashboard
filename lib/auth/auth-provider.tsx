@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
           // Você pode adicionar uma chamada para verificar o token, se o backend tiver um endpoint para isso
-          // const response = await api.get("/api/auth/me")
+          // const response = await api.get("/v2/auth/me")
           // setUser(response.data)
 
           // Como alternativa, podemos extrair as informações do usuário do token JWT
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await api.post("/api/auth/login", { email, password })
+      const response = await api.post("/v2/auth/login", { email, password })
       const { token, user } = response.data
 
       // Store token in localStorage
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       // Chamar o endpoint de logout, se disponível
-      await api.post("/api/auth/logout")
+      await api.post("/v2/auth/logout")
     } catch (error) {
       console.error("Error during logout:", error)
     } finally {

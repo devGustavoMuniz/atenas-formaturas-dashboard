@@ -34,38 +34,36 @@ export type UserStats = {
 
 // API functions
 export async function fetchUsers(): Promise<User[]> {
-  const response = await api.get("/api/users")
+  const response = await api.get("/v2/user")
   return response.data.data
 }
 
 export async function fetchUserById(id: string): Promise<User> {
-  const response = await api.get(`/api/users/${id}`)
+  const response = await api.get(`/v2/user/${id}`)
   return response.data
 }
 
 export async function createUser(userData: Omit<User, "id" | "createdAt">): Promise<User> {
-  const response = await api.post("/api/users", userData)
+  const response = await api.post("/v2/user", userData)
   return response.data
 }
 
 export async function updateUser(id: string, userData: Partial<User>): Promise<User> {
-  const response = await api.put(`/api/users/${id}`, userData)
+  const response = await api.put(`/v2/user/${id}`, userData)
   return response.data
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  await api.delete(`/api/users/${id}`)
+  await api.delete(`/v2/user/${id}`)
 }
 
 export async function fetchRecentUsers(): Promise<User[]> {
-  const response = await api.get("/api/users/recent")
+  const response = await api.get("/v2/user/recent")
   return response.data
 }
 
-// Adicione a função fetchUserStats após a função fetchRecentUsers
-
 export async function fetchUserStats(): Promise<UserStats> {
-  const response = await api.get("/api/users/stats")
+  const response = await api.get("/v2/user/stats")
   return response.data
 }
 
@@ -75,6 +73,6 @@ export async function getPresignedUrl({
 }: {
   contentType: string
 }): Promise<{ uploadUrl: string; filename: string }> {
-  const response = await api.post("/api/presigned-url", { contentType })
+  const response = await api.post("/v2/presigned-url", { contentType })
   return response.data
 }
