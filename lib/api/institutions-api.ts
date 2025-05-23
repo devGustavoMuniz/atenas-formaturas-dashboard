@@ -42,8 +42,14 @@ export async function createInstitution(
   return response.data
 }
 
-export async function updateInstitution(id: string, institutionData: Partial<Institution>): Promise<Institution> {
-  const response = await api.put(`/v2/institutions/${id}`, institutionData)
+export async function updateInstitution(
+  id: string,
+  institutionData: Partial<Omit<Institution, "id">>,
+): Promise<Institution> {
+  // Remover o campo 'id' do institutionData se ele existir
+  const { id: _, ...dataWithoutId } = institutionData as any
+
+  const response = await api.put(`/v2/institutions/${id}`, dataWithoutId)
   return response.data
 }
 

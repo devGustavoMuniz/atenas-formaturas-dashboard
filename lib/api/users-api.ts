@@ -67,8 +67,11 @@ export async function createUser(userData: Omit<User, "id" | "createdAt">): Prom
   return response.data
 }
 
-export async function updateUser(id: string, userData: Partial<User>): Promise<User> {
-  const response = await api.put(`/v2/users/${id}`, userData)
+export async function updateUser(id: string, userData: Partial<Omit<User, "id">>): Promise<User> {
+  // Remover o campo 'id' do userData se ele existir
+  const { id: _, ...dataWithoutId } = userData as any
+
+  const response = await api.put(`/v2/users/${id}`, dataWithoutId)
   return response.data
 }
 

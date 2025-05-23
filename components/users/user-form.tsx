@@ -180,9 +180,12 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
-  // Mutation para atualizar usuário
+  // Mutation para atualizar usuário - corrigida para não enviar o ID no body
   const updateMutation = useMutation({
-    mutationFn: (data: { id: string } & Partial<any>) => updateUser(data.id, data),
+    mutationFn: (data: { id: string } & Partial<any>) => {
+      const { id, ...dataWithoutId } = data
+      return updateUser(id, dataWithoutId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
       queryClient.invalidateQueries({ queryKey: ["user", userId] })

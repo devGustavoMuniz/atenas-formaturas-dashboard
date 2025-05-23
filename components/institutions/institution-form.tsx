@@ -98,10 +98,12 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     },
   })
 
+  // Mutation para atualizar instituição - corrigida para não enviar o ID no body
   const updateMutation = useMutation({
-    mutationFn: (data: InstitutionFormValues) =>
-      // Não precisamos mais converter os eventos, pois já estão no formato correto
-      updateInstitution(institutionId!, data),
+    mutationFn: (data: { id: string } & InstitutionFormValues) => {
+      const { id, ...dataWithoutId } = data
+      return updateInstitution(id, dataWithoutId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
       queryClient.invalidateQueries({ queryKey: ["institution", institutionId] })
@@ -122,7 +124,10 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
 
   function onSubmit(data: InstitutionFormValues) {
     if (isEditing) {
-      updateMutation.mutate(data)
+      updateMutation.mutate({
+        id: institutionId!,
+        ...data,
+      })
     } else {
       createMutation.mutate(data)
     }
