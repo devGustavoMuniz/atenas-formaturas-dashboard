@@ -201,14 +201,27 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
-  // Mutation para obter URL presigned
+  // Vamos corrigir a mutation de presigned URL para garantir que ela chame a criação do usuário após o upload
+
+  // Substitua a mutation presignedUrlMutation por esta implementação:
   const presignedUrlMutation = useMutation({
-    mutationFn: getPresignedUrl,
-    onSuccess: async (data, variables, context) => {
-      if (profileImageFile && data.uploadUrl) {
+    mutationFn: async ({ contentType, formData }: { contentType: string; formData: UserFormValues }) => {
+      // Primeiro, obtenha a URL presigned
+      const response = await getPresignedUrl({ contentType })
+
+      // Retorne tanto a resposta da URL presigned quanto os dados do formulário
+      return {
+        presignedData: response,
+        formData,
+      }
+    },
+    onSuccess: async (result) => {
+      const { presignedData, formData } = result
+
+      if (profileImageFile && presignedData.uploadUrl) {
         try {
           // Upload da imagem para a URL presigned
-          await fetch(data.uploadUrl, {
+          await fetch(presignedData.uploadUrl, {
             method: "PUT",
             body: profileImageFile,
             headers: {
@@ -217,25 +230,22 @@ export function UserForm({ userId }: UserFormProps) {
           })
 
           // Salvar o nome do arquivo para usar no cadastro/atualização
-          setProfileImageFilename(data.filename)
+          setProfileImageFilename(presignedData.filename)
 
-          // Continuar com a criação/atualização do usuário usando o contexto
-          if (context) {
-            const { formData, isEditing } = context as { formData: UserFormValues; isEditing: boolean }
-            const cleanedData = cleanFormData(formData)
+          // Continuar com a criação/atualização do usuário
+          const cleanedData = cleanFormData(formData)
 
-            if (isEditing) {
-              updateMutation.mutate({
-                id: userId!,
-                ...cleanedData,
-                profileImage: data.filename,
-              })
-            } else {
-              createMutation.mutate({
-                ...cleanedData,
-                profileImage: data.filename,
-              })
-            }
+          if (isEditing) {
+            updateMutation.mutate({
+              id: userId!,
+              ...cleanedData,
+              profileImage: presignedData.filename,
+            })
+          } else {
+            createMutation.mutate({
+              ...cleanedData,
+              profileImage: presignedData.filename,
+            })
           }
         } catch (error) {
           toast({
@@ -255,18 +265,16 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
-  // Função para lidar com o envio do formulário
+  // Substitua a função onSubmit por esta implementação:
   function onSubmit(data: UserFormValues) {
     const cleanedData = cleanFormData(data)
 
     // Se tiver uma nova imagem, obter URL presigned primeiro
     if (profileImageFile) {
-      presignedUrlMutation.mutate(
-        { contentType: profileImageFile.type },
-        {
-          context: { formData: data, isEditing },
-        },
-      )
+      presignedUrlMutation.mutate({
+        contentType: profileImageFile.type,
+        formData: data,
+      })
     } else {
       // Se não tiver nova imagem, continuar com a criação/atualização
       if (isEditing) {
