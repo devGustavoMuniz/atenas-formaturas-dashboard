@@ -24,6 +24,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
     y: 0,
   })
   const [completedCrop, setCompletedCrop] = useState<Crop | null>(null)
+  const [hasCropChanged, setHasCropChanged] = useState(false)
   const imgRef = useRef<HTMLImageElement | null>(null)
   const [originalFile, setOriginalFile] = useState<File | null>(null)
 
@@ -53,6 +54,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
           x: 0,
           y: 0,
         })
+        setHasCropChanged(false) // Reset crop change state
         updateCroppingState(true)
       })
       reader.readAsDataURL(file)
@@ -101,6 +103,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
       // Apenas atualiza o estado local com a imagem cortada
       onImageCropped(croppedImageUrl, croppedFile)
       setSrc(null) // Close the cropping interface
+      setHasCropChanged(false) // Reset crop change state
       updateCroppingState(false)
     }, originalFile.type)
   }, [completedCrop, onImageCropped, originalFile, updateCroppingState])
@@ -109,10 +112,19 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
     setCompletedCrop(crop)
   }
 
+  const handleCropChange = (crop: Crop) => {
+    setCrop(crop)
+    setHasCropChanged(true) // Mark that crop has been changed
+  }
+
   const cancelCrop = () => {
     setSrc(null)
+    setHasCropChanged(false)
     updateCroppingState(false)
   }
+
+  // Check if crop button should be enabled
+  const isCropButtonEnabled = hasCropChanged && completedCrop
 
   return (
     <div className="space-y-4 w-full max-w-md mx-auto text-center">
@@ -131,7 +143,16 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
           <input id="picture" type="file" accept="image/*" onChange={onSelectFile} className="hidden" />
           {src && (
             <div className="flex gap-2">
-              <Button onClick={generateCrop} type="button" className="bg-yellow-500 text-black hover:bg-yellow-400">
+              <Button
+                onClick={generateCrop}
+                type="button"
+                disabled={!isCropButtonEnabled}
+                className={`${
+                  isCropButtonEnabled
+                    ? "bg-yellow-500 text-black hover:bg-yellow-400"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
                 Aplicar Corte
               </Button>
               <Button onClick={cancelCrop} type="button" variant="outline">
@@ -144,7 +165,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
 
       {src && (
         <div className="mt-4 border rounded-md p-2 overflow-hidden max-w-md mx-auto">
-          <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={handleCropComplete} aspect={1} circularCrop>
+          <ReactCrop crop={crop} onChange={handleCropChange} onComplete={handleCropComplete} aspect={1} circularCrop>
             <img
               ref={imgRef}
               src={src || "/placeholder.svg"}
@@ -153,7 +174,9 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
               crossOrigin="anonymous"
             />
           </ReactCrop>
-          <p className="text-xs text-muted-foreground mt-2 text-center">Arraste para ajustar o corte da imagem</p>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            {!hasCropChanged ? "Arraste para ajustar o corte da imagem" : "Clique em 'Aplicar Corte' para confirmar"}
+          </p>
         </div>
       )}
     </div>

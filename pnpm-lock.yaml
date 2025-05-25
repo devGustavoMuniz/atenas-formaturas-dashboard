@@ -94,10 +94,10 @@ importers:
         version: 1.1.6(@types/react-dom@19.0.0)(@types/react@19.0.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@tanstack/react-query':
         specifier: latest
-        version: 5.76.2(react@19.0.0)
+        version: 5.77.1(react@19.0.0)
       '@tanstack/react-query-devtools':
         specifier: latest
-        version: 5.76.2(@tanstack/react-query@5.76.2(react@19.0.0))(react@19.0.0)
+        version: 5.77.1(@tanstack/react-query@5.77.1(react@19.0.0))(react@19.0.0)
       '@tanstack/react-table':
         specifier: latest
         version: 8.21.3(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -178,7 +178,7 @@ importers:
         version: 0.9.6(@types/react-dom@19.0.0)(@types/react@19.0.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       zod:
         specifier: latest
-        version: 3.25.23
+        version: 3.25.28
       zustand:
         specifier: latest
         version: 5.0.5(@types/react@19.0.0)(immer@10.1.1)(react@19.0.0)(use-sync-external-store@1.5.0(react@19.0.0))
@@ -1098,20 +1098,20 @@ packages:
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
-  '@tanstack/query-core@5.76.2':
-    resolution: {integrity: sha512-PFGwWh5ss9cJQ67l6bZ7hqXbisX2gy13G2jP+VGY1bgdbCfOMWh6UBVnN62QbFXro6CCoX9hYzTnZHr6Rz00YQ==}
+  '@tanstack/query-core@5.77.1':
+    resolution: {integrity: sha512-nfxVhy4UynChMFfN4NxwI8pktV9R3Zt/ROxOAe6pdOf8CigDLn26p+ex1YW5uien26BBICLmN0dTvIELHCs5vw==}
 
   '@tanstack/query-devtools@5.76.0':
     resolution: {integrity: sha512-1p92nqOBPYVqVDU0Ua5nzHenC6EGZNrLnB2OZphYw8CNA1exuvI97FVgIKON7Uug3uQqvH/QY8suUKpQo8qHNQ==}
 
-  '@tanstack/react-query-devtools@5.76.2':
-    resolution: {integrity: sha512-XQqPM7ByqhitYtzzRXpFcPXY2FIMGY13atJoQnDInxX+ko7wOhAJg51QGzSxQwZ2JEy91taj0IaIUh3pOz2buw==}
+  '@tanstack/react-query-devtools@5.77.1':
+    resolution: {integrity: sha512-b4sOJYTjvCCfL1kQsJevDopqp8b+SpfjCVYr5CqGwAmYsKPIDk5US5wjoacaUHGF+GULjPFH4yT29Ce19kU3iQ==}
     peerDependencies:
-      '@tanstack/react-query': ^5.76.2
+      '@tanstack/react-query': ^5.77.1
       react: ^18 || ^19
 
-  '@tanstack/react-query@5.76.2':
-    resolution: {integrity: sha512-rGkWberCrFdIxMdvSAJM/UOKeu0O/JVTbMmfhQoJpiU9Uq0EDx2EMCadnNuJWbXR4smDA2t7DY3NKkYFmDVS5A==}
+  '@tanstack/react-query@5.77.1':
+    resolution: {integrity: sha512-qBwpxFg0+MZF0fICQwgvzwrVbcs7TdQlLyEd1f1dN83oeIALofCIAJHV7sPWu+BCS5tcXkG5CvOuf7yla8GYqQ==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -2062,8 +2062,8 @@ packages:
     engines: {node: '>= 14.6'}
     hasBin: true
 
-  zod@3.25.23:
-    resolution: {integrity: sha512-Od2bdMosahjSrSgJtakrwjMDb1zM1A3VIHCPGveZt/3/wlrTWBya2lmEh2OYe4OIu8mPTmmr0gnLHIWQXdtWBg==}
+  zod@3.25.28:
+    resolution: {integrity: sha512-/nt/67WYKnr5by3YS7LroZJbtcCBurDKKPBPWWzaxvVCGuG/NOsiKkrjoOhI8mJ+SQUXEbUzeB3S+6XDUEEj7Q==}
 
   zustand@5.0.5:
     resolution: {integrity: sha512-mILtRfKW9xM47hqxGIxCv12gXusoY/xTSHBYApXozR0HmQv299whhBeeAcRy+KrPPybzosvJBCOmVjq6x12fCg==}
@@ -2962,19 +2962,19 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@tanstack/query-core@5.76.2': {}
+  '@tanstack/query-core@5.77.1': {}
 
   '@tanstack/query-devtools@5.76.0': {}
 
-  '@tanstack/react-query-devtools@5.76.2(@tanstack/react-query@5.76.2(react@19.0.0))(react@19.0.0)':
+  '@tanstack/react-query-devtools@5.77.1(@tanstack/react-query@5.77.1(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@tanstack/query-devtools': 5.76.0
-      '@tanstack/react-query': 5.76.2(react@19.0.0)
+      '@tanstack/react-query': 5.77.1(react@19.0.0)
       react: 19.0.0
 
-  '@tanstack/react-query@5.76.2(react@19.0.0)':
+  '@tanstack/react-query@5.77.1(react@19.0.0)':
     dependencies:
-      '@tanstack/query-core': 5.76.2
+      '@tanstack/query-core': 5.77.1
       react: 19.0.0
 
   '@tanstack/react-table@8.21.3(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
@@ -3913,7 +3913,7 @@ snapshots:
 
   yaml@2.8.0: {}
 
-  zod@3.25.23: {}
+  zod@3.25.28: {}
 
   zustand@5.0.5(@types/react@19.0.0)(immer@10.1.1)(react@19.0.0)(use-sync-external-store@1.5.0(react@19.0.0)):
     optionalDependencies:

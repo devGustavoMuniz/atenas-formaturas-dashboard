@@ -37,6 +37,17 @@ interface InstitutionFormProps {
   institutionId?: string
 }
 
+// Função para extrair mensagem de erro da resposta da API
+const getErrorMessage = (error: any): string => {
+  if (error?.response?.data?.message) {
+    return error.response.data.message
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return "Ocorreu um erro inesperado. Tente novamente."
+}
+
 export function InstitutionForm({ institutionId }: InstitutionFormProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -89,11 +100,12 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
       })
       router.push("/institutions")
     },
-    onError: () => {
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao criar",
-        description: "Não foi possível criar a instituição. Tente novamente.",
+        title: "Erro ao criar instituição",
+        description: errorMessage,
       })
     },
   })
@@ -113,11 +125,12 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
       })
       router.push("/institutions")
     },
-    onError: () => {
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao atualizar",
-        description: "Não foi possível atualizar a instituição. Tente novamente.",
+        title: "Erro ao atualizar instituição",
+        description: errorMessage,
       })
     },
   })

@@ -63,6 +63,17 @@ interface UserFormProps {
   userId?: string
 }
 
+// Função para extrair mensagem de erro da resposta da API
+const getErrorMessage = (error: any): string => {
+  if (error?.response?.data?.message) {
+    return error.response.data.message
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return "Ocorreu um erro inesperado. Tente novamente."
+}
+
 export function UserForm({ userId }: UserFormProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -171,11 +182,12 @@ export function UserForm({ userId }: UserFormProps) {
       })
       router.push("/users")
     },
-    onError: () => {
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao criar",
-        description: "Não foi possível criar o usuário. Tente novamente.",
+        title: "Erro ao criar usuário",
+        description: errorMessage,
       })
     },
   })
@@ -195,11 +207,12 @@ export function UserForm({ userId }: UserFormProps) {
       })
       router.push("/users")
     },
-    onError: () => {
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao atualizar",
-        description: "Não foi possível atualizar o usuário. Tente novamente.",
+        title: "Erro ao atualizar usuário",
+        description: errorMessage,
       })
     },
   })
@@ -259,11 +272,12 @@ export function UserForm({ userId }: UserFormProps) {
         }
       }
     },
-    onError: () => {
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
         title: "Erro ao obter URL para upload",
-        description: "Não foi possível obter a URL para upload da imagem. Tente novamente.",
+        description: errorMessage,
       })
     },
   })

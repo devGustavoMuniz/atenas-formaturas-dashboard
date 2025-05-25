@@ -49,6 +49,17 @@ type Institution = {
   createdAt: string
 }
 
+// Função para extrair mensagem de erro da resposta da API
+const getErrorMessage = (error: any): string => {
+  if (error?.response?.data?.message) {
+    return error.response.data.message
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return "Não foi possível excluir a instituição. Tente novamente."
+}
+
 export function InstitutionsTable() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -73,11 +84,12 @@ export function InstitutionsTable() {
         description: "A instituição foi excluída com sucesso.",
       })
     },
-    onError: () => {
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir a instituição. Tente novamente.",
+        title: "Erro ao excluir instituição",
+        description: errorMessage,
       })
     },
   })

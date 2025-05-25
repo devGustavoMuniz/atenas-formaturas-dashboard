@@ -18,6 +18,17 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
+// Função para extrair mensagem de erro da resposta da API
+const getErrorMessage = (error: any): string => {
+  if (error?.response?.data?.message) {
+    return error.response.data.message
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return "Credenciais inválidas. Tente novamente."
+}
+
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
@@ -39,10 +50,11 @@ export function LoginForm() {
       await login(data.email, data.password)
       router.push("/dashboard")
     } catch (error) {
+      const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
         title: "Erro ao fazer login",
-        description: "Credenciais inválidas. Tente novamente.",
+        description: errorMessage,
       })
     } finally {
       setIsLoading(false)
