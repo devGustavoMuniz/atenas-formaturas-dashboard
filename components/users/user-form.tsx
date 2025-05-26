@@ -65,11 +65,27 @@ interface UserFormProps {
 
 // Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
+  console.log("Erro capturado no user form:", error) // Debug
+
+  // Verificar diferentes estruturas de erro
   if (error?.response?.data?.message) {
     return error.response.data.message
   }
+  if (error?.response?.data?.error) {
+    return error.response.data.error
+  }
+  if (error?.response?.data?.errors) {
+    // Se for um array de erros, pegar o primeiro
+    if (Array.isArray(error.response.data.errors)) {
+      return error.response.data.errors[0]?.message || error.response.data.errors[0]
+    }
+    return error.response.data.errors
+  }
   if (error?.message) {
     return error.message
+  }
+  if (typeof error === "string") {
+    return error
   }
   return "Ocorreu um erro inesperado. Tente novamente."
 }
@@ -183,7 +199,10 @@ export function UserForm({ userId }: UserFormProps) {
       router.push("/users")
     },
     onError: (error) => {
+      console.log("Erro no createMutation:", error) // Debug
       const errorMessage = getErrorMessage(error)
+      console.log("Mensagem de erro processada:", errorMessage) // Debug
+
       toast({
         variant: "destructive",
         title: "Erro ao criar usuário",
@@ -208,7 +227,10 @@ export function UserForm({ userId }: UserFormProps) {
       router.push("/users")
     },
     onError: (error) => {
+      console.log("Erro no updateMutation:", error) // Debug
       const errorMessage = getErrorMessage(error)
+      console.log("Mensagem de erro processada:", errorMessage) // Debug
+
       toast({
         variant: "destructive",
         title: "Erro ao atualizar usuário",
@@ -263,7 +285,8 @@ export function UserForm({ userId }: UserFormProps) {
               profileImage: presignedData.filename,
             })
           }
-        } catch (error) {
+        } catch (uploadError) {
+          console.log("Erro no upload da imagem:", uploadError) // Debug
           toast({
             variant: "destructive",
             title: "Erro ao fazer upload da imagem",
@@ -273,7 +296,10 @@ export function UserForm({ userId }: UserFormProps) {
       }
     },
     onError: (error) => {
+      console.log("Erro no presignedUrlMutation:", error) // Debug
       const errorMessage = getErrorMessage(error)
+      console.log("Mensagem de erro processada:", errorMessage) // Debug
+
       toast({
         variant: "destructive",
         title: "Erro ao obter URL para upload",
@@ -284,15 +310,19 @@ export function UserForm({ userId }: UserFormProps) {
 
   // Substitua a função onSubmit por esta implementação:
   function onSubmit(data: UserFormValues) {
+    console.log("Dados do formulário:", data) // Debug
     const cleanedData = cleanFormData(data)
+    console.log("Dados limpos:", cleanedData) // Debug
 
     // Se tiver uma nova imagem, obter URL presigned primeiro
     if (profileImageFile) {
+      console.log("Enviando com imagem") // Debug
       presignedUrlMutation.mutate({
         contentType: profileImageFile.type,
         formData: data,
       })
     } else {
+      console.log("Enviando sem imagem") // Debug
       // Se não tiver nova imagem, continuar com a criação/atualização
       if (isEditing) {
         updateMutation.mutate({

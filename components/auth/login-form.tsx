@@ -20,11 +20,20 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 // Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
+  console.log("Erro capturado no login:", error) // Debug
+
+  // Verificar diferentes estruturas de erro
   if (error?.response?.data?.message) {
     return error.response.data.message
   }
+  if (error?.response?.data?.error) {
+    return error.response.data.error
+  }
   if (error?.message) {
     return error.message
+  }
+  if (typeof error === "string") {
+    return error
   }
   return "Credenciais inválidas. Tente novamente."
 }
@@ -50,7 +59,10 @@ export function LoginForm() {
       await login(data.email, data.password)
       router.push("/dashboard")
     } catch (error) {
+      console.log("Erro no onSubmit do login:", error) // Debug
       const errorMessage = getErrorMessage(error)
+      console.log("Mensagem de erro processada:", errorMessage) // Debug
+
       toast({
         variant: "destructive",
         title: "Erro ao fazer login",

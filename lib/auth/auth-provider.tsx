@@ -85,7 +85,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log("Tentando fazer login com:", { email, password }) // Debug
       const response = await api.post("/v2/auth/login", { email, password })
+      console.log("Resposta do login:", response.data) // Debug
       const { token, user } = response.data
 
       // Store token in localStorage
@@ -100,7 +102,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return user
     } catch (error) {
-      throw new Error("Authentication failed")
+      console.log("Erro no login (auth-provider):", error) // Debug
+      // Re-throw the error so it can be caught by the form
+      throw error
     }
   }
 
