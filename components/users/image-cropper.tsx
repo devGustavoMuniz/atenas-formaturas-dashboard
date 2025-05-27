@@ -30,10 +30,10 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
   const [src, setSrc] = useState<string | null>(null)
   const [crop, setCrop] = useState<any>({
     unit: "%",
-    width: 100,
-    height: 100,
-    x: 0,
-    y: 0,
+    width: 80,
+    height: 80,
+    x: 10,
+    y: 10,
   })
   const [completedCrop, setCompletedCrop] = useState<any>(null)
   const [hasCropChanged, setHasCropChanged] = useState(false)
@@ -61,10 +61,10 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
         // Reset crop when new image is loaded
         setCrop({
           unit: "%",
-          width: 100,
-          height: 100,
-          x: 0,
-          y: 0,
+          width: 80,
+          height: 80,
+          x: 10,
+          y: 10,
         })
         setHasCropChanged(false)
         updateCroppingState(true)

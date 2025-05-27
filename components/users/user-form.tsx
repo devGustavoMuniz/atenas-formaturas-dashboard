@@ -25,14 +25,7 @@ import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { IMaskInput } from "react-imask"
 
-// Schema de validação de senha mais robusto
-const passwordSchema = z
-  .string()
-  .min(6, "Senha deve ter pelo menos 6 caracteres")
-  .regex(/[a-z]/, "Senha deve conter pelo menos uma letra minúscula")
-  .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
-  .regex(/[0-9]/, "Senha deve conter pelo menos um número")
-
+// Schema original sem alterações complexas
 const userFormSchema = z.object({
   institutionId: z.string({
     required_error: "Selecione uma instituição.",
@@ -50,51 +43,9 @@ const userFormSchema = z.object({
     message: "Telefone é obrigatório.",
   }),
   observations: z.string().optional(),
-  password: passwordSchema,
-  role: z.enum(["admin", "client"], {
-    required_error: "Selecione um cargo.",
+  password: z.string().min(6, {
+    message: "Senha deve ter pelo menos 6 caracteres.",
   }),
-  fatherName: z.string().optional(),
-  fatherPhone: z.string().optional(),
-  motherName: z.string().optional(),
-  motherPhone: z.string().optional(),
-  driveLink: z.string().optional(),
-  creditValue: z.number().optional(),
-})
-
-// Schema para edição (senha opcional)
-const userEditFormSchema = z.object({
-  institutionId: z.string({
-    required_error: "Selecione uma instituição.",
-  }),
-  name: z.string().min(2, {
-    message: "Nome deve ter pelo menos 2 caracteres.",
-  }),
-  identifier: z.string().min(1, {
-    message: "Identificador é obrigatório.",
-  }),
-  email: z.string().email({
-    message: "Email inválido.",
-  }),
-  phone: z.string().min(1, {
-    message: "Telefone é obrigatório.",
-  }),
-  observations: z.string().optional(),
-  password: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        // Se a senha for fornecida (não vazia e não é o placeholder), aplicar validações
-        if (val && val !== "" && val !== "********") {
-          return passwordSchema.safeParse(val).success
-        }
-        return true
-      },
-      {
-        message: "Senha deve ter pelo menos 6 caracteres, incluindo: minúscula, maiúscula e número",
-      },
-    ),
   role: z.enum(["admin", "client"], {
     required_error: "Selecione um cargo.",
   }),
@@ -107,7 +58,6 @@ const userEditFormSchema = z.object({
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
-type UserEditFormValues = z.infer<typeof userEditFormSchema>
 
 interface UserFormProps {
   userId?: string
@@ -193,8 +143,8 @@ export function UserForm({ userId }: UserFormProps) {
 
   const isLoading = isLoadingUser || isLoadingInstitutions
 
-  const form = useForm<UserFormValues | UserEditFormValues>({
-    resolver: zodResolver(isEditing ? userEditFormSchema : userFormSchema),
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
       institutionId: "",
       name: "",
@@ -237,8 +187,31 @@ export function UserForm({ userId }: UserFormProps) {
     }
   }, [user, form, isEditing])
 
+  // Função para validar senha com critérios específicos
+  const validatePasswordCriteria = (password: string): string | null => {
+    if (!password || password === "") {
+      return "Senha é obrigatória"
+    }
+    if (password === "********" && isEditing) {
+      return null // Senha placeholder na edição é válida
+    }
+    if (password.length < 6) {
+      return "Senha deve ter pelo menos 6 caracteres"
+    }
+    if (!/[a-z]/.test(password)) {
+      return "Senha deve conter pelo menos uma letra minúscula"
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "Senha deve conter pelo menos uma letra maiúscula"
+    }
+    if (!/[0-9]/.test(password)) {
+      return "Senha deve conter pelo menos um número"
+    }
+    return null
+  }
+
   // Função para limpar campos vazios do formulário
-  const cleanFormData = (data: UserFormValues | UserEditFormValues) => {
+  const cleanFormData = (data: UserFormValues) => {
     const cleanedData: Record<string, any> = { ...data }
 
     // Remover campos opcionais vazios
@@ -256,8 +229,8 @@ export function UserForm({ userId }: UserFormProps) {
       delete cleanedData.creditValue
     }
 
-    // Não enviar o campo password se for o placeholder ou vazio na edição
-    if (isEditing && (cleanedData.password === "********" || cleanedData.password === "")) {
+    // Não enviar o campo password se for o placeholder
+    if (cleanedData.password === "********") {
       delete cleanedData.password
     }
 
@@ -317,10 +290,7 @@ export function UserForm({ userId }: UserFormProps) {
   })
 
   const presignedUrlMutation = useMutation({
-    mutationFn: async ({
-      contentType,
-      formData,
-    }: { contentType: string; formData: UserFormValues | UserEditFormValues }) => {
+    mutationFn: async ({ contentType, formData }: { contentType: string; formData: UserFormValues }) => {
       // Primeiro, obtenha a URL presigned
       const response = await getPresignedUrl({ contentType })
 
@@ -385,8 +355,20 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
-  function onSubmit(data: UserFormValues | UserEditFormValues) {
+  function onSubmit(data: UserFormValues) {
     console.log("Dados do formulário:", data) // Debug
+
+    // Validação adicional da senha
+    const passwordError = validatePasswordCriteria(data.password)
+    if (passwordError) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: passwordError,
+      })
+      return
+    }
+
     const cleanedData = cleanFormData(data)
     console.log("Dados limpos:", cleanedData) // Debug
 
