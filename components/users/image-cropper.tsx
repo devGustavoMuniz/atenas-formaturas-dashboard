@@ -6,18 +6,23 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Upload } from "lucide-react"
 
-// Importação condicional do ReactCrop
+// Importação condicional mais robusta do ReactCrop
 let ReactCrop: any = null
 let Crop: any = null
+let cropLoaded = false
 
 if (typeof window !== "undefined") {
   try {
     const reactCropModule = require("react-image-crop")
-    ReactCrop = reactCropModule.default
+    ReactCrop = reactCropModule.default || reactCropModule.ReactCrop
     Crop = reactCropModule.Crop
+
+    // Importar CSS do react-image-crop
     require("react-image-crop/dist/ReactCrop.css")
+    cropLoaded = true
   } catch (error) {
     console.warn("React Image Crop not available:", error)
+    cropLoaded = false
   }
 }
 
@@ -66,7 +71,14 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
           x: 10,
           y: 10,
         })
-        setHasCropChanged(false)
+        setCompletedCrop({
+          unit: "%",
+          width: 80,
+          height: 80,
+          x: 10,
+          y: 10,
+        })
+        setHasCropChanged(true) // Marcar como alterado para habilitar o botão
         updateCroppingState(true)
       })
       reader.readAsDataURL(file)
@@ -122,6 +134,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
 
   const handleCropComplete = (crop: any) => {
     setCompletedCrop(crop)
+    setHasCropChanged(true)
   }
 
   const handleCropChange = (crop: any) => {
@@ -132,14 +145,15 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
   const cancelCrop = () => {
     setSrc(null)
     setHasCropChanged(false)
+    setOriginalFile(null)
     updateCroppingState(false)
   }
 
   // Check if crop button should be enabled
-  const isCropButtonEnabled = hasCropChanged && completedCrop
+  const isCropButtonEnabled = hasCropChanged && completedCrop && src
 
   // Se ReactCrop não estiver disponível, mostrar apenas o upload básico
-  if (!ReactCrop) {
+  if (!cropLoaded || !ReactCrop) {
     return (
       <div className="space-y-4 w-full max-w-md mx-auto text-center">
         <div className="grid w-full max-w-sm items-center gap-1.5 mx-auto">
@@ -169,6 +183,9 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
             />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Funcionalidade de corte não disponível. A imagem será usada como está.
+        </p>
       </div>
     )
   }
@@ -219,6 +236,27 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
               alt="Imagem para corte"
               className="max-w-full h-auto"
               crossOrigin="anonymous"
+              onLoad={() => {
+                // Garantir que o crop inicial seja definido quando a imagem carregar
+                if (imgRef.current) {
+                  const { width, height } = imgRef.current
+                  const cropSize = Math.min(width, height) * 0.8
+                  const x = (width - cropSize) / 2
+                  const y = (height - cropSize) / 2
+
+                  const newCrop = {
+                    unit: "px" as const,
+                    x,
+                    y,
+                    width: cropSize,
+                    height: cropSize,
+                  }
+
+                  setCrop(newCrop)
+                  setCompletedCrop(newCrop)
+                  setHasCropChanged(true)
+                }
+              }}
             />
           </ReactCrop>
           <p className="text-xs text-muted-foreground mt-2 text-center">
