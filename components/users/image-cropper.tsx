@@ -6,23 +6,18 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Upload } from "lucide-react"
 
-// Importação condicional mais robusta do ReactCrop
+// Importação condicional do ReactCrop - revertendo para a versão original que funcionava
 let ReactCrop: any = null
 let Crop: any = null
-let cropLoaded = false
 
 if (typeof window !== "undefined") {
   try {
     const reactCropModule = require("react-image-crop")
-    ReactCrop = reactCropModule.default || reactCropModule.ReactCrop
+    ReactCrop = reactCropModule.default
     Crop = reactCropModule.Crop
-
-    // Importar CSS do react-image-crop
     require("react-image-crop/dist/ReactCrop.css")
-    cropLoaded = true
   } catch (error) {
     console.warn("React Image Crop not available:", error)
-    cropLoaded = false
   }
 }
 
@@ -153,7 +148,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
   const isCropButtonEnabled = hasCropChanged && completedCrop && src
 
   // Se ReactCrop não estiver disponível, mostrar apenas o upload básico
-  if (!cropLoaded || !ReactCrop) {
+  if (!ReactCrop) {
     return (
       <div className="space-y-4 w-full max-w-md mx-auto text-center">
         <div className="grid w-full max-w-sm items-center gap-1.5 mx-auto">
