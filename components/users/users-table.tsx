@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import {
   type ColumnDef,
@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
+import { UserTableToolbar } from "./user-table-toolbar"
 
 type User = {
   id: string
@@ -49,7 +50,7 @@ type User = {
   observations?: string
   role: "admin" | "client"
   institutionId: string
-  userContract: string // Adicionado o campo userContract
+  userContract: string
   fatherName?: string
   fatherPhone?: string
   motherName?: string
@@ -78,13 +79,30 @@ export function UsersTable() {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
+  // Debounce para a pesquisa
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      setCurrentPage(1) // Reset para primeira página quando pesquisar
+    }, 500) // 500ms de delay
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users", currentPage, pageSize],
-    queryFn: () => fetchUsers({ page: currentPage, limit: pageSize }),
+    queryKey: ["users", currentPage, pageSize, debouncedSearchTerm],
+    queryFn: () =>
+      fetchUsers({
+        page: currentPage,
+        limit: pageSize,
+        search: debouncedSearchTerm || undefined,
+      }),
   })
 
   const isLoading = isLoadingUsers
@@ -119,9 +137,13 @@ export function UsersTable() {
     }
   }
 
+  const handleSearchChange = useCallback((search: string) => {
+    setSearchTerm(search)
+  }, [])
+
   const columns: ColumnDef<User>[] = [
     {
-      accessorKey: "userContract", // Usar o campo userContract diretamente
+      accessorKey: "userContract",
       header: "Nº do Contrato",
       cell: ({ row }) => {
         return <div>{row.getValue("userContract")}</div>
@@ -226,16 +248,20 @@ export function UsersTable() {
 
   if (isLoading) {
     return (
-      <div className="rounded-md border">
-        <div className="h-24 flex items-center justify-center">
-          <Skeleton className="h-8 w-[200px]" />
+      <div className="space-y-4">
+        <UserTableToolbar onSearchChange={handleSearchChange} />
+        <div className="rounded-md border">
+          <div className="h-24 flex items-center justify-center">
+            <Skeleton className="h-8 w-[200px]" />
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div>
+    <div className="space-y-4">
+      <UserTableToolbar onSearchChange={handleSearchChange} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -263,7 +289,7 @@ export function UsersTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Nenhum resultado encontrado.
+                  {debouncedSearchTerm ? "Nenhum usuário encontrado para a busca." : "Nenhum resultado encontrado."}
                 </TableCell>
               </TableRow>
             )}

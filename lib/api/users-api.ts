@@ -10,7 +10,7 @@ export type User = {
   observations?: string
   role: "admin" | "client"
   institutionId: string
-  userContract: string // Adicionado o campo userContract
+  userContract: string
   fatherName?: string
   fatherPhone?: string
   motherName?: string
@@ -49,12 +49,12 @@ export async function fetchUsers(params: PaginationParams = {}): Promise<User[]>
   queryParams.append("page", page.toString())
   queryParams.append("limit", limit.toString())
 
-  if (search) {
-    queryParams.append("search", search)
+  if (search && search.trim() !== "") {
+    queryParams.append("search", search.trim())
   }
 
   const response = await api.get(`/v2/users?${queryParams.toString()}`)
-  return response.data.data
+  return response.data.data || []
 }
 
 export async function fetchUserById(id: string): Promise<User> {
@@ -62,7 +62,7 @@ export async function fetchUserById(id: string): Promise<User> {
   return response.data
 }
 
-export async function createUser(userData: Omit<User, "id" | "createdAt">): Promise<User> {
+export async function createUser(userData: Omit<User, "id" | "createdAt" | "userContract" | "status">): Promise<User> {
   const response = await api.post("/v2/users", userData)
   return response.data
 }
@@ -85,39 +85,64 @@ export async function fetchRecentUsers(): Promise<User[]> {
     {
       id: "1",
       name: "Maria Silva",
+      identifier: "ID-001",
       email: "maria.silva@exemplo.com",
-      avatar: "/placeholder.svg",
+      phone: "(11) 98765-4321",
+      role: "client",
+      institutionId: "inst-1",
+      userContract: "CONT-001",
+      status: "active",
       createdAt: "2023-05-15T10:30:00Z",
     },
     {
       id: "2",
       name: "João Santos",
+      identifier: "ID-002",
       email: "joao.santos@exemplo.com",
-      avatar: "/placeholder.svg",
+      phone: "(11) 98765-4322",
+      role: "client",
+      institutionId: "inst-1",
+      userContract: "CONT-002",
+      status: "active",
       createdAt: "2023-05-14T14:45:00Z",
     },
     {
       id: "3",
       name: "Ana Oliveira",
+      identifier: "ID-003",
       email: "ana.oliveira@exemplo.com",
-      avatar: "/placeholder.svg",
+      phone: "(11) 98765-4323",
+      role: "admin",
+      institutionId: "inst-1",
+      userContract: "CONT-003",
+      status: "active",
       createdAt: "2023-05-13T09:15:00Z",
     },
     {
       id: "4",
       name: "Pedro Costa",
+      identifier: "ID-004",
       email: "pedro.costa@exemplo.com",
-      avatar: "/placeholder.svg",
+      phone: "(11) 98765-4324",
+      role: "client",
+      institutionId: "inst-1",
+      userContract: "CONT-004",
+      status: "active",
       createdAt: "2023-05-12T16:20:00Z",
     },
     {
       id: "5",
       name: "Carla Souza",
+      identifier: "ID-005",
       email: "carla.souza@exemplo.com",
-      avatar: "/placeholder.svg",
+      phone: "(11) 98765-4325",
+      role: "client",
+      institutionId: "inst-1",
+      userContract: "CONT-005",
+      status: "active",
       createdAt: "2023-05-11T11:10:00Z",
     },
-  ] as any[]
+  ]
 }
 
 export async function fetchUserStats(): Promise<UserStats> {
@@ -140,7 +165,6 @@ export async function getPresignedUrl({
 }: {
   contentType: string
 }): Promise<{ uploadUrl: string; filename: string }> {
-  // Atualizar o endpoint para /v2/storage/presigned-url
   const response = await api.post("/v2/storage/presigned-url", { contentType })
   return response.data
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import {
   type ColumnDef,
@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
+import { InstitutionTableToolbar } from "./institution-table-toolbar"
 
 type Institution = {
   id: string
@@ -66,13 +67,30 @@ export function InstitutionsTable() {
   const [deleteInstitutionId, setDeleteInstitutionId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
+  // Debounce para a pesquisa
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      setCurrentPage(1) // Reset para primeira página quando pesquisar
+    }, 500) // 500ms de delay
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   const { data: institutions = [], isLoading } = useQuery({
-    queryKey: ["institutions", currentPage, pageSize],
-    queryFn: () => fetchInstitutions({ page: currentPage, limit: pageSize }),
+    queryKey: ["institutions", currentPage, pageSize, debouncedSearchTerm],
+    queryFn: () =>
+      fetchInstitutions({
+        page: currentPage,
+        limit: pageSize,
+        search: debouncedSearchTerm || undefined,
+      }),
   })
 
   const deleteMutation = useMutation({
@@ -104,6 +122,10 @@ export function InstitutionsTable() {
       setDeleteInstitutionId(null)
     }
   }
+
+  const handleSearchChange = useCallback((search: string) => {
+    setSearchTerm(search)
+  }, [])
 
   const columns: ColumnDef<Institution>[] = [
     {
@@ -206,16 +228,20 @@ export function InstitutionsTable() {
 
   if (isLoading) {
     return (
-      <div className="rounded-md border">
-        <div className="h-24 flex items-center justify-center">
-          <Skeleton className="h-8 w-[200px]" />
+      <div className="space-y-4">
+        <InstitutionTableToolbar onSearchChange={handleSearchChange} />
+        <div className="rounded-md border">
+          <div className="h-24 flex items-center justify-center">
+            <Skeleton className="h-8 w-[200px]" />
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div>
+    <div className="space-y-4">
+      <InstitutionTableToolbar onSearchChange={handleSearchChange} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -243,7 +269,9 @@ export function InstitutionsTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Nenhum resultado encontrado.
+                  {debouncedSearchTerm
+                    ? "Nenhuma instituição encontrada para a busca."
+                    : "Nenhum resultado encontrado."}
                 </TableCell>
               </TableRow>
             )}

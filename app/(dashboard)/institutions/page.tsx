@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { InstitutionsTable } from "@/components/institutions/institutions-table"
-import { InstitutionTableToolbar } from "@/components/institutions/institution-table-toolbar"
 
 export const metadata: Metadata = {
   title: "Instituições",
@@ -12,7 +11,6 @@ export default function InstitutionsPage() {
     <div className="flex flex-col gap-4">
       <h2 className="text-3xl font-bold tracking-tight">Instituições</h2>
       <div className="space-y-4">
-        <InstitutionTableToolbar />
         <InstitutionsTable />
       </div>
     </div>

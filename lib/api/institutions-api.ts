@@ -13,7 +13,6 @@ export type Institution = {
 }
 
 // API functions
-// Modificar a função fetchInstitutions para usar parâmetros de paginação corretamente
 export async function fetchInstitutions(params: PaginationParams = {}): Promise<Institution[]> {
   const { page = 1, limit = 10, search } = params
 
@@ -22,12 +21,12 @@ export async function fetchInstitutions(params: PaginationParams = {}): Promise<
   queryParams.append("page", page.toString())
   queryParams.append("limit", limit.toString())
 
-  if (search) {
-    queryParams.append("search", search)
+  if (search && search.trim() !== "") {
+    queryParams.append("search", search.trim())
   }
 
   const response = await api.get(`/v2/institutions?${queryParams.toString()}`)
-  return response.data.data
+  return response.data.data || []
 }
 
 export async function fetchInstitutionById(id: string): Promise<Institution> {

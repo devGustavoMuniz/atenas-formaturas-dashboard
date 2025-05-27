@@ -1,13 +1,25 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Upload } from "lucide-react"
-import ReactCrop, { type Crop } from "react-image-crop"
-import "react-image-crop/dist/ReactCrop.css"
+
+// Importação condicional do ReactCrop
+let ReactCrop: any = null
+let Crop: any = null
+
+if (typeof window !== "undefined") {
+  try {
+    const reactCropModule = require("react-image-crop")
+    ReactCrop = reactCropModule.default
+    Crop = reactCropModule.Crop
+    require("react-image-crop/dist/ReactCrop.css")
+  } catch (error) {
+    console.warn("React Image Crop not available:", error)
+  }
+}
 
 interface ImageCropperProps {
   onImageCropped: (croppedImageUrl: string | null, file: File | null) => void
@@ -16,14 +28,14 @@ interface ImageCropperProps {
 
 export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperProps) {
   const [src, setSrc] = useState<string | null>(null)
-  const [crop, setCrop] = useState<Crop>({
+  const [crop, setCrop] = useState<any>({
     unit: "%",
     width: 100,
     height: 100,
     x: 0,
     y: 0,
   })
-  const [completedCrop, setCompletedCrop] = useState<Crop | null>(null)
+  const [completedCrop, setCompletedCrop] = useState<any>(null)
   const [hasCropChanged, setHasCropChanged] = useState(false)
   const imgRef = useRef<HTMLImageElement | null>(null)
   const [originalFile, setOriginalFile] = useState<File | null>(null)
@@ -54,7 +66,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
           x: 0,
           y: 0,
         })
-        setHasCropChanged(false) // Reset crop change state
+        setHasCropChanged(false)
         updateCroppingState(true)
       })
       reader.readAsDataURL(file)
@@ -108,13 +120,13 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
     }, originalFile.type)
   }, [completedCrop, onImageCropped, originalFile, updateCroppingState])
 
-  const handleCropComplete = (crop: Crop) => {
+  const handleCropComplete = (crop: any) => {
     setCompletedCrop(crop)
   }
 
-  const handleCropChange = (crop: Crop) => {
+  const handleCropChange = (crop: any) => {
     setCrop(crop)
-    setHasCropChanged(true) // Mark that crop has been changed
+    setHasCropChanged(true)
   }
 
   const cancelCrop = () => {
@@ -125,6 +137,41 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
 
   // Check if crop button should be enabled
   const isCropButtonEnabled = hasCropChanged && completedCrop
+
+  // Se ReactCrop não estiver disponível, mostrar apenas o upload básico
+  if (!ReactCrop) {
+    return (
+      <div className="space-y-4 w-full max-w-md mx-auto text-center">
+        <div className="grid w-full max-w-sm items-center gap-1.5 mx-auto">
+          <Label htmlFor="picture" className="text-center mb-2">
+            Selecione uma imagem para o perfil
+          </Label>
+          <div className="flex items-center justify-center gap-2">
+            <Label
+              htmlFor="picture"
+              className="flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Escolher arquivo
+            </Label>
+            <input
+              id="picture"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  const file = e.target.files[0]
+                  const url = URL.createObjectURL(file)
+                  onImageCropped(url, file)
+                }
+              }}
+              className="hidden"
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4 w-full max-w-md mx-auto text-center">
@@ -163,7 +210,7 @@ export function ImageCropper({ onImageCropped, onCroppingChange }: ImageCropperP
         </div>
       </div>
 
-      {src && (
+      {src && ReactCrop && (
         <div className="mt-4 border rounded-md p-2 overflow-hidden max-w-md mx-auto">
           <ReactCrop crop={crop} onChange={handleCropChange} onComplete={handleCropComplete} aspect={1} circularCrop>
             <img
