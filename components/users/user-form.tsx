@@ -20,12 +20,19 @@ import { ImageCropper } from "@/components/users/image-cropper"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { IMaskInput } from "react-imask"
 
-// Remover o campo status do schema
+// Schema de validação de senha mais robusto
+const passwordSchema = z
+  .string()
+  .min(6, "Senha deve ter pelo menos 6 caracteres")
+  .regex(/[a-z]/, "Senha deve conter pelo menos uma letra minúscula")
+  .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
+  .regex(/[0-9]/, "Senha deve conter pelo menos um número")
+
 const userFormSchema = z.object({
   institutionId: z.string({
     required_error: "Selecione uma instituição.",
@@ -43,9 +50,51 @@ const userFormSchema = z.object({
     message: "Telefone é obrigatório.",
   }),
   observations: z.string().optional(),
-  password: z.string().min(6, {
-    message: "Senha deve ter pelo menos 6 caracteres.",
+  password: passwordSchema,
+  role: z.enum(["admin", "client"], {
+    required_error: "Selecione um cargo.",
   }),
+  fatherName: z.string().optional(),
+  fatherPhone: z.string().optional(),
+  motherName: z.string().optional(),
+  motherPhone: z.string().optional(),
+  driveLink: z.string().optional(),
+  creditValue: z.number().optional(),
+})
+
+// Schema para edição (senha opcional)
+const userEditFormSchema = z.object({
+  institutionId: z.string({
+    required_error: "Selecione uma instituição.",
+  }),
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
+  identifier: z.string().min(1, {
+    message: "Identificador é obrigatório.",
+  }),
+  email: z.string().email({
+    message: "Email inválido.",
+  }),
+  phone: z.string().min(1, {
+    message: "Telefone é obrigatório.",
+  }),
+  observations: z.string().optional(),
+  password: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        // Se a senha for fornecida (não vazia e não é o placeholder), aplicar validações
+        if (val && val !== "" && val !== "********") {
+          return passwordSchema.safeParse(val).success
+        }
+        return true
+      },
+      {
+        message: "Senha deve ter pelo menos 6 caracteres, incluindo: minúscula, maiúscula e número",
+      },
+    ),
   role: z.enum(["admin", "client"], {
     required_error: "Selecione um cargo.",
   }),
@@ -58,6 +107,7 @@ const userFormSchema = z.object({
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
+type UserEditFormValues = z.infer<typeof userEditFormSchema>
 
 interface UserFormProps {
   userId?: string
@@ -90,6 +140,30 @@ const getErrorMessage = (error: any): string => {
   return "Ocorreu um erro inesperado. Tente novamente."
 }
 
+// Componente para mostrar os critérios de senha
+function PasswordCriteria({ password }: { password: string }) {
+  const criteria = [
+    { label: "Pelo menos 6 caracteres", test: (pwd: string) => pwd.length >= 6 },
+    { label: "Uma letra minúscula", test: (pwd: string) => /[a-z]/.test(pwd) },
+    { label: "Uma letra maiúscula", test: (pwd: string) => /[A-Z]/.test(pwd) },
+    { label: "Um número", test: (pwd: string) => /[0-9]/.test(pwd) },
+  ]
+
+  return (
+    <div className="mt-2 space-y-1">
+      <p className="text-xs text-muted-foreground">A senha deve conter:</p>
+      {criteria.map((criterion, index) => (
+        <div key={index} className="flex items-center gap-2 text-xs">
+          <div className={`h-2 w-2 rounded-full ${criterion.test(password) ? "bg-green-500" : "bg-gray-300"}`} />
+          <span className={criterion.test(password) ? "text-green-600" : "text-muted-foreground"}>
+            {criterion.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function UserForm({ userId }: UserFormProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -101,6 +175,8 @@ export function UserForm({ userId }: UserFormProps) {
   const [institutionOpen, setInstitutionOpen] = useState(false)
   const [isCropping, setIsCropping] = useState(false)
   const [profileImageFilename, setProfileImageFilename] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [passwordValue, setPasswordValue] = useState("")
 
   const steps = ["basic", "additional", "profile"]
 
@@ -117,8 +193,8 @@ export function UserForm({ userId }: UserFormProps) {
 
   const isLoading = isLoadingUser || isLoadingInstitutions
 
-  const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
+  const form = useForm<UserFormValues | UserEditFormValues>({
+    resolver: zodResolver(isEditing ? userEditFormSchema : userFormSchema),
     defaultValues: {
       institutionId: "",
       name: "",
@@ -157,11 +233,12 @@ export function UserForm({ userId }: UserFormProps) {
       })
       setProfileImage(user.profileImage || null)
       setProfileImageFilename(user.profileImage || null)
+      setPasswordValue("********")
     }
   }, [user, form, isEditing])
 
   // Função para limpar campos vazios do formulário
-  const cleanFormData = (data: UserFormValues) => {
+  const cleanFormData = (data: UserFormValues | UserEditFormValues) => {
     const cleanedData: Record<string, any> = { ...data }
 
     // Remover campos opcionais vazios
@@ -179,8 +256,8 @@ export function UserForm({ userId }: UserFormProps) {
       delete cleanedData.creditValue
     }
 
-    // Não enviar o campo password se for o placeholder
-    if (cleanedData.password === "********") {
+    // Não enviar o campo password se for o placeholder ou vazio na edição
+    if (isEditing && (cleanedData.password === "********" || cleanedData.password === "")) {
       delete cleanedData.password
     }
 
@@ -239,11 +316,11 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
-  // Vamos corrigir a mutation de presigned URL para garantir que ela chame a criação do usuário após o upload
-
-  // Substitua a mutation presignedUrlMutation por esta implementação:
   const presignedUrlMutation = useMutation({
-    mutationFn: async ({ contentType, formData }: { contentType: string; formData: UserFormValues }) => {
+    mutationFn: async ({
+      contentType,
+      formData,
+    }: { contentType: string; formData: UserFormValues | UserEditFormValues }) => {
       // Primeiro, obtenha a URL presigned
       const response = await getPresignedUrl({ contentType })
 
@@ -308,8 +385,7 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
-  // Substitua a função onSubmit por esta implementação:
-  function onSubmit(data: UserFormValues) {
+  function onSubmit(data: UserFormValues | UserEditFormValues) {
     console.log("Dados do formulário:", data) // Debug
     const cleanedData = cleanFormData(data)
     console.log("Dados limpos:", cleanedData) // Debug
@@ -530,10 +606,33 @@ export function UserForm({ userId }: UserFormProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Senha</FormLabel>
+                      <FormLabel>Senha {isEditing && "(deixe em branco para manter a atual)"}</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="******" {...field} />
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder={isEditing ? "Nova senha (opcional)" : "******"}
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e)
+                              setPasswordValue(e.target.value)
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
                       </FormControl>
+                      {/* Mostrar critérios apenas se não for edição ou se a senha não for o placeholder */}
+                      {(!isEditing || (passwordValue && passwordValue !== "********")) && (
+                        <PasswordCriteria password={passwordValue} />
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
