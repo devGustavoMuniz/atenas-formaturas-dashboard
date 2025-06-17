@@ -6,7 +6,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, Building } from "lucide-react"
+import { LayoutDashboard, Users, Building, Package } from "lucide-react"
 
 interface NavItem {
   title: string
@@ -29,6 +29,11 @@ const navItems: NavItem[] = [
     title: "Usuários",
     href: "/users",
     icon: Users,
+  },
+  {
+    title: "Produtos",
+    href: "/products",
+    icon: Package,
   },
 ]
 

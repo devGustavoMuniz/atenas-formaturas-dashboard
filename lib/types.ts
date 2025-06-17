@@ -18,3 +18,13 @@ export type User = {
   status: "active" | "inactive"
   createdAt: string
 }
+
+export type Product = {
+  id: string
+  name: string
+  category: "Álbum" | "Produto com seleção de fotos" | "Arquivos digitais"
+  description: string
+  photos: string[] // Array de URLs ou nomes de arquivos
+  videos?: string[] // Array de URLs ou nomes de arquivos (opcional)
+  createdAt: string
+}
