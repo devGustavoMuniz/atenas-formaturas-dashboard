@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createProduct, updateProduct, fetchProductById, getPresignedUrlsForProduct } from "@/lib/api/products-api"
-import { api as axiosApi } from "@/lib/api/axios-config" // Usando o axios configurado
+import { api as axiosApi } from "@/lib/api/axios-config"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Product } from "@/lib/types"
@@ -28,8 +28,8 @@ const productFormSchema = z.object({
         required_error: "Selecione uma categoria.",
     }),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres." }),
-    photos: z.array(z.string()).default([]),
-    videos: z.array(z.string()).default([]),
+    photos: z.array(z.string()).optional(),
+    videos: z.array(z.string()).optional(),
 })
 
 type ProductFormValues = z.infer<typeof productFormSchema>
@@ -95,52 +95,78 @@ export function ProductForm({ productId }: { productId?: string }) {
         const filesToUpload = [...stagedPhotos, ...stagedVideos];
         let newPhotoUrls: string[] = [];
         let newVideoUrls: string[] = [];
-
+    
         if (filesToUpload.length > 0) {
             setUploadProgress(0);
             try {
-                const fileTypes = filesToUpload.map(f => f.file.type);
-                const presignedUrlResponses = await getPresignedUrlsForProduct(filesToUpload.length, fileTypes);
-
+                // 1. Agrupar arquivos por tipo de conteúdo para criar os lotes
+                const groupedFiles = filesToUpload.reduce<Record<string, File[]>>((acc, filePreview) => {
+                    const key = filePreview.file.type;
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push(filePreview.file);
+                    return acc;
+                }, {});
+    
+                // 2. Criar as requisições para a API com base nos grupos
+                const presignedUrlRequests = Object.entries(groupedFiles).map(([contentType, files]) => ({
+                    contentType,
+                    quantity: files.length,
+                    mediaType: contentType.startsWith('image/') ? 'image' : 'video' as 'image' | 'video',
+                }));
+    
+                // 3. Chamar a API para obter todas as URLs de uma vez
+                const presignedUrlResponses = await getPresignedUrlsForProduct(presignedUrlRequests);
+                
                 let uploadedCount = 0;
-
-                for (let i = 0; i < filesToUpload.length; i++) {
-                    const file = filesToUpload[i].file;
-                    const { uploadUrl } = presignedUrlResponses[i];
-
-                    // Upload com axios e onUploadProgress
-                    await axiosApi.put(uploadUrl, file, {
-                        headers: { 'Content-Type': file.type },
-                        onUploadProgress: (progressEvent) => {
-                            const totalProgress = (uploadedCount / filesToUpload.length) * 100 + (progressEvent.loaded / (progressEvent.total || file.size)) * (100 / filesToUpload.length);
-                            setUploadProgress(totalProgress);
+                let urlIndex = 0;
+    
+                // 4. Fazer o upload de cada arquivo para a URL correspondente
+                for (const contentType in groupedFiles) {
+                    const files = groupedFiles[contentType];
+                    for (const file of files) {
+                        // Garante que haja uma URL correspondente antes de tentar o upload
+                        if (urlIndex >= presignedUrlResponses.length) {
+                            throw new Error("Mismatch between number of files and presigned URLs received.");
                         }
-                    });
-
-                    uploadedCount++;
-                    const finalUrl = uploadUrl.split('?')[0];
-                    if(file.type.startsWith('image/')) {
-                        newPhotoUrls.push(finalUrl);
-                    } else {
-                        newVideoUrls.push(finalUrl);
+                        const { uploadUrl } = presignedUrlResponses[urlIndex++];
+                        
+                        await axiosApi.put(uploadUrl, file, {
+                            headers: { 'Content-Type': file.type },
+                            onUploadProgress: (progressEvent) => {
+                               const individualProgress = progressEvent.total ? (progressEvent.loaded / progressEvent.total) : 0;
+                               const overallProgress = ((uploadedCount + individualProgress) / filesToUpload.length) * 100;
+                               setUploadProgress(overallProgress);
+                            }
+                        });
+                        
+                        uploadedCount++;
+                        const finalUrl = uploadUrl.split('?')[0];
+                        if(file.type.startsWith('image/')) {
+                            newPhotoUrls.push(finalUrl);
+                        } else {
+                            newVideoUrls.push(finalUrl);
+                        }
                     }
                 }
-            } catch (error) {
-                toast({ variant: "destructive", title: "Erro no Upload", description: "Não foi possível enviar as mídias." });
+    
+            } catch (error: any) {
+                toast({ variant: "destructive", title: "Erro no Upload", description: error.message || "Não foi possível enviar as mídias." });
                 setUploadProgress(null);
                 return;
             }
         }
-
-        // Combina URLs existentes com as novas
+    
+        // Combina URLs existentes (do formulário) com as novas URLs de upload
         const finalData = {
             ...data,
-            photos: [...data.photos, ...newPhotoUrls],
-            videos: [...data.videos, ...newVideoUrls],
+            photos: [...(data.photos || []), ...newPhotoUrls],
+            videos: [...(data.videos || []), ...newVideoUrls],
         };
-
+    
         mutation.mutate(finalData);
-    }
+    }    
 
     if (isLoading && isEditing) {
         return <Card><CardHeader><Skeleton className="h-8 w-full" /><Skeleton className="h-4 w-full" /></CardHeader><CardContent><Skeleton className="h-32 w-full" /></CardContent></Card>
@@ -168,8 +194,8 @@ export function ProductForm({ productId }: { productId?: string }) {
                             <MediaUploader
                                 onNewFilesChange={handleMediaFilesChange}
                                 onExistingMediaChange={handleExistingMediaChange}
-                                existingPhotos={form.watch('photos')}
-                                existingVideos={form.watch('videos')}
+                                existingPhotos={form.watch('photos') || []}
+                                existingVideos={form.watch('videos') || []}
                             />
                         </div>
                     </CardContent>
