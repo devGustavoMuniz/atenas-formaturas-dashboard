@@ -2,7 +2,7 @@ import axios from "axios"
 
 // Create axios instance with base URL
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://atenas-formaturas-425248033078.southamerica-east1.run.app",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://atenas-formaturas-425248033078.us-east1.run.app",
   headers: {
     "Content-Type": "application/json",
   },
