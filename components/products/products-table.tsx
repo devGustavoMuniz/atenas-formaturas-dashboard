@@ -41,6 +41,8 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import { ProductTableToolbar } from "../../app/(dashboard)/products/product-table-toolbar"
 import type { Product } from "@/lib/types"
+import { ProductFlag } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 const getErrorMessage = (error: any): string => {
     if (error?.message) {
@@ -122,6 +124,14 @@ export function ProductsTable() {
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
             ),
+        },
+        {
+            accessorKey: "flag",
+            header: "Categoria",
+            cell: ({ row }) => {
+                const flag = row.getValue<"ALBUM" | "GENERIC" | "DIGITAL_FILES">("flag");
+                return <Badge variant="outline">{ProductFlag[flag]}</Badge>;
+            },
         },
         {
             id: "actions",

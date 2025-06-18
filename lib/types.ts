@@ -22,9 +22,9 @@ export type User = {
 export type Product = {
   id: string
   name: string
-  category: "Álbum" | "Produto com seleção de fotos" | "Arquivos digitais"
+  flag: "ALBUM" | "GENERIC" | "DIGITAL_FILES" // 'category' foi substituída por 'flag'
   description: string
-  photos: string[] // Array de URLs ou nomes de arquivos
-  videos?: string[] // Array de URLs ou nomes de arquivos (opcional)
+  photos: string[]
+  video?: string[] // 'videos' foi renomeado para 'video'
   createdAt: string
 }

@@ -1,5 +1,3 @@
-// components/products/product-form.tsx
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -24,12 +22,12 @@ import { Progress } from "../ui/progress"
 
 const productFormSchema = z.object({
     name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres." }),
-    category: z.enum(["Álbum", "Produto com seleção de fotos", "Arquivos digitais"], {
-        required_error: "Selecione uma categoria.",
+    flag: z.enum(["ALBUM", "GENERIC", "DIGITAL_FILES"], {
+        required_error: "Selecione uma flag.",
     }),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres." }),
-    photos: z.array(z.string()).optional(),
-    videos: z.array(z.string()).optional(),
+    photos: z.array(z.string()).default([]),
+    video: z.array(z.string()).default([]),
 })
 
 type ProductFormValues = z.infer<typeof productFormSchema>
@@ -52,7 +50,7 @@ export function ProductForm({ productId }: { productId?: string }) {
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productFormSchema),
-        defaultValues: { name: "", description: "", photos: [], videos: [] },
+        defaultValues: { name: "", description: "", flag: "GENERIC", photos: [], video: [] },
     })
 
     useEffect(() => {
@@ -63,10 +61,14 @@ export function ProductForm({ productId }: { productId?: string }) {
 
     const mutation = useMutation({
         mutationFn: (data: ProductFormValues) => {
+            // --- ALTERAÇÃO AQUI ---
             if (isEditing) {
-                return updateProduct(productId!, data)
+                // Remove a propriedade 'flag' do objeto de dados antes de enviar para a atualização
+                const { flag, ...dataToUpdate } = data;
+                return updateProduct(productId!, dataToUpdate);
             }
-            return createProduct(data)
+            // A operação de criação continua enviando a 'flag' normalmente
+            return createProduct(data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
@@ -77,7 +79,7 @@ export function ProductForm({ productId }: { productId?: string }) {
             toast({ variant: "destructive", title: `Erro ao salvar produto`, description: error.message })
         },
         onSettled: () => {
-            setUploadProgress(null); // Limpa a barra de progresso
+            setUploadProgress(null);
         }
     })
 
@@ -88,10 +90,20 @@ export function ProductForm({ productId }: { productId?: string }) {
 
     const handleExistingMediaChange = (photos: string[], videos: string[]) => {
         form.setValue('photos', photos, { shouldDirty: true });
-        form.setValue('videos', videos, { shouldDirty: true });
+        form.setValue('video', videos, { shouldDirty: true });
     }
 
     async function onSubmit(data: ProductFormValues) {
+        const totalPhotos = (data.photos?.length || 0) + stagedPhotos.length;
+        if (totalPhotos < 1) {
+            toast({
+                variant: "destructive",
+                title: "Fotos insuficientes",
+                description: "É necessário ter pelo menos 1 foto no produto.",
+            });
+            return;
+        }
+
         const filesToUpload = [...stagedPhotos, ...stagedVideos];
         let newPhotoUrls: string[] = [];
         let newVideoUrls: string[] = [];
@@ -99,7 +111,6 @@ export function ProductForm({ productId }: { productId?: string }) {
         if (filesToUpload.length > 0) {
             setUploadProgress(0);
             try {
-                // 1. Agrupar arquivos por tipo de conteúdo para criar os lotes
                 const groupedFiles = filesToUpload.reduce<Record<string, File[]>>((acc, filePreview) => {
                     const key = filePreview.file.type;
                     if (!acc[key]) {
@@ -109,28 +120,25 @@ export function ProductForm({ productId }: { productId?: string }) {
                     return acc;
                 }, {});
     
-                // 2. Criar as requisições para a API com base nos grupos
                 const presignedUrlRequests = Object.entries(groupedFiles).map(([contentType, files]) => ({
                     contentType,
                     quantity: files.length,
                     mediaType: contentType.startsWith('image/') ? 'image' : 'video' as 'image' | 'video',
                 }));
     
-                // 3. Chamar a API para obter todas as URLs de uma vez
                 const presignedUrlResponses = await getPresignedUrlsForProduct(presignedUrlRequests);
                 
                 let uploadedCount = 0;
                 let urlIndex = 0;
     
-                // 4. Fazer o upload de cada arquivo para a URL correspondente
                 for (const contentType in groupedFiles) {
                     const files = groupedFiles[contentType];
                     for (const file of files) {
-                        // Garante que haja uma URL correspondente antes de tentar o upload
                         if (urlIndex >= presignedUrlResponses.length) {
                             throw new Error("Mismatch between number of files and presigned URLs received.");
                         }
-                        const { uploadUrl } = presignedUrlResponses[urlIndex++];
+                        
+                        const { uploadUrl, filename } = presignedUrlResponses[urlIndex++];
                         
                         await axiosApi.put(uploadUrl, file, {
                             headers: { 'Content-Type': file.type },
@@ -142,11 +150,11 @@ export function ProductForm({ productId }: { productId?: string }) {
                         });
                         
                         uploadedCount++;
-                        const finalUrl = uploadUrl.split('?')[0];
+                        
                         if(file.type.startsWith('image/')) {
-                            newPhotoUrls.push(finalUrl);
+                            newPhotoUrls.push(filename);
                         } else {
-                            newVideoUrls.push(finalUrl);
+                            newVideoUrls.push(filename);
                         }
                     }
                 }
@@ -158,11 +166,10 @@ export function ProductForm({ productId }: { productId?: string }) {
             }
         }
     
-        // Combina URLs existentes (do formulário) com as novas URLs de upload
         const finalData = {
             ...data,
             photos: [...(data.photos || []), ...newPhotoUrls],
-            videos: [...(data.videos || []), ...newVideoUrls],
+            video: [...(data.video || []), ...newVideoUrls],
         };
     
         mutation.mutate(finalData);
@@ -187,7 +194,30 @@ export function ProductForm({ productId }: { productId?: string }) {
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-6">
                         <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome do Produto</FormLabel><FormControl><Input placeholder="Ex: Álbum de Luxo" {...field} /></FormControl><FormMessage /></FormItem>} />
-                        <FormField control={form.control} name="category" render={({ field }) => <FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Álbum">Álbum</SelectItem><SelectItem value="Produto com seleção de fotos">Produto com seleção de fotos</SelectItem><SelectItem value="Arquivos digitais">Arquivos digitais</SelectItem></SelectContent></Select><FormMessage /></FormItem>} />
+                        
+                        <FormField
+                          control={form.control}
+                          name="flag"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Flag</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione uma flag" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="ALBUM">Álbum</SelectItem>
+                                  <SelectItem value="GENERIC">Produto com seleção de fotos</SelectItem>
+                                  <SelectItem value="DIGITAL_FILES">Arquivos Digitais</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
                         <FormField control={form.control} name="description" render={({ field }) => <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o produto..." className="min-h-[120px]" {...field} /></FormControl><FormMessage /></FormItem>} />
                         <div className="space-y-2">
                             <FormLabel>Fotos e Vídeos</FormLabel>
@@ -195,7 +225,7 @@ export function ProductForm({ productId }: { productId?: string }) {
                                 onNewFilesChange={handleMediaFilesChange}
                                 onExistingMediaChange={handleExistingMediaChange}
                                 existingPhotos={form.watch('photos') || []}
-                                existingVideos={form.watch('videos') || []}
+                                existingVideos={form.watch('video') || []}
                             />
                         </div>
                     </CardContent>

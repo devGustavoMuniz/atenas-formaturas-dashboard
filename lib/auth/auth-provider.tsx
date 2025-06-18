@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       console.log("Tentando fazer login com:", { email, password }) // Debug
-      const response = await api.post("/user/auth/login", { email, password })
+      const response = await api.post("/v1/auth/login", { email, password })
       console.log("Resposta do login:", response.data) // Debug
       const { token, user } = response.data
 
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       // Chamar o endpoint de logout
-      await api.post("/user/auth/logout")
+      await api.post("/v1/auth/logout")
     } catch (error) {
       console.error("Error during logout:", error)
     } finally {

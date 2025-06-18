@@ -7,6 +7,7 @@ import { useDropzone } from "react-dropzone"
 import { UploadCloud, X, FileVideo } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CustomVideoPlayer } from "./custom-video-player"
+import { useToast } from "../ui/use-toast"
 
 export interface FilePreview {
     file: File
@@ -14,9 +15,7 @@ export interface FilePreview {
 }
 
 interface MediaUploaderProps {
-    // Recebe e devolve a lista de arquivos novos
     onNewFilesChange: (photos: FilePreview[], videos: FilePreview[]) => void
-    // Recebe e devolve a lista de URLs existentes (para remoção)
     onExistingMediaChange: (photos: string[], videos: string[]) => void
     existingPhotos: string[]
     existingVideos: string[]
@@ -25,13 +24,30 @@ interface MediaUploaderProps {
 export function MediaUploader({ onNewFilesChange, onExistingMediaChange, existingPhotos, existingVideos }: MediaUploaderProps) {
     const [photoFiles, setPhotoFiles] = useState<FilePreview[]>([])
     const [videoFiles, setVideoFiles] = useState<FilePreview[]>([])
+    const { toast } = useToast()
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         const newPhotos = acceptedFiles.filter(f => f.type.startsWith("image/"))
         const newVideos = acceptedFiles.filter(f => f.type.startsWith("video/"))
 
-        if (existingVideos.length + videoFiles.length + newVideos.length > 3) {
-            alert("Você pode enviar no máximo 3 vídeos.");
+        // --- ALTERAÇÕES AQUI ---
+        // 1. Validação do limite de fotos
+        if (existingPhotos.length + photoFiles.length + newPhotos.length > 10) {
+            toast({
+                variant: "destructive",
+                title: "Limite de fotos excedido",
+                description: "Você pode ter no máximo 10 fotos por produto."
+            })
+            return;
+        }
+
+        // 2. Validação do limite de vídeos (atualizado de 3 para 5)
+        if (existingVideos.length + videoFiles.length + newVideos.length > 5) {
+            toast({
+                variant: "destructive",
+                title: "Limite de vídeos excedido",
+                description: "Você pode ter no máximo 5 vídeos por produto."
+            })
             return;
         }
 
@@ -48,7 +64,7 @@ export function MediaUploader({ onNewFilesChange, onExistingMediaChange, existin
         setVideoFiles(newVideoPreviews);
         onNewFilesChange(newPhotoPreviews, newVideoPreviews);
 
-    }, [existingVideos.length, videoFiles, photoFiles, onNewFilesChange])
+    }, [existingPhotos, existingVideos, photoFiles, videoFiles, onNewFilesChange, toast])
 
     const removeNewFile = (fileToRemove: FilePreview, type: 'photo' | 'video') => {
         let newPhotoPreviews = photoFiles;
@@ -80,11 +96,12 @@ export function MediaUploader({ onNewFilesChange, onExistingMediaChange, existin
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <UploadCloud className="h-10 w-10" />
                     <p>Arraste e solte arquivos aqui, ou clique para selecionar</p>
-                    <p className="text-xs">(Imagens sem limite, Vídeos no máximo 3)</p>
+                    {/* 3. Texto de ajuda atualizado */}
+                    <p className="text-xs">(Fotos: 1 a 10, Vídeos: até 5)</p>
                 </div>
             </div>
 
-            {/* Previews de fotos novas */}
+            {/* O resto do componente permanece igual... */}
             {photoFiles.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {photoFiles.map((p, i) => (
@@ -97,8 +114,6 @@ export function MediaUploader({ onNewFilesChange, onExistingMediaChange, existin
                     ))}
                 </div>
             )}
-
-            {/* Listagem de vídeos novos */}
             {videoFiles.length > 0 && (
                 <div className="space-y-2">
                     <h4 className="font-medium">Vídeos a serem enviados:</h4>
@@ -111,8 +126,6 @@ export function MediaUploader({ onNewFilesChange, onExistingMediaChange, existin
                     ))}
                 </div>
             )}
-
-            {/* Mídias existentes */}
             {(existingPhotos.length > 0 || existingVideos.length > 0) && <h3 className="text-lg font-medium pt-4 border-t">Mídias Atuais</h3>}
             {existingPhotos.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">

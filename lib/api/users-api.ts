@@ -53,17 +53,17 @@ export async function fetchUsers(params: PaginationParams = {}): Promise<User[]>
     queryParams.append("search", search.trim())
   }
 
-  const response = await api.get(`/v2/users?${queryParams.toString()}`)
+  const response = await api.get(`/v1/users?${queryParams.toString()}`)
   return response.data.data || []
 }
 
 export async function fetchUserById(id: string): Promise<User> {
-  const response = await api.get(`/v2/users/${id}`)
+  const response = await api.get(`/v1/users/${id}`)
   return response.data
 }
 
 export async function createUser(userData: Omit<User, "id" | "createdAt" | "userContract" | "status">): Promise<User> {
-  const response = await api.post("/v2/users", userData)
+  const response = await api.post("/v1/users", userData)
   return response.data
 }
 
@@ -71,12 +71,12 @@ export async function updateUser(id: string, userData: Partial<Omit<User, "id">>
   // Remover o campo 'id' do userData se ele existir
   const { id: _, ...dataWithoutId } = userData as any
 
-  const response = await api.put(`/v2/users/${id}`, dataWithoutId)
+  const response = await api.put(`/v1/users/${id}`, dataWithoutId)
   return response.data
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  await api.delete(`/v2/users/${id}`)
+  await api.delete(`/v1/users/${id}`)
 }
 
 export async function fetchRecentUsers(): Promise<User[]> {
@@ -165,6 +165,6 @@ export async function getPresignedUrl({
 }: {
   contentType: string
 }): Promise<{ uploadUrl: string; filename: string }> {
-  const response = await api.post("/v2/storage/presigned-url", { contentType })
+  const response = await api.post("/v1/storage/presigned-url", { contentType })
   return response.data
 }

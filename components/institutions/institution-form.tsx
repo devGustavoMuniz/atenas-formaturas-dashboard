@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createInstitution, updateInstitution, fetchInstitutionById } from "@/lib/api/institutions-api"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, X } from "lucide-react"
+import { Plus, X, Settings } from "lucide-react"
 
 const institutionFormSchema = z.object({
   contractNumber: z.string().min(1, {
@@ -174,6 +174,16 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
             ? "Atualize as informações da instituição existente."
             : "Preencha as informações para criar uma nova instituição."}
         </CardDescription>
+        {isEditing && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/institutions/${institutionId}/products`)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Configurar Produtos
+            </Button>
+          )}
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
