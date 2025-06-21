@@ -6,6 +6,7 @@ export type InstitutionProduct = {
   id: string
   product: Product
   institution: Institution
+  details: any;
   // ... outros campos que você possa precisar
 }
 
@@ -34,4 +35,9 @@ export async function linkProductToInstitution(payload: { institutionId: string;
 export async function unlinkProductFromInstitution(institutionProductId: string): Promise<void> {
   // Endpoint DELETE para remover o vínculo
   await api.delete(`/v1/institution/products/${institutionProductId}`)
+}
+
+export async function updateInstitutionProductDetails(institutionProductId: string, details: any): Promise<void> {
+  // Assumindo um endpoint PATCH para atualizar os detalhes do vínculo
+  await api.patch(`/v1/institution/products/${institutionProductId}`, { details });
 }

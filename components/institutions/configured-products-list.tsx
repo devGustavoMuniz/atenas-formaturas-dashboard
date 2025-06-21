@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Pencil } from "lucide-react"
 import { fetchInstitutionById } from "@/lib/api/institutions-api"
-import { fetchInstitutionProducts, unlinkProductFromInstitution } from "@/lib/api/institution-products-api"
+import { fetchInstitutionProducts, unlinkProductFromInstitution, type InstitutionProduct } from "@/lib/api/institution-products-api"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { LinkProductModal } from "./link-product-modal"
+import { EditProductDetailsModal } from "./edit-product-details-modal"
 import { ProductFlag } from "@/lib/utils"
 
 export function ConfiguredProductsList({ institutionId }: { institutionId: string }) {
@@ -21,6 +22,8 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<InstitutionProduct | null>(null)
 
   const { data: institution, isLoading: isLoadingInstitution } = useQuery({
     queryKey: ['institution', institutionId],
@@ -42,6 +45,11 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
       toast({ variant: "destructive", title: "Erro ao desvincular", description: error.message })
     },
   })
+
+  const handleEditClick = (institutionProduct: InstitutionProduct) => {
+    setSelectedProduct(institutionProduct);
+    setIsEditModalOpen(true);
+  }
 
   const isLoading = isLoadingInstitution || isLoadingConfigured
   const linkedProductIds = new Set(configuredProducts?.map(p => p.product.id) || [])
@@ -68,7 +76,7 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
                 <TableRow>
                   <TableHead>Produto</TableHead>
                   <TableHead>Categoria</TableHead>
-                  <TableHead className="w-[120px] text-right">Ação</TableHead>
+                  <TableHead className="w-[120px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -77,14 +85,15 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
                     <TableRow key={i}><TableCell colSpan={3}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
                   ))
                 ) : configuredProducts && configuredProducts.length > 0 ? (
-                  configuredProducts.map(({ id, product }) => (
-                    <TableRow key={id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>
-                            {/* A Badge agora usa a propriedade 'flag' */}
-                            <Badge variant="outline">{ProductFlag[product.flag]}</Badge> 
-                        </TableCell>
-                      <TableCell className="text-right">
+                  configuredProducts.map((instProduct) => (
+                    <TableRow key={instProduct.id}>
+                      <TableCell className="font-medium">{instProduct.product.name}</TableCell>
+                      <TableCell><Badge variant="outline">{ProductFlag[instProduct.product.flag]}</Badge></TableCell>
+                      <TableCell className="text-right space-x-2">
+                        {/* --- BOTÃO DE EDITAR ADICIONADO AQUI --- */}
+                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(instProduct)}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" disabled={isUnlinking}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -93,12 +102,12 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
                             <AlertDialogHeader>
                               <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. Isso irá desvincular o produto "{product.name}" desta instituição.
+                                Esta ação irá desvincular o produto "{instProduct.product.name}" desta instituição.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => unlinkProduct(id)} className="bg-destructive hover:bg-destructive/90">
+                              <AlertDialogAction onClick={() => unlinkProduct(instProduct.id)} className="bg-destructive hover:bg-destructive/90">
                                 Desvincular
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -119,12 +128,19 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
         </CardFooter>
       </Card>
       
-      {/* O Modal é renderizado aqui */}
       <LinkProductModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         institutionId={institutionId}
         alreadyLinkedProductIds={linkedProductIds}
+      />
+
+      {/* --- RENDERIZAÇÃO DO NOVO MODAL DE EDIÇÃO --- */}
+      <EditProductDetailsModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        institutionProduct={selectedProduct}
+        institutionEvents={institution?.events || []}
       />
     </>
   )

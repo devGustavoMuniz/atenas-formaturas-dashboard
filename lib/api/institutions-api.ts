@@ -7,7 +7,8 @@ export type Institution = {
   contractNumber: string
   name: string
   observations: string
-  events: string[]
+  // Alterado de string[] para um array de objetos com id e nome
+  events: { id: string; name: string }[] 
   userCount: number
   createdAt: string
 }
