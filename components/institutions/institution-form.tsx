@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from "@/components/ui/skeleton"
 import { Plus, X, Settings } from "lucide-react"
 
+// O Zod schema já espera o formato correto: um array de objetos com a propriedade 'name'
 const institutionFormSchema = z.object({
   contractNumber: z.string().min(1, {
     message: "Número do contrato é obrigatório.",
@@ -37,7 +38,6 @@ interface InstitutionFormProps {
   institutionId?: string
 }
 
-// Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
   if (error?.response?.data?.message) {
     return error.response.data.message
@@ -81,15 +81,20 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
         contractNumber: institution.contractNumber,
         name: institution.name,
         observations: institution.observations,
-        // Converter o array de strings para array de objetos com a propriedade name
-        events: institution.events.map((event) => ({ name: event })),
+        // --- CORREÇÃO AQUI ---
+        // Agora, o `institution.events` é um array de objetos {id, name}.
+        // O .map garante que estamos passando para o formulário o formato que ele espera,
+        // que é um array de objetos com a propriedade 'name'.
+        // Adicionamos uma verificação para garantir que events exista e tenha itens.
+        events: institution.events && institution.events.length > 0
+          ? institution.events.map((event) => ({ name: event.name }))
+          : [{ name: "" }], // Se não houver eventos, começa com um campo vazio
       })
     }
   }, [institution, form, isEditing])
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<InstitutionFormValues, "id" | "createdAt" | "userCount">) => {
-      // Não precisamos mais converter os eventos, pois já estão no formato correto
       return createInstitution(data)
     },
     onSuccess: () => {
@@ -110,7 +115,6 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     },
   })
 
-  // Mutation para atualizar instituição - corrigida para não enviar o ID no body
   const updateMutation = useMutation({
     mutationFn: (data: { id: string } & InstitutionFormValues) => {
       const { id, ...dataWithoutId } = data
@@ -167,13 +171,15 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{isEditing ? "Editar Instituição" : "Nova Instituição"}</CardTitle>
-        <CardDescription>
-          {isEditing
-            ? "Atualize as informações da instituição existente."
-            : "Preencha as informações para criar uma nova instituição."}
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+            <CardTitle>{isEditing ? "Editar Instituição" : "Nova Instituição"}</CardTitle>
+            <CardDescription>
+            {isEditing
+                ? "Atualize as informações da instituição existente."
+                : "Preencha as informações para criar uma nova instituição."}
+            </CardDescription>
+        </div>
         {isEditing && (
             <Button
               type="button"
@@ -187,7 +193,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <FormField
               control={form.control}
               name="contractNumber"

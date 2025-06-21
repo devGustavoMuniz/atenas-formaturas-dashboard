@@ -88,8 +88,6 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
     const { fields, append, remove } = useFieldArray({
         control: form.control,
         name: "events",
-        // --- CORREÇÃO AQUI ---
-        // Usando 'key' como nome da chave interna do hook para evitar conflito com o 'id' do evento.
         keyName: "key",
     });
 
@@ -134,13 +132,11 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
 
     const { product } = institutionProduct;
 
-    // --- LÓGICA DO HANDLER CORRIGIDA ---
     const handleEventToggle = (eventId: string, isChecked: boolean) => {
         const fieldIndex = fields.findIndex(field => field.id === eventId);
         
         if (isChecked) {
             if (fieldIndex === -1) {
-                // Ao adicionar, passamos um objeto com o `id` do evento e valores padrão.
                 append({ id: eventId, minPhotos: 1, valorPhoto: "0,00" });
             }
         } else {
@@ -154,18 +150,13 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
         <div className="space-y-4">
             <h4 className="font-medium">Selecione e Configure os Eventos</h4>
             {institutionEvents.map(event => {
-                // Busca o índice do evento no array de campos do formulário
                 const fieldIndex = fields.findIndex(field => field.id === event.id);
                 const isEnabled = fieldIndex > -1;
 
                 return (
                     <div key={event.id} className="p-4 border rounded-md space-y-3 transition-all">
                         <div className="flex flex-row items-center space-x-3">
-                            <Checkbox 
-                                id={`event-checkbox-${event.id}`} 
-                                checked={isEnabled} 
-                                onCheckedChange={(checked) => handleEventToggle(event.id, !!checked)} 
-                            />
+                            <Checkbox id={`event-checkbox-${event.id}`} checked={isEnabled} onCheckedChange={(checked) => handleEventToggle(event.id, !!checked)} />
                             <label htmlFor={`event-checkbox-${event.id}`} className="font-medium cursor-pointer">{event.name}</label>
                         </div>
                         {isEnabled && (
@@ -211,17 +202,23 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            {/* --- ALTERAÇÕES NA ESTRUTURA DO MODAL --- */}
+            <DialogContent className="max-w-2xl flex flex-col max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle>Editar Detalhes de: {product.name}</DialogTitle>
                     <DialogDescription>Configure as opções específicas deste produto para a instituição selecionada.</DialogDescription>
                 </DialogHeader>
+
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(data => updateDetails(data))} className="space-y-6">
-                        <div className="py-4 max-h-[60vh] overflow-y-auto px-1">
+                    {/* A tag <form> agora envolve a área de scroll e o rodapé */}
+                    <form onSubmit={form.handleSubmit(data => updateDetails(data))} className="flex-1 flex flex-col min-h-0">
+                        {/* Esta div é a área de conteúdo que terá o scroll */}
+                        <div className="flex-1 overflow-y-auto p-4 -mx-4">
                             {renderFormFields()}
                         </div>
-                        <DialogFooter className="sticky bottom-0 bg-background pt-4 -mx-6 -mb-6 px-6 pb-6 border-t">
+
+                        {/* O rodapé agora é uma parte fixa no final do flex container */}
+                        <DialogFooter className="pt-4 border-t">
                             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
                             <Button type="submit" disabled={isPending} className="bg-yellow-500 text-black hover:bg-yellow-400">
                                 {isPending ? "Salvando..." : "Salvar Detalhes"}
