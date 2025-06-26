@@ -10,6 +10,7 @@ export interface EventConfiguration {
   minPhotos?: number;
   valorPhoto?: number;
   date?: string; // Incluído conforme a interface
+  valorPack?: number;
 }
 
 export interface GenericDetails {
@@ -20,6 +21,6 @@ export interface GenericDetails {
 export interface DigitalFilesDetails {
   isAvailableUnit: boolean;
   events?: EventConfiguration[];
-  valorTotal?: number;
+  valorPackTotal?: number;
   // Os outros campos foram removidos para seguir a estrutura de 'events'
 }

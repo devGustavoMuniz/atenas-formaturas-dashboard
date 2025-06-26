@@ -200,7 +200,7 @@ export function ProductForm({ productId }: { productId?: string }) {
                           name="flag"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Flag</FormLabel>
+                              <FormLabel>Categoria</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
                                 <FormControl>
                                   <SelectTrigger>
