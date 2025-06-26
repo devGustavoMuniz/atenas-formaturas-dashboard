@@ -25,7 +25,28 @@ import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { IMaskInput } from "react-imask"
 
-// Schema original sem alterações complexas
+// Função para converter o valor monetário formatado de volta para número
+const parseCurrency = (value: string | number | undefined): number | undefined => {
+  if (value === undefined || value === null || value === "") return undefined
+  if (typeof value === 'number') return value
+  // Remove caracteres não numéricos, exceto a vírgula do decimal
+  const stringValue = String(value).replace("R$", "").trim().replace(/\./g, "").replace(",", ".")
+  const numberValue = parseFloat(stringValue)
+  return isNaN(numberValue) ? undefined : numberValue
+}
+
+// Função para formatar um número para o padrão de moeda BRL para exibição inicial
+const formatCurrency = (value: number | undefined): string => {
+    if (value === undefined || value === null) return ""
+    // Garante que o valor seja tratado como número
+    const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    }).format(numberValue)
+}
+
+
 const userFormSchema = z.object({
   institutionId: z.string({
     required_error: "Selecione uma instituição.",
@@ -54,7 +75,7 @@ const userFormSchema = z.object({
   motherName: z.string().optional(),
   motherPhone: z.string().optional(),
   driveLink: z.string().optional(),
-  creditValue: z.number().optional(),
+  creditValue: z.any().transform(v => parseCurrency(v)).optional(),
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
@@ -63,11 +84,7 @@ interface UserFormProps {
   userId?: string
 }
 
-// Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
-  console.log("Erro capturado no user form:", error) // Debug
-
-  // Verificar diferentes estruturas de erro
   if (error?.response?.data?.message) {
     return error.response.data.message
   }
@@ -75,7 +92,6 @@ const getErrorMessage = (error: any): string => {
     return error.response.data.error
   }
   if (error?.response?.data?.errors) {
-    // Se for um array de erros, pegar o primeiro
     if (Array.isArray(error.response.data.errors)) {
       return error.response.data.errors[0]?.message || error.response.data.errors[0]
     }
@@ -90,7 +106,6 @@ const getErrorMessage = (error: any): string => {
   return "Ocorreu um erro inesperado. Tente novamente."
 }
 
-// Componente para mostrar os critérios de senha
 function PasswordCriteria({ password }: { password: string }) {
   const criteria = [
     { label: "Pelo menos 6 caracteres", test: (pwd: string) => pwd.length >= 6 },
@@ -166,14 +181,9 @@ export function UserForm({ userId }: UserFormProps) {
   useEffect(() => {
     if (user && isEditing) {
       form.reset({
-        institutionId: user.institutionId,
-        name: user.name,
-        identifier: user.identifier,
-        email: user.email,
-        phone: user.phone,
+        ...user,
         observations: user.observations || "",
-        password: "********", // Placeholder for password
-        role: user.role,
+        password: "********",
         fatherName: user.fatherName || "",
         fatherPhone: user.fatherPhone || "",
         motherName: user.motherName || "",
@@ -187,13 +197,12 @@ export function UserForm({ userId }: UserFormProps) {
     }
   }, [user, form, isEditing])
 
-  // Função para validar senha com critérios específicos
   const validatePasswordCriteria = (password: string): string | null => {
     if (!password || password === "") {
       return "Senha é obrigatória"
     }
     if (password === "********" && isEditing) {
-      return null // Senha placeholder na edição é válida
+      return null
     }
     if (password.length < 6) {
       return "Senha deve ter pelo menos 6 caracteres"
@@ -210,11 +219,9 @@ export function UserForm({ userId }: UserFormProps) {
     return null
   }
 
-  // Função para limpar campos vazios do formulário
-  const cleanFormData = (data: UserFormValues) => {
-    const cleanedData: Record<string, any> = { ...data }
+  const cleanFormData = (data: Record<string, any>) => {
+    const cleanedData = { ...data }
 
-    // Remover campos opcionais vazios
     Object.keys(cleanedData).forEach((key) => {
       if (
         cleanedData[key] === "" &&
@@ -224,12 +231,10 @@ export function UserForm({ userId }: UserFormProps) {
       }
     })
 
-    // Não enviar o campo creditValue se for undefined
     if (cleanedData.creditValue === undefined) {
       delete cleanedData.creditValue
     }
 
-    // Não enviar o campo password se for o placeholder
     if (cleanedData.password === "********") {
       delete cleanedData.password
     }
@@ -237,7 +242,6 @@ export function UserForm({ userId }: UserFormProps) {
     return cleanedData
   }
 
-  // Mutation para criar usuário
   const createMutation = useMutation({
     mutationFn: createUser,
     onSuccess: () => {
@@ -249,10 +253,7 @@ export function UserForm({ userId }: UserFormProps) {
       router.push("/users")
     },
     onError: (error) => {
-      console.log("Erro no createMutation:", error) // Debug
       const errorMessage = getErrorMessage(error)
-      console.log("Mensagem de erro processada:", errorMessage) // Debug
-
       toast({
         variant: "destructive",
         title: "Erro ao criar usuário",
@@ -261,7 +262,6 @@ export function UserForm({ userId }: UserFormProps) {
     },
   })
 
-  // Mutation para atualizar usuário - corrigida para não enviar o ID no body
   const updateMutation = useMutation({
     mutationFn: (data: { id: string } & Partial<any>) => {
       const { id, ...dataWithoutId } = data
@@ -277,10 +277,7 @@ export function UserForm({ userId }: UserFormProps) {
       router.push("/users")
     },
     onError: (error) => {
-      console.log("Erro no updateMutation:", error) // Debug
       const errorMessage = getErrorMessage(error)
-      console.log("Mensagem de erro processada:", errorMessage) // Debug
-
       toast({
         variant: "destructive",
         title: "Erro ao atualizar usuário",
@@ -291,10 +288,7 @@ export function UserForm({ userId }: UserFormProps) {
 
   const presignedUrlMutation = useMutation({
     mutationFn: async ({ contentType, formData }: { contentType: string; formData: UserFormValues }) => {
-      // Primeiro, obtenha a URL presigned
       const response = await getPresignedUrl({ contentType })
-
-      // Retorne tanto a resposta da URL presigned quanto os dados do formulário
       return {
         presignedData: response,
         formData,
@@ -305,7 +299,6 @@ export function UserForm({ userId }: UserFormProps) {
 
       if (profileImageFile && presignedData.urls[0].uploadUrl) {
         try {
-          // Upload da imagem para a URL presigned
           await fetch(presignedData.urls[0].uploadUrl, {
             method: "PUT",
             body: profileImageFile,
@@ -314,10 +307,8 @@ export function UserForm({ userId }: UserFormProps) {
             },
           })
 
-          // Salvar o nome do arquivo para usar no cadastro/atualização
           setProfileImageFilename(presignedData.urls[0].filename)
 
-          // Continuar com a criação/atualização do usuário
           const cleanedData = cleanFormData(formData)
 
           if (isEditing) {
@@ -333,7 +324,6 @@ export function UserForm({ userId }: UserFormProps) {
             })
           }
         } catch (uploadError) {
-          console.log("Erro no upload da imagem:", uploadError) // Debug
           toast({
             variant: "destructive",
             title: "Erro ao fazer upload da imagem",
@@ -343,10 +333,7 @@ export function UserForm({ userId }: UserFormProps) {
       }
     },
     onError: (error) => {
-      console.log("Erro no presignedUrlMutation:", error) // Debug
       const errorMessage = getErrorMessage(error)
-      console.log("Mensagem de erro processada:", errorMessage) // Debug
-
       toast({
         variant: "destructive",
         title: "Erro ao obter URL para upload",
@@ -356,9 +343,6 @@ export function UserForm({ userId }: UserFormProps) {
   })
 
   function onSubmit(data: UserFormValues) {
-    console.log("Dados do formulário:", data) // Debug
-
-    // Validação adicional da senha
     const passwordError = validatePasswordCriteria(data.password)
     if (passwordError) {
       toast({
@@ -369,19 +353,14 @@ export function UserForm({ userId }: UserFormProps) {
       return
     }
 
-    const cleanedData = cleanFormData(data)
-    console.log("Dados limpos:", cleanedData) // Debug
+    const cleanedData = cleanFormData(data as Record<string, any>)
 
-    // Se tiver uma nova imagem, obter URL presigned primeiro
     if (profileImageFile) {
-      console.log("Enviando com imagem") // Debug
       presignedUrlMutation.mutate({
         contentType: profileImageFile.type,
         formData: data,
       })
     } else {
-      console.log("Enviando sem imagem") // Debug
-      // Se não tiver nova imagem, continuar com a criação/atualização
       if (isEditing) {
         updateMutation.mutate({
           id: userId!,
@@ -414,7 +393,6 @@ export function UserForm({ userId }: UserFormProps) {
     return institution ? `${institution.contractNumber} - ${institution.name}` : "Selecione uma instituição"
   }
 
-  // Função para lidar com a imagem cortada
   const handleImageCropped = (imageUrl: string | null, file: File | null) => {
     setProfileImage(imageUrl)
     setProfileImageFile(file)
@@ -452,7 +430,6 @@ export function UserForm({ userId }: UserFormProps) {
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          {/* Tabs visíveis mas não clicáveis */}
           <Tabs value={steps[currentStep]} className="w-full">
             <TabsList className="grid w-full grid-cols-3 pointer-events-none">
               <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
@@ -461,7 +438,6 @@ export function UserForm({ userId }: UserFormProps) {
             </TabsList>
           </Tabs>
 
-          {/* Etapa 1: Informações Básicas */}
           {currentStep === 0 && (
             <CardContent className="space-y-4 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -611,7 +587,6 @@ export function UserForm({ userId }: UserFormProps) {
                           </Button>
                         </div>
                       </FormControl>
-                      {/* Mostrar critérios apenas se não for edição ou se a senha não for o placeholder */}
                       {(!isEditing || (passwordValue && passwordValue !== "********")) && (
                         <PasswordCriteria password={passwordValue} />
                       )}
@@ -665,7 +640,6 @@ export function UserForm({ userId }: UserFormProps) {
             </CardContent>
           )}
 
-          {/* Etapa 2: Informações Adicionais */}
           {currentStep === 1 && (
             <CardContent className="space-y-4 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -752,7 +726,7 @@ export function UserForm({ userId }: UserFormProps) {
                     </FormItem>
                   )}
                 />
-
+                
                 <FormField
                   control={form.control}
                   name="creditValue"
@@ -760,15 +734,24 @@ export function UserForm({ userId }: UserFormProps) {
                     <FormItem>
                       <FormLabel>Valor de Crédito</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00 (opcional)"
-                          value={field.value || ""}
-                          onChange={(e) => {
-                            const value = e.target.value === "" ? undefined : Number.parseFloat(e.target.value)
-                            field.onChange(value)
+                        <IMaskInput
+                          mask="R$ num"
+                          blocks={{
+                            num: {
+                              mask: Number,
+                              scale: 2,
+                              thousandsSeparator: '.',
+                              padFractionalZeros: true,
+                              radix: ',',
+                              lazy: false, // Garante que "R$" seja sempre exibido
+                            },
                           }}
+                          // O valor do formulário é uma string mascarada
+                          value={String(field.value || '')}
+                          // onAccept atualiza o formulário com o valor mascarado
+                          onAccept={(_value, mask) => field.onChange(mask.value)}
+                          placeholder="R$ 0,00 (opcional)"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                       </FormControl>
                       <FormMessage />
@@ -788,7 +771,6 @@ export function UserForm({ userId }: UserFormProps) {
             </CardContent>
           )}
 
-          {/* Etapa 3: Foto de Perfil */}
           {currentStep === 2 && (
             <CardContent className="space-y-4 pt-6">
               <div className="flex flex-col items-center space-y-6">

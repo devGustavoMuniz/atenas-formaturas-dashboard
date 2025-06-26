@@ -18,23 +18,29 @@ import { IMaskInput } from "react-imask"
 import { AlbumDetails, EventConfiguration, GenericDetails, DigitalFilesDetails } from "@/lib/product-details-types"
 
 // --- UTILS ---
-const parseCurrency = (value: string | number | undefined): number => {
+const parseCurrency = (value: string | number | undefined): number | undefined => {
+    if (value === undefined || value === null || value === "") return undefined;
     if (typeof value === 'number') return value;
-    if (typeof value !== 'string' || !value) return 0;
-    return Number(String(value).replace(/\./g, "").replace(",", "."));
-}
+    const stringValue = String(value).replace("R$", "").trim().replace(/\./g, "").replace(",", ".");
+    const numberValue = parseFloat(stringValue);
+    return isNaN(numberValue) ? undefined : numberValue;
+};
 
 const formatCurrency = (value: number | undefined): string => {
     if (value === undefined || value === null) return "";
-    return new Intl.NumberFormat('pt-BR', { style: 'decimal', minimumFractionDigits: 2 }).format(value);
-}
+    const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+    }).format(numberValue);
+};
+
 
 // --- ZOD SCHEMAS ---
 const albumDetailsSchema: z.ZodType<AlbumDetails> = z.object({
   minPhoto: z.coerce.number().min(1, "Mínimo de 1 foto."),
   maxPhoto: z.coerce.number().min(1, "Mínimo de 1 foto."),
-  valorEncadernacao: z.any().transform(v => parseCurrency(v)).refine(v => v > 0, "Valor é obrigatório."),
-  valorFoto: z.any().transform(v => parseCurrency(v)).refine(v => v > 0, "Valor é obrigatório."),
+  valorEncadernacao: z.any().transform(v => parseCurrency(v)).refine(v => v !== undefined && v > 0, "Valor é obrigatório."),
+  valorFoto: z.any().transform(v => parseCurrency(v)).refine(v => v !== undefined && v > 0, "Valor é obrigatório."),
 });
 
 const eventConfigurationSchema: z.ZodType<Partial<EventConfiguration>> = z.object({
@@ -96,8 +102,10 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
         defaultValues: {},
     });
 
+    const { control, handleSubmit, watch, reset } = form;
+
     const { fields, append, remove } = useFieldArray({
-        control: form.control,
+        control,
         name: "events",
         keyName: "key",
     });
@@ -150,25 +158,25 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
             const initialValues: any = {
                 minPhoto: details.minPhoto,
                 maxPhoto: details.maxPhoto,
-                valorEncadernacao: formatCurrency(details.valorEncadernacao),
-                valorFoto: formatCurrency(details.valorFoto),
+                valorEncadernacao: details.valorEncadernacao,
+                valorFoto: details.valorFoto,
                 isAvailableUnit: !!details.isAvailableUnit,
-                valorPackTotal: formatCurrency(details.valorPackTotal),
+                valorPackTotal: details.valorPackTotal,
                 events: (details.events || []).map((evt: any) => ({
                     id: evt.id,
                     minPhotos: evt.minPhotos,
-                    valorPhoto: formatCurrency(evt.valorPhoto),
-                    valorPack: formatCurrency(evt.valorPack)
+                    valorPhoto: evt.valorPhoto,
+                    valorPack: evt.valorPack
                 }))
             };
-            form.reset(initialValues);
+            reset(initialValues);
         }
-    }, [institutionProduct, form.reset]);
+    }, [institutionProduct, reset]);
     
     if (!institutionProduct) return null;
 
     const { product } = institutionProduct;
-    const isAvailableUnit = form.watch("isAvailableUnit");
+    const isAvailableUnit = watch("isAvailableUnit");
 
     const handleEventToggle = (eventId: string, isChecked: boolean) => {
         const fieldIndex = fields.findIndex(field => field.id === eventId);
@@ -199,13 +207,12 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
                         </div>
                         {isEnabled && (
                             <div className="grid grid-cols-2 gap-4 pl-8">
-                                {/* --- LÓGICA DE RENDERIZAÇÃO CORRIGIDA --- */}
                                 {product.flag === 'DIGITAL_FILES' && !isAvailableUnit ? (
-                                    <Controller name={`events.${fieldIndex}.valorPack`} control={form.control} render={({ field, fieldState }) => <FormItem><FormLabel>Valor do Pacote</FormLabel><FormControl><IMaskInput mask={Number} scale={2} thousandsSeparator="." padFractionalZeros radix="," placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" onAccept={field.onChange} value={String(field.value || '')} /></FormControl><FormMessage>{fieldState.error?.message}</FormMessage></FormItem>} />
+                                    <FormField name={`events.${fieldIndex}.valorPack`} control={control} render={({ field }) => <FormItem><FormLabel>Valor do Pacote</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
                                 ) : (
                                     <>
-                                        <FormField name={`events.${fieldIndex}.minPhotos`} control={form.control} render={({ field }) => <FormItem><FormLabel>Mín. Fotos</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>} />
-                                        <Controller name={`events.${fieldIndex}.valorPhoto`} control={form.control} render={({ field, fieldState }) => <FormItem><FormLabel>Valor/Foto</FormLabel><FormControl><IMaskInput mask={Number} scale={2} thousandsSeparator="." padFractionalZeros radix="," placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" onAccept={field.onChange} value={String(field.value || '')} /></FormControl><FormMessage>{fieldState.error?.message}</FormMessage></FormItem>} />
+                                        <FormField name={`events.${fieldIndex}.minPhotos`} control={control} render={({ field }) => <FormItem><FormLabel>Mín. Fotos</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>} />
+                                        <FormField name={`events.${fieldIndex}.valorPhoto`} control={control} render={({ field }) => <FormItem><FormLabel>Valor/Foto</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
                                     </>
                                 )}
                             </div>
@@ -221,10 +228,10 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
             case "ALBUM":
                  return (
                     <div className="grid grid-cols-2 gap-4">
-                        <FormField name="minPhoto" control={form.control} render={({ field }) => <FormItem><FormLabel>Mínimo de fotos</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>} />
-                        <FormField name="maxPhoto" control={form.control} render={({ field }) => <FormItem><FormLabel>Máximo de fotos</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>} />
-                        <Controller name="valorEncadernacao" control={form.control} render={({ field, fieldState }) => <FormItem><FormLabel>Valor da Encadernação</FormLabel><FormControl><IMaskInput mask={Number} scale={2} thousandsSeparator="." padFractionalZeros radix="," placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" onAccept={field.onChange} value={field.value || ""} /></FormControl><FormMessage>{fieldState.error?.message}</FormMessage></FormItem>} />
-                        <Controller name="valorFoto" control={form.control} render={({ field, fieldState }) => <FormItem><FormLabel>Valor por Foto Extra</FormLabel><FormControl><IMaskInput mask={Number} scale={2} thousandsSeparator="." padFractionalZeros radix="," placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" onAccept={field.onChange} value={field.value || ""} /></FormControl><FormMessage>{fieldState.error?.message}</FormMessage></FormItem>} />
+                        <FormField name="minPhoto" control={control} render={({ field }) => <FormItem><FormLabel>Mínimo de fotos</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>} />
+                        <FormField name="maxPhoto" control={control} render={({ field }) => <FormItem><FormLabel>Máximo de fotos</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>} />
+                        <FormField name="valorEncadernacao" control={control} render={({ field }) => <FormItem><FormLabel>Valor da Encadernação</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
+                        <FormField name="valorFoto" control={control} render={({ field }) => <FormItem><FormLabel>Valor por Foto Extra</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
                     </div>
                 );
             case "GENERIC":
@@ -232,10 +239,10 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
             case "DIGITAL_FILES":
                 return (
                     <div className="space-y-4">
-                        <FormField name="isAvailableUnit" control={form.control} render={({ field }) => <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Permitir venda separadamente?</FormLabel></div><FormControl><Switch checked={!!field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>} />
+                        <FormField name="isAvailableUnit" control={control} render={({ field }) => <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Permitir venda separadamente?</FormLabel></div><FormControl><Switch checked={!!field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>} />
                         
                         {!isAvailableUnit && (
-                             <Controller name="valorPackTotal" control={form.control} render={({ field, fieldState }) => <FormItem><FormLabel>Valor do Pacote Completo</FormLabel><FormControl><IMaskInput mask={Number} scale={2} thousandsSeparator="." padFractionalZeros radix="," placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" onAccept={field.onChange} value={String(field.value || '')} /></FormControl><FormMessage>{fieldState.error?.message}</FormMessage></FormItem>} />
+                             <FormField name="valorPackTotal" control={control} render={({ field }) => <FormItem><FormLabel>Valor do Pacote Completo</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
                         )}
                         
                         {renderEventList()}
@@ -254,7 +261,7 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
                     <DialogDescription>Configure as opções específicas deste produto para a instituição selecionada.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(data => updateDetails(data))} className="flex-1 flex flex-col min-h-0">
+                    <form onSubmit={handleSubmit(data => updateDetails(data))} className="flex-1 flex flex-col min-h-0">
                         <div className="flex-1 overflow-y-auto p-4 -mx-4">
                             {renderFormFields()}
                         </div>
