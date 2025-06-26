@@ -57,6 +57,7 @@
     "react-dom": "^19",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "latest",
+    "react-image-crop": "^11.0.10",
     "react-imask": "latest",
     "react-resizable-panels": "^2.1.7",
     "recharts": "latest",

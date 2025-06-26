@@ -396,7 +396,6 @@ export function UserForm({ userId }: UserFormProps) {
   const handleImageCropped = (imageUrl: string | null, file: File | null) => {
     setProfileImage(imageUrl)
     setProfileImageFile(file)
-    setIsCropping(false)
   }
 
   if (isLoading) {
@@ -782,7 +781,10 @@ export function UserForm({ userId }: UserFormProps) {
                   <p className="text-sm text-muted-foreground">Foto de perfil atual</p>
                 </div>
 
-                <ImageCropper onImageCropped={handleImageCropped} onCroppingChange={setIsCropping} />
+                <ImageCropper
+                  onImageCropped={handleImageCropped}
+                  onCroppingChange={setIsCropping}
+                />
               </div>
 
               <div className="flex justify-between mt-4">
