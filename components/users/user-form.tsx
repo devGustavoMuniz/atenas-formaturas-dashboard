@@ -303,10 +303,10 @@ export function UserForm({ userId }: UserFormProps) {
     onSuccess: async (result) => {
       const { presignedData, formData } = result
 
-      if (profileImageFile && presignedData.uploadUrl) {
+      if (profileImageFile && presignedData.urls[0].uploadUrl) {
         try {
           // Upload da imagem para a URL presigned
-          await fetch(presignedData.uploadUrl, {
+          await fetch(presignedData.urls[0].uploadUrl, {
             method: "PUT",
             body: profileImageFile,
             headers: {
@@ -315,7 +315,7 @@ export function UserForm({ userId }: UserFormProps) {
           })
 
           // Salvar o nome do arquivo para usar no cadastro/atualização
-          setProfileImageFilename(presignedData.filename)
+          setProfileImageFilename(presignedData.urls[0].filename)
 
           // Continuar com a criação/atualização do usuário
           const cleanedData = cleanFormData(formData)
@@ -324,12 +324,12 @@ export function UserForm({ userId }: UserFormProps) {
             updateMutation.mutate({
               id: userId!,
               ...cleanedData,
-              profileImage: presignedData.filename,
+              profileImage: presignedData.urls[0].filename,
             })
           } else {
             createMutation.mutate({
               ...cleanedData,
-              profileImage: presignedData.filename,
+              profileImage: presignedData.urls[0].filename,
             })
           }
         } catch (uploadError) {

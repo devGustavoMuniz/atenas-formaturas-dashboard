@@ -165,6 +165,6 @@ export async function getPresignedUrl({
 }: {
   contentType: string
 }): Promise<{ uploadUrl: string; filename: string }> {
-  const response = await api.post("/v1/storage/presigned-url", { contentType })
+  const response = await api.post("/v1/storage/presigned-url", { contentType, quantity: 1, mediaType: "image" })
   return response.data
 }
