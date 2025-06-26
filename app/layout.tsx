@@ -9,9 +9,15 @@ import { AuthProvider } from "@/lib/auth/auth-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard",
+  title: {
+    template: '%s - Atenas Formaturas',
+    default: 'Dashboard - Atenas Formaturas',
+  },
   description: "Admin dashboard template with Next.js",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
