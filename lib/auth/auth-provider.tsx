@@ -36,30 +36,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem("token")
+      const refreshToken = localStorage.getItem("refreshToken")
+      const storedUser = localStorage.getItem("user")
 
-      if (token) {
+      if (refreshToken && storedUser) {
         try {
-          // Set token in axios headers for future requests
+          // Verificar o token usando o endpoint de refresh
+          const response = await api.post("/v1/auth/refresh", { refreshToken })
+          const { token } = response.data // Only expect token from refresh
+
+          // Atualizar o token
+          localStorage.setItem("token", token)
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-          // Verificar o token usando o endpoint de refresh
-          const response = await api.post("/auth/refresh")
-          const { user, token: newToken } = response.data
-
-          // Atualizar o token se um novo for retornado
-          if (newToken) {
-            localStorage.setItem("token", newToken)
-            api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`
-          }
-
-          // Atualizar o usuário
+          // Atualizar o usuário com os dados do localStorage
+          const user = JSON.parse(storedUser)
           setUser(user)
-          localStorage.setItem("user", JSON.stringify(user))
         } catch (error) {
           // Se o token for inválido ou expirado, limpar os dados de autenticação
           localStorage.removeItem("token")
+          localStorage.removeItem("refreshToken")
           localStorage.removeItem("user")
+          setUser(null) // Clear user state
         }
       }
 
@@ -88,10 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Tentando fazer login com:", { email, password }) // Debug
       const response = await api.post("/v1/auth/login", { email, password })
       console.log("Resposta do login:", response.data) // Debug
-      const { token, user } = response.data
+      const { token, refreshToken, user } = response.data
 
       // Store token in localStorage
       localStorage.setItem("token", token)
+      localStorage.setItem("refreshToken", refreshToken)
       localStorage.setItem("user", JSON.stringify(user))
 
       // Set token in axios headers for future requests
@@ -117,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       // Remove token from localStorage
       localStorage.removeItem("token")
+      localStorage.removeItem("refreshToken")
       localStorage.removeItem("user")
 
       // Remove token from axios headers
