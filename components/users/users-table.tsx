@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { UserTableToolbar } from "./user-table-toolbar"
+import { UserCard } from "./user-card"
 
 type User = {
   id: string
@@ -62,7 +63,6 @@ type User = {
   createdAt: string
 }
 
-// Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
   if (error?.response?.data?.message) {
     return error.response.data.message
@@ -85,12 +85,11 @@ export function UsersTable() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  // Debounce para a pesquisa
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm)
-      setCurrentPage(1) // Reset para primeira página quando pesquisar
-    }, 500) // 500ms de delay
+      setCurrentPage(1)
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [searchTerm])
@@ -183,10 +182,6 @@ export function UsersTable() {
       },
     },
     {
-      accessorKey: "phone",
-      header: "Telefone",
-    },
-    {
       accessorKey: "role",
       header: "Cargo",
       cell: ({ row }) => {
@@ -266,7 +261,7 @@ export function UsersTable() {
   return (
     <div className="space-y-4">
       <UserTableToolbar onSearchChange={handleSearchChange} />
-      <div className="rounded-md border">
+      <div className="hidden md:block rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -299,6 +294,15 @@ export function UsersTable() {
             )}
           </TableBody>
         </Table>
+      </div>
+      <div className="block md:hidden space-y-4">
+        {users.length > 0 ? (
+          users.map((user) => <UserCard key={user.id} user={user} onDelete={handleDelete} />)
+        ) : (
+          <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+            {debouncedSearchTerm ? "Nenhum usuário encontrado para a busca." : "Nenhum resultado encontrado."}
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button

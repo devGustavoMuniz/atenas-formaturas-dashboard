@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-// Dados mockados para substituir a chamada de API
 const mockRecentUsers = [
   {
     id: "1",
@@ -42,22 +41,21 @@ const mockRecentUsers = [
 ]
 
 export function RecentUsers() {
-  // Usar dados mockados em vez de fazer chamada de API
   const users = mockRecentUsers
 
   return (
     <div className="space-y-8">
       {users.map((user) => (
-        <div key={user.id} className="flex items-center">
+        <div key={user.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
           </Avatar>
-          <div className="ml-4 space-y-1">
+          <div className="mt-2 sm:ml-4 sm:mt-0 space-y-1">
             <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
-          <div className="ml-auto font-medium">{new Date(user.createdAt).toLocaleDateString("pt-BR")}</div>
+          <div className="mt-2 sm:ml-auto sm:mt-0 font-medium">{new Date(user.createdAt).toLocaleDateString("pt-BR")}</div>
         </div>
       ))}
     </div>

@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -37,7 +35,11 @@ const navItems: NavItem[] = [
   },
 ]
 
-export function DashboardNav() {
+interface DashboardNavProps {
+  closeSidebar?: () => void
+}
+
+export function DashboardNav({ closeSidebar }: DashboardNavProps) {
   const pathname = usePathname()
 
   return (
@@ -51,6 +53,7 @@ export function DashboardNav() {
             variant={isActive ? "secondary" : "ghost"}
             className={cn("justify-start gap-2", isActive && "bg-muted font-medium text-yellow-500")}
             asChild
+            onClick={closeSidebar}
           >
             <Link href={item.href}>
               <item.icon className={cn("h-4 w-4", isActive && "text-yellow-500")} />

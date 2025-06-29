@@ -14,8 +14,8 @@ interface PresignedUrlResponse {
 export const getPresignedUrls = async (files: File[]): Promise<PresignedUrlResponse[]> => {
   const requests = files.map(file => ({
     contentType: file.type,
-    quantity: 1, // Always 1 for individual file upload
-    mediaType: 'image', // Assuming all are images for photos upload
+    quantity: 1, 
+    mediaType: 'image',
   }));
 
   const batchPromises = requests.map(request =>
@@ -24,7 +24,6 @@ export const getPresignedUrls = async (files: File[]): Promise<PresignedUrlRespo
 
   const responses = await Promise.all(batchPromises);
 
-  // Extract and flatten the 'urls' array from each response object
   const allPresignedData = responses.flatMap(response => response.data.urls);
 
   return allPresignedData;
@@ -50,7 +49,6 @@ export const saveUserEventPhotos = async (payload: SavePhotosPayload) => {
   return response.data;
 };
 
-// New types and function for fetching existing photos
 interface Photo {
   id: string;
   fileName: string;

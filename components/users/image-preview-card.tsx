@@ -9,10 +9,10 @@ import { cn } from "@/lib/utils";
 interface ImagePreviewCardProps {
   src: string;
   alt: string;
-  onRemove?: () => void; // Make onRemove optional
+  onRemove?: () => void; 
   className?: string;
-  progress?: number; // Add progress prop
-  isDeleting?: boolean; // Add isDeleting prop
+  progress?: number; 
+  isDeleting?: boolean;
 }
 
 export function ImagePreviewCard({ src, alt, onRemove, className, progress, isDeleting }: ImagePreviewCardProps) {

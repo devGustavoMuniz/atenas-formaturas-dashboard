@@ -16,7 +16,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from "@/components/ui/skeleton"
 import { Plus, X, Settings } from "lucide-react"
 
-// O Zod schema já espera o formato correto: um array de objetos com a propriedade 'name'
 const institutionFormSchema = z.object({
   contractNumber: z.string().min(1, {
     message: "Número do contrato é obrigatório.",
@@ -81,14 +80,9 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
         contractNumber: institution.contractNumber,
         name: institution.name,
         observations: institution.observations,
-        // --- CORREÇÃO AQUI ---
-        // Agora, o `institution.events` é um array de objetos {id, name}.
-        // O .map garante que estamos passando para o formulário o formato que ele espera,
-        // que é um array de objetos com a propriedade 'name'.
-        // Adicionamos uma verificação para garantir que events exista e tenha itens.
         events: institution.events && institution.events.length > 0
           ? institution.events.map((event) => ({ name: event.name }))
-          : [{ name: "" }], // Se não houver eventos, começa com um campo vazio
+          : [{ name: "" }],
       })
     }
   }, [institution, form, isEditing])
@@ -171,7 +165,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
             <CardTitle>{isEditing ? "Editar Instituição" : "Nova Instituição"}</CardTitle>
             <CardDescription>
@@ -235,7 +229,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
             />
 
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                 <h3 className="text-sm font-medium">Eventos</h3>
                 <Button
                   type="button"
@@ -257,9 +251,9 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
                     name={`events.${index}.name`}
                     render={({ field }) => (
                       <FormItem>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                           <FormControl>
-                            <Input placeholder="Nome do evento" {...field} />
+                            <Input placeholder="Nome do evento" {...field} className="w-full" />
                           </FormControl>
                           <Button
                             type="button"
@@ -281,7 +275,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
+          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2">
             <Button variant="outline" type="button" onClick={() => router.push("/institutions")}>
               Cancelar
             </Button>

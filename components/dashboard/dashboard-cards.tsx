@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, UserPlus, UserMinus, UserCheck } from "lucide-react"
 
-// Dados mockados para substituir a chamada de API
 const mockStats = {
   total: 256,
   new: 24,
@@ -16,7 +15,6 @@ const mockStats = {
 }
 
 export function DashboardCards() {
-  // Usar dados mockados em vez de fazer chamada de API
   const stats = mockStats
 
   return (

@@ -5,9 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 
-export function MobileSidebar() {
+interface MobileSidebarProps {
+  isOpen: boolean
+  setIsOpen: (isOpen: boolean) => void
+  closeSidebar: () => void
+}
+
+export function MobileSidebar({ isOpen, setIsOpen, closeSidebar }: MobileSidebarProps) {
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
@@ -15,7 +21,7 @@ export function MobileSidebar() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="pr-0">
-        <DashboardNav />
+        <DashboardNav closeSidebar={closeSidebar} />
       </SheetContent>
     </Sheet>
   )

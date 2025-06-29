@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { InstitutionTableToolbar } from "./institution-table-toolbar"
+import { InstitutionCard } from "./institution-card"
 
 type Institution = {
   id: string
@@ -50,7 +51,6 @@ type Institution = {
   createdAt: string
 }
 
-// Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
   if (error?.response?.data?.message) {
     return error.response.data.message
@@ -73,12 +73,11 @@ export function InstitutionsTable() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  // Debounce para a pesquisa
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm)
-      setCurrentPage(1) // Reset para primeira página quando pesquisar
-    }, 500) // 500ms de delay
+      setCurrentPage(1)
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [searchTerm])
@@ -242,7 +241,7 @@ export function InstitutionsTable() {
   return (
     <div className="space-y-4">
       <InstitutionTableToolbar onSearchChange={handleSearchChange} />
-      <div className="rounded-md border">
+      <div className="hidden md:block rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -277,6 +276,19 @@ export function InstitutionsTable() {
             )}
           </TableBody>
         </Table>
+      </div>
+      <div className="block md:hidden space-y-4">
+        {institutions.length > 0 ? (
+          institutions.map((institution) => (
+            <InstitutionCard key={institution.id} institution={institution} onDelete={handleDelete} />
+          ))
+        ) : (
+          <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+            {debouncedSearchTerm
+              ? "Nenhuma instituição encontrada para a busca."
+              : "Nenhum resultado encontrado."}
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
@@ -316,3 +328,4 @@ export function InstitutionsTable() {
     </div>
   )
 }
+

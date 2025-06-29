@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { UserNav } from "@/components/dashboard/user-nav"
 import { MobileSidebar } from "@/components/dashboard/mobile-sidebar"
@@ -10,16 +11,18 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  // In a real app, you would check for authentication here
-  // const isAuthenticated = useAuth()
-  // if (!isAuthenticated) redirect("/login")
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false)
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-2 md:hidden">
-            <MobileSidebar />
+            <MobileSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} closeSidebar={closeSidebar} />
             <h1 className="text-lg font-semibold">Dashboard</h1>
           </div>
           <div className="hidden md:flex md:items-center md:gap-2">
@@ -43,10 +46,10 @@ export default function DashboardLayout({
         </div>
       </header>
       <div className="container flex-1 items-start md:grid md:grid-cols-[220px_1fr] md:gap-6 lg:grid-cols-[240px_1fr] lg:gap-10">
-        <aside className="fixed top-16 z-30 hidden h-[calc(100vh-4rem)] w-full shrink-0 overflow-y-auto border-r md:sticky md:block">
-          <DashboardNav />
+        <aside className={`fixed top-16 z-30 h-[calc(100vh-4rem)] w-full shrink-0 overflow-y-auto border-r md:sticky md:block ${isSidebarOpen ? 'block' : 'hidden'}`}>
+          <DashboardNav closeSidebar={closeSidebar} />
         </aside>
-        <main className="flex w-full flex-col overflow-hidden p-4 md:py-8">{children}</main>
+        <main className={`flex w-full flex-col overflow-hidden p-4 md:py-8 ${isSidebarOpen ? 'md:ml-[220px] lg:ml-[240px]' : ''}`}>{children}</main>
       </div>
     </div>
   )

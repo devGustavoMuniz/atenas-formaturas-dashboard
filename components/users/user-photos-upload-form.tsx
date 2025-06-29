@@ -39,7 +39,7 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
 
-  // Clean up preview URLs when component unmounts or files change
+  
   useEffect(() => {
     return () => {
       Object.values(selectedFiles).forEach(files => {
@@ -211,7 +211,7 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
                   Selecione as fotos para o evento {event.name}.
                 </p>
                 
-                {/* Existing Photos */}
+                
                 {existingPhotosForEvent.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="text-md font-medium">Fotos Existentes:</h3>
@@ -229,7 +229,7 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
                   </div>
                 )}
 
-                {/* New Photos Dropzone */}
+                
                 <div className="space-y-2">
                   <h3 className="text-md font-medium">Novas Fotos:</h3>
                   <Dropzone 

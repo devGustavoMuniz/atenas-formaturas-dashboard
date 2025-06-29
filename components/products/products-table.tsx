@@ -43,6 +43,7 @@ import { ProductTableToolbar } from "../../app/(dashboard)/products/product-tabl
 import type { Product } from "@/lib/types"
 import { ProductFlag } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { ProductCard } from "./product-card"
 
 const getErrorMessage = (error: any): string => {
     if (error?.message) {
@@ -187,7 +188,7 @@ export function ProductsTable() {
     return (
         <div className="space-y-4">
             <ProductTableToolbar onSearchChange={handleSearchChange} />
-            <div className="rounded-md border">
+            <div className="hidden md:block rounded-md border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -218,6 +219,15 @@ export function ProductsTable() {
                         )}
                     </TableBody>
                 </Table>
+            </div>
+            <div className="block md:hidden space-y-4">
+                {products.length > 0 ? (
+                    products.map((product) => <ProductCard key={product.id} product={product} onDelete={handleDelete} />)
+                ) : (
+                    <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+                        {debouncedSearchTerm ? "Nenhum produto encontrado para a busca." : "Nenhum resultado encontrado."}
+                    </div>
+                )}
             </div>
 
             <AlertDialog open={!!deleteProductId} onOpenChange={() => setDeleteProductId(null)}>

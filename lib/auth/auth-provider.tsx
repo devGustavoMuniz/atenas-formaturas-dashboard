@@ -34,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
       const refreshToken = localStorage.getItem("refreshToken")
@@ -42,23 +41,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (refreshToken && storedUser) {
         try {
-          // Verificar o token usando o endpoint de refresh
           const response = await api.post("/v1/auth/refresh", { refreshToken })
-          const { token } = response.data // Only expect token from refresh
+          const { token } = response.data
 
-          // Atualizar o token
           localStorage.setItem("token", token)
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-          // Atualizar o usuário com os dados do localStorage
           const user = JSON.parse(storedUser)
           setUser(user)
         } catch (error) {
-          // Se o token for inválido ou expirado, limpar os dados de autenticação
           localStorage.removeItem("token")
           localStorage.removeItem("refreshToken")
           localStorage.removeItem("user")
-          setUser(null) // Clear user state
+          setUser(null)
         }
       }
 
@@ -68,7 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, [])
 
-  // Redirect based on auth status
   useEffect(() => {
     if (!isLoading) {
       const isAuthRoute = pathname?.startsWith("/login")
@@ -84,49 +78,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log("Tentando fazer login com:", { email, password }) // Debug
       const response = await api.post("/v1/auth/login", { email, password })
-      console.log("Resposta do login:", response.data) // Debug
       const { token, refreshToken, user } = response.data
 
-      // Store token in localStorage
       localStorage.setItem("token", token)
       localStorage.setItem("refreshToken", refreshToken)
       localStorage.setItem("user", JSON.stringify(user))
 
-      // Set token in axios headers for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-      // Update user state
       setUser(user)
 
       return user
     } catch (error) {
-      console.log("Erro no login (auth-provider):", error) // Debug
-      // Re-throw the error so it can be caught by the form
+      console.error("Erro no login (auth-provider):", error)
       throw error
     }
   }
 
   const logout = async () => {
     try {
-      // Chamar o endpoint de logout
       await api.post("/v1/auth/logout")
     } catch (error) {
       console.error("Error during logout:", error)
     } finally {
-      // Remove token from localStorage
       localStorage.removeItem("token")
       localStorage.removeItem("refreshToken")
       localStorage.removeItem("user")
 
-      // Remove token from axios headers
       delete api.defaults.headers.common["Authorization"]
 
-      // Clear user state
       setUser(null)
 
-      // Redirect to login
       router.push("/login")
     }
   }

@@ -419,13 +419,15 @@ export function UserForm({ userId }: UserFormProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{isEditing ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
-        <CardDescription>
-          {isEditing
-            ? "Atualize as informações do usuário existente."
-            : "Preencha as informações para criar um novo usuário."}
-        </CardDescription>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <CardTitle>{isEditing ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
+          <CardDescription>
+            {isEditing
+              ? "Atualize as informações do usuário existente."
+              : "Preencha as informações para criar um novo usuário."}
+          </CardDescription>
+        </div>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -742,12 +744,10 @@ export function UserForm({ userId }: UserFormProps) {
                               thousandsSeparator: '.',
                               padFractionalZeros: true,
                               radix: ',',
-                              lazy: false, // Garante que "R$" seja sempre exibido
+                              lazy: false,
                             },
                           }}
-                          // O valor do formulário é uma string mascarada
                           value={String(field.value || '')}
-                          // onAccept atualiza o formulário com o valor mascarado
                           onAccept={(_value, mask) => field.onChange(mask.value)}
                           placeholder="R$ 0,00 (opcional)"
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
