@@ -11,6 +11,7 @@ type User = {
   name: string
   email: string
   role: string
+  profileImage?: string
 }
 
 type AuthContextType = {
