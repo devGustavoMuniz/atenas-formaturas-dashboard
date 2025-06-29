@@ -22,7 +22,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, ArrowUpDown, Pencil, Trash2 } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, Pencil, Trash2, Upload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -216,6 +216,10 @@ export function UsersTable() {
               <DropdownMenuItem onClick={() => router.push(`/users/${user.id}/edit`)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/users/${user.id}/upload-photos`)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload de Fotos
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
