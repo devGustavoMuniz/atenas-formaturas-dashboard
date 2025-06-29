@@ -55,7 +55,7 @@ export function RecentUsers() {
             <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
-          <div className="mt-2 sm:ml-auto sm:mt-0 font-medium">{new Date(user.createdAt).toLocaleDateString("pt-BR")}</div>
+          
         </div>
       ))}
     </div>
