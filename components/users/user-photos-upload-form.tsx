@@ -215,7 +215,7 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
                 {existingPhotosForEvent.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="text-md font-medium">Fotos Existentes:</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div className="flex flex-wrap justify-center gap-2">
                       {existingPhotosForEvent.map(photo => (
                         <ImagePreviewCard 
                           key={photo.id}
@@ -236,7 +236,7 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
                     onDrop={(acceptedFiles) => handleFileChange(event.id, acceptedFiles)}
                   />
                   {selectedFiles[event.id] && selectedFiles[event.id].length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+                    <div className="flex flex-wrap justify-center gap-2 mt-4">
                       {selectedFiles[event.id].map((file, index) => (
                         <ImagePreviewCard 
                           key={file.id} // Use unique ID as key
