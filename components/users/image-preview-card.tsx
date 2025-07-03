@@ -1,7 +1,7 @@
 "use client";
 
 
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,10 @@ export function ImagePreviewCard({ src, alt, onRemove, className, progress, isDe
             className
           )}
         >
-          <img src={src} alt={alt} className={cn("w-full h-full object-cover", isDeleting && "opacity-50")} />
+          <img src={src} alt={alt} className={cn("w-full h-full object-cover group-hover:opacity-75 transition-opacity", isDeleting && "opacity-50")} />
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <ZoomIn className="text-white h-8 w-8" />
+          </div>
           {typeof progress === 'number' && progress < 100 && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
               <Progress value={progress} className="w-3/4 h-2" />
