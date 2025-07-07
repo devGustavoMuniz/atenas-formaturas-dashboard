@@ -49,7 +49,7 @@ export function LinkProductModal({ isOpen, onClose, institutionId, alreadyLinked
         <DialogHeader>
           <DialogTitle>Vincular Novo Produto</DialogTitle>
           <DialogDescription>
-            Selecione um produto da lista abaixo para vincular a esta instituição.
+            Selecione um produto da lista abaixo para vincular a este contrato.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">

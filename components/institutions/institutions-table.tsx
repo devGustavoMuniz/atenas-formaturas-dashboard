@@ -58,7 +58,7 @@ const getErrorMessage = (error: any): string => {
   if (error?.message) {
     return error.message
   }
-  return "Não foi possível excluir a instituição. Tente novamente."
+  return "Não foi possível excluir o contrato. Tente novamente."
 }
 
 export function InstitutionsTable() {
@@ -97,15 +97,15 @@ export function InstitutionsTable() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
       toast({
-        title: "Instituição excluída",
-        description: "A instituição foi excluída com sucesso.",
+        title: "Contrato excluído",
+description: "O contrato foi excluído com sucesso.",
       })
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao excluir instituição",
+        title: "Erro ao excluir contrato",
         description: errorMessage,
       })
     },
@@ -269,7 +269,7 @@ export function InstitutionsTable() {
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
                   {debouncedSearchTerm
-                    ? "Nenhuma instituição encontrada para a busca."
+                    ? "Nenhum contrato encontrado para a busca."
                     : "Nenhum resultado encontrado."}
                 </TableCell>
               </TableRow>
@@ -285,7 +285,7 @@ export function InstitutionsTable() {
         ) : (
           <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
             {debouncedSearchTerm
-              ? "Nenhuma instituição encontrada para a busca."
+              ? "Nenhum contrato encontrado para a busca."
               : "Nenhum resultado encontrado."}
           </div>
         )}

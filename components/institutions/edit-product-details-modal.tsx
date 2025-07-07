@@ -258,7 +258,7 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
             <DialogContent className="max-w-2xl flex flex-col max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle>Editar Detalhes de: {product.name}</DialogTitle>
-                    <DialogDescription>Configure as opções específicas deste produto para a instituição selecionada.</DialogDescription>
+                    <DialogDescription>Configure as opções específicas deste produto para o contrato selecionado.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={handleSubmit(data => updateDetails(data))} className="flex-1 flex flex-col min-h-0">

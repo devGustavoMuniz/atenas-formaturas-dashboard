@@ -26,7 +26,7 @@ export function InstitutionTableToolbar({ onSearchChange }: InstitutionTableTool
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar instituições..."
+            placeholder="Buscar contratos..."
             className="w-full pl-8"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -35,7 +35,7 @@ export function InstitutionTableToolbar({ onSearchChange }: InstitutionTableTool
       </div>
       <Button onClick={() => router.push("/institutions/new")} className="bg-yellow-500 text-black hover:bg-yellow-400">
         <Plus className="mr-2 h-4 w-4" />
-        Nova Instituição
+        Novo Contrato
       </Button>
     </div>
   )

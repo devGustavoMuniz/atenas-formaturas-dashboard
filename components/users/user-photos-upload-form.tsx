@@ -184,7 +184,7 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
   }
 
   if (!institution?.events || institution.events.length === 0) {
-    return <p>Nenhum evento encontrado para a instituição deste usuário.</p>;
+    return <p>Nenhum evento encontrado para o contrato deste usuário.</p>;
   }
 
   return (

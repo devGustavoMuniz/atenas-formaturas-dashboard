@@ -11,7 +11,7 @@ export type InstitutionProduct = {
 }
 
 /**
- * Busca os produtos que já estão configurados para uma instituição específica.
+ * Busca os produtos que já estão configurados para um contrato específico.
  */
 export async function fetchInstitutionProducts(institutionId: string): Promise<InstitutionProduct[]> {
   const response = await api.get(`/v1/institution/products`, {
@@ -21,7 +21,7 @@ export async function fetchInstitutionProducts(institutionId: string): Promise<I
 }
 
 /**
- * Vincula um único produto a uma instituição.
+ * Vincula um único produto a um contrato.
  */
 export async function linkProductToInstitution(payload: { institutionId: string; productId: string }): Promise<void> {
   // Endpoint POST para criar um novo vínculo
@@ -29,7 +29,7 @@ export async function linkProductToInstitution(payload: { institutionId: string;
 }
 
 /**
- * Desvincula um produto de uma instituição.
+ * Desvincula um produto de um contrato.
  * @param institutionProductId - O ID do VÍNCULO (não o ID do produto).
  */
 export async function unlinkProductFromInstitution(institutionProductId: string): Promise<void> {

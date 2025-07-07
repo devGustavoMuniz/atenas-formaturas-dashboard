@@ -94,8 +94,8 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
       toast({
-        title: "Instituição criada",
-        description: "A instituição foi criada com sucesso.",
+        title: "Contrato criado",
+description: "O contrato foi criado com sucesso.",
       })
       router.push("/institutions")
     },
@@ -103,7 +103,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
       const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao criar instituição",
+        title: "Erro ao criar contrato",
         description: errorMessage,
       })
     },
@@ -118,8 +118,8 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
       queryClient.invalidateQueries({ queryKey: ["institution", institutionId] })
       toast({
-        title: "Instituição atualizada",
-        description: "A instituição foi atualizada com sucesso.",
+        title: "Contrato atualizado",
+description: "O contrato foi atualizado com sucesso.",
       })
       router.push("/institutions")
     },
@@ -127,7 +127,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
       const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao atualizar instituição",
+        title: "Erro ao atualizar contrato",
         description: errorMessage,
       })
     },
@@ -167,11 +167,11 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-            <CardTitle>{isEditing ? "Editar Instituição" : "Nova Instituição"}</CardTitle>
+            <CardTitle>{isEditing ? "Editar Contrato" : "Novo Contrato"}</CardTitle>
             <CardDescription>
             {isEditing
-                ? "Atualize as informações da instituição existente."
-                : "Preencha as informações para criar uma nova instituição."}
+                ? "Atualize as informações do contrato existente."
+                : "Preencha as informações para criar um novo contrato."}
             </CardDescription>
         </div>
         {isEditing && (

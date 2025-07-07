@@ -19,7 +19,7 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: "Instituições",
+    title: "Contratos",
     href: "/institutions",
     icon: Building,
   },

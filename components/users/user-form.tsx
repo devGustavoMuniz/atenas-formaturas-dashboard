@@ -49,7 +49,7 @@ const formatCurrency = (value: number | undefined): string => {
 
 const userFormSchema = z.object({
   institutionId: z.string({
-    required_error: "Selecione uma instituição.",
+    required_error: "Selecione um contrato.",
   }),
   name: z.string().min(2, {
     message: "Nome deve ter pelo menos 2 caracteres.",
@@ -390,7 +390,7 @@ export function UserForm({ userId }: UserFormProps) {
 
   const getInstitutionLabel = (id: string) => {
     const institution = institutions.find((inst) => inst.id === id)
-    return institution ? `${institution.contractNumber} - ${institution.name}` : "Selecione uma instituição"
+    return institution ? `${institution.contractNumber} - ${institution.name}` : "Selecione um contrato"
   }
 
   const handleImageCropped = (imageUrl: string | null, file: File | null) => {
@@ -447,7 +447,7 @@ export function UserForm({ userId }: UserFormProps) {
                   name="institutionId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Instituição</FormLabel>
+                      <FormLabel>Contrato</FormLabel>
                       <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -458,16 +458,16 @@ export function UserForm({ userId }: UserFormProps) {
                               className="justify-between w-full h-10"
                               type="button"
                             >
-                              {field.value ? getInstitutionLabel(field.value) : "Selecione uma instituição"}
+                              {field.value ? getInstitutionLabel(field.value) : "Selecione um contrato"}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-[400px] p-0">
                           <Command>
-                            <CommandInput placeholder="Buscar instituição..." />
+                            <CommandInput placeholder="Buscar contrato..." />
                             <CommandList>
-                              <CommandEmpty>Nenhuma instituição encontrada.</CommandEmpty>
+                              <CommandEmpty>Nenhum contrato encontrado.</CommandEmpty>
                               <CommandGroup className="max-h-[300px] overflow-y-auto">
                                 {institutions.map((institution) => (
                                   <CommandItem

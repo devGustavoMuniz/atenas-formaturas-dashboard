@@ -1,18 +1,19 @@
-import type { Metadata } from "next"
 import { InstitutionForm } from "@/components/institutions/institution-form"
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Editar Instituição",
-  description: "Editar instituição existente",
+  title: "Editar Contrato",
+  description: "Editar contrato existente",
 }
 
 export default function EditInstitutionPage({ params }: { params: { id: string } }) {
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-3xl font-bold tracking-tight">Editar Instituição</h2>
-      <div className="space-y-4">
-        <InstitutionForm institutionId={params.id} />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Editar Contrato</h2>
       </div>
+      <InstitutionForm institutionId={params.id} />
     </div>
   )
 }
+

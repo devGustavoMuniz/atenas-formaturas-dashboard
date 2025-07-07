@@ -102,7 +102,7 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
                             <AlertDialogHeader>
                               <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Esta ação irá desvincular o produto "{instProduct.product.name}" desta instituição.
+                                Esta ação irá desvincular o produto "{instProduct.product.name}" deste contrato.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

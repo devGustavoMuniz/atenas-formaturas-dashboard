@@ -54,7 +54,7 @@ export default function TermsPage() {
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">2. Descrição do Serviço</h2>
               <p className="text-sm text-muted-foreground">
-                Nossa plataforma oferece ferramentas para gerenciamento de usuários e instituições, permitindo o
+                Nossa plataforma oferece ferramentas para gerenciamento de usuários e contratos, permitindo o
                 cadastro, edição e exclusão de informações relacionadas.
               </p>
             </div>
