@@ -56,7 +56,7 @@ export default function LoginPage() {
             <p className="text-sm text-muted-foreground">Digite seu e-mail e senha para acessar o dashboard</p>
           </div>
           <LoginForm />
-          <p className="px-8 text-center text-sm text-muted-foreground">
+          <p className="px-4 text-center text-sm text-muted-foreground">
             Ao continuar, você concorda com nossos{" "}
             <Link href="/terms" className="underline underline-offset-4 hover:text-yellow-500">
               Termos de Serviço
