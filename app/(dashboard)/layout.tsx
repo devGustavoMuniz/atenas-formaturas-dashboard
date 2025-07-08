@@ -49,7 +49,7 @@ export default function DashboardLayout({
         <aside className={`fixed top-16 z-30 h-[calc(100vh-4rem)] w-full shrink-0 overflow-y-auto border-r md:sticky md:block ${isSidebarOpen ? 'block' : 'hidden'}`}>
           <DashboardNav closeSidebar={closeSidebar} />
         </aside>
-        <main className={`flex w-full flex-col overflow-hidden md:py-8 ${isSidebarOpen ? 'md:ml-[220px] lg:ml-[240px]' : ''}`}>{children}</main>
+        <main className={`flex w-full flex-col overflow-hidden py-4 md:py-8 ${isSidebarOpen ? 'md:ml-[220px] lg:ml-[240px]' : ''}`}>{children}</main>
       </div>
     </div>
   )
