@@ -56,7 +56,7 @@ interface Photo {
   createdAt: string;
 }
 
-interface EventGroup {
+export interface EventGroup {
   eventId: string;
   eventName: string;
   photos: Photo[];
