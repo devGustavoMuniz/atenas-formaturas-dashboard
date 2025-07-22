@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, Building, Package } from "lucide-react"
+import { useAuth } from "@/lib/auth/use-auth"
 
 interface NavItem {
   title: string
@@ -12,7 +13,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>
 }
 
-const navItems: NavItem[] = [
+const adminNavItems: NavItem[] = [
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -35,16 +36,32 @@ const navItems: NavItem[] = [
   },
 ]
 
+const clientNavItems: NavItem[] = [
+  {
+    title: "Dashboard",
+    href: "/client/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Produtos",
+    href: "/client/products",
+    icon: Package,
+  },
+]
+
 interface DashboardNavProps {
   closeSidebar?: () => void
 }
 
 export function DashboardNav({ closeSidebar }: DashboardNavProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
+
+  const currentNavItems = user?.role === "admin" ? adminNavItems : clientNavItems
 
   return (
     <nav className="grid items-start gap-2 p-4">
-      {navItems.map((item) => {
+      {currentNavItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
 
         return (

@@ -5,6 +5,7 @@ import type React from "react"
 import { createContext, useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { api } from "@/lib/api/axios-config"
+import { fetchUserById } from "@/lib/api/users-api"
 
 type User = {
   id: string
@@ -12,6 +13,7 @@ type User = {
   email: string
   role: string
   profileImage?: string
+  institutionId?: string
 }
 
 type AuthContextType = {
@@ -48,7 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
           const user = JSON.parse(storedUser)
-          setUser(user)
+          const fullUser = await fetchUserById(user.id)
+          setUser(fullUser)
         } catch (error) {
           localStorage.removeItem("token")
           localStorage.removeItem("refreshToken")
@@ -86,13 +89,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       localStorage.setItem("token", token)
       localStorage.setItem("refreshToken", refreshToken)
-      localStorage.setItem("user", JSON.stringify(user))
+      // Only store basic user info, full user data will be fetched
+      localStorage.setItem("user", JSON.stringify({ id: user.id, email: user.email, role: user.role }))
 
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-      setUser(user)
+      const fullUser = await fetchUserById(user.id)
+      setUser(fullUser)
 
-      return user
+      return fullUser
     } catch (error) {
       console.error("Erro no login (auth-provider):", error)
       throw error
