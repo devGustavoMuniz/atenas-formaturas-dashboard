@@ -1,4 +1,3 @@
-
 # Gemini Project Manual
 
 This document provides a guide for the Gemini AI to understand and interact with this project, ensuring that any generated code or modifications align with the established conventions and structure.
@@ -46,5 +45,6 @@ This document provides a guide for the Gemini AI to understand and interact with
   - Use `Zustand` for global UI state.
 - **Path Aliases:** The project uses the `@/*` alias to refer to the root directory. Always use this alias when importing modules from within the project (e.g., `import { Button } from '@/components/ui/button'`).
 - **API Requests:** Always use the `axios` instance configured in `lib/api/axios-config.ts` for making API calls. This ensures that the base URL and other defaults are applied consistently.
+- **Localization:** All user-facing text should be in Portuguese (pt-BR).
 
 By following these guidelines, Gemini can provide more accurate and consistent assistance.
