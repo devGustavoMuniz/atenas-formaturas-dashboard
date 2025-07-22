@@ -16,7 +16,7 @@ type User = {
 
 type AuthContextType = {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<User>
   logout: () => void
   isLoading: boolean
 }
@@ -70,7 +70,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!user && !isAuthRoute && !isPublicRoute && pathname !== "/") {
         router.push("/login")
       } else if (user && isAuthRoute) {
-        router.push("/dashboard")
+        if (user.role === "client") {
+          router.push("/client/dashboard")
+        } else {
+          router.push("/dashboard")
+        }
       }
     }
   }, [user, isLoading, pathname, router])

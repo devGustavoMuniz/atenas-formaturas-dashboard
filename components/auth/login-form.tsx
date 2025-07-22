@@ -56,8 +56,14 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      await login(data.email, data.password)
-      router.push("/dashboard")
+      const user = await login(data.email, data.password)
+      console.log("User object after login:", user);
+      console.log("User role:", user?.role);
+      if (user?.role === "client") {
+        router.push("/client/dashboard")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (error) {
       console.log("Erro no onSubmit do login:", error) // Debug
       const errorMessage = getErrorMessage(error)
