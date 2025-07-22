@@ -431,8 +431,8 @@ export function UserForm({ userId }: UserFormProps) {
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Tabs value={steps[currentStep]} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 pointer-events-none">
+          <Tabs value={steps[currentStep]} onValueChange={(value) => setCurrentStep(steps.indexOf(value))} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
               <TabsTrigger value="additional">Informações Adicionais</TabsTrigger>
               <TabsTrigger value="profile">Foto de Perfil</TabsTrigger>
@@ -547,7 +547,7 @@ export function UserForm({ userId }: UserFormProps) {
                       <FormLabel>Telefone</FormLabel>
                       <FormControl>
                         <IMaskInput
-                          mask="(00) 00000-0000"
+                          mask={["(00) 0000-0000", "(00) 00000-0000"]}
                           unmask={false}
                           value={field.value}
                           onAccept={(value) => field.onChange(value)}
@@ -666,7 +666,7 @@ export function UserForm({ userId }: UserFormProps) {
                       <FormLabel>Telefone do Pai</FormLabel>
                       <FormControl>
                         <IMaskInput
-                          mask="(00) 00000-0000"
+                          mask={["(00) 0000-0000", "(00) 00000-0000"]}
                           unmask={false}
                           value={field.value}
                           onAccept={(value) => field.onChange(value)}
@@ -701,7 +701,7 @@ export function UserForm({ userId }: UserFormProps) {
                       <FormLabel>Telefone da Mãe</FormLabel>
                       <FormControl>
                         <IMaskInput
-                          mask="(00) 00000-0000"
+                          mask={["(00) 0000-0000", "(00) 00000-0000"]}
                           unmask={false}
                           value={field.value}
                           onAccept={(value) => field.onChange(value)}
