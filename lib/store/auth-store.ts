@@ -1,12 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-
-type User = {
-  id: string
-  name: string
-  email: string
-  role: string
-}
+import type { User } from "@/lib/types"
 
 type AuthState = {
   user: User | null
@@ -29,7 +23,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({ token: state.token }),
+      partialize: (state) => ({ token: state.token, user: state.user }),
     },
   ),
 )

@@ -1,20 +1,12 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { api } from "@/lib/api/axios-config"
 import { fetchUserById } from "@/lib/api/users-api"
-
-type User = {
-  id: string
-  name: string
-  email: string
-  role: string
-  profileImage?: string
-  institutionId?: string
-}
+import { useAuthStore } from "@/lib/store/auth-store" // Importar o store
+import type { User } from "@/lib/types"
 
 type AuthContextType = {
   user: User | null
@@ -25,16 +17,21 @@ type AuthContextType = {
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: async () => {},
+  login: async () => {
+    throw new Error("Login function not implemented")
+  },
   logout: () => {},
   isLoading: true,
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(null) // Manter o estado local original
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
+
+  // Obter as ações do Zustand para sincronização
+  const { setUser: setZustandUser, setToken: setZustandToken, logout: logoutFromZustand } = useAuthStore()
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -51,17 +48,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           const user = JSON.parse(storedUser)
           const fullUser = await fetchUserById(user.id)
+          
+          // 1. Atualiza o estado local (lógica original)
           setUser(fullUser)
+          // 2. SINCRONIZA: Atualiza o Zustand Store
+          setZustandUser(fullUser)
+          setZustandToken(token)
+
         } catch (error) {
           localStorage.removeItem("token")
           localStorage.removeItem("refreshToken")
+          // 1. Limpa o estado local (lógica original)
           setUser(null)
+          // 2. SINCRONIZA: Limpa o Zustand Store
+          logoutFromZustand()
         }
       }
-
       setIsLoading(false)
     }
-
     checkAuth()
   }, [])
 
@@ -85,17 +89,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post("/v1/auth/login", { email, password })
-      const { token, refreshToken, user } = response.data
+      const { token, refreshToken, user: userData } = response.data
 
       localStorage.setItem("token", token)
       localStorage.setItem("refreshToken", refreshToken)
-      // Only store basic user info, full user data will be fetched
-      localStorage.setItem("user", JSON.stringify({ id: user.id, email: user.email, role: user.role }))
+      localStorage.setItem("user", JSON.stringify({ id: userData.id, email: userData.email, role: userData.role }))
 
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-      const fullUser = await fetchUserById(user.id)
+      const fullUser = await fetchUserById(userData.id)
+      
+      // 1. Atualiza o estado local (lógica original)
       setUser(fullUser)
+      // 2. SINCRONIZA: Atualiza o Zustand Store
+      setZustandUser(fullUser)
+      setZustandToken(token)
 
       return fullUser
     } catch (error) {
@@ -113,10 +121,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("token")
       localStorage.removeItem("refreshToken")
       localStorage.removeItem("user")
-
       delete api.defaults.headers.common["Authorization"]
 
+      // 1. Limpa o estado local (lógica original)
       setUser(null)
+      // 2. SINCRONIZA: Limpa o Zustand Store
+      logoutFromZustand()
 
       router.push("/login")
     }
@@ -124,3 +134,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>
 }
+

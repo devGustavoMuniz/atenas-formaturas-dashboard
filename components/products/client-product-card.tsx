@@ -27,7 +27,7 @@ export function ClientProductCard({ product }: ClientProductCardProps) {
         {product.description || "Sem descrição."}
       </p>
       <Button onClick={() => router.push(`/client/products/${product.id}`)} className="mt-auto">
-        Adquirir
+        Ver Detalhes
       </Button>
     </div>
   )
