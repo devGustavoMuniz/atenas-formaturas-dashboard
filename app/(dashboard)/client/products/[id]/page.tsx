@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { fetchProductById } from "@/lib/api/products-api"
 import { fetchInstitutionProducts, type InstitutionProduct } from "@/lib/api/institution-products-api"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { useProductSelectionStore } from "@/lib/store/product-selection-store"
 import type { Product } from "@/lib/types"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,7 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ProductDetailsPage() {
   const { id: productId } = useParams<{ id: string }>()
+  const router = useRouter()
   const user = useAuthStore((state) => state.user)
+  const setSelectedProduct = useProductSelectionStore((state) => state.setSelectedProduct)
 
   const [product, setProduct] = useState<Product | null>(null)
   const [institutionProduct, setInstitutionProduct] = useState<InstitutionProduct | null>(null)
@@ -60,6 +63,13 @@ export default function ProductDetailsPage() {
 
     fetchData()
   }, [productId, user])
+
+  const handleAcquireProduct = () => {
+    if (product && institutionProduct) {
+      setSelectedProduct(product, institutionProduct)
+      router.push(`/client/products/${productId}/select-photos`)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -195,7 +205,7 @@ export default function ProductDetailsPage() {
             {product.description || "Sem descrição detalhada."}
           </p>
 
-          <Button size="lg" className="mt-6 w-full">
+          <Button size="lg" className="mt-6 w-full" onClick={handleAcquireProduct}>
             Adquirir Produto
           </Button>
         </div>
