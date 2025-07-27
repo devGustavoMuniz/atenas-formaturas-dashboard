@@ -35,7 +35,15 @@ export default function SelectPhotosPage() {
       setIsLoading(true)
       try {
         const data = await fetchUserEventPhotos(user.id)
-        setEventGroups(data.eventGroups)
+
+        if (product?.flag === "GENERIC" && institutionProduct?.details?.events) {
+          const allowedEventIds = new Set(institutionProduct.details.events.map((e) => e.id))
+          const filteredEventGroups = data.eventGroups.filter((group) => allowedEventIds.has(group.eventId))
+          setEventGroups(filteredEventGroups)
+        } else {
+          setEventGroups(data.eventGroups)
+        }
+
         // Initialize all collapsible components to be open by default
         const initialOpenStates = data.eventGroups.reduce(
           (acc, group) => {

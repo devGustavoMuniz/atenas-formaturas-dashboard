@@ -48,3 +48,26 @@ This document provides a guide for the Gemini AI to understand and interact with
 - **Localization:** All user-facing text should be in Portuguese (pt-BR).
 
 By following these guidelines, Gemini can provide more accurate and consistent assistance.
+
+## 5. Tasks Completed (26 de julho de 2025)
+
+- **Funcionalidade de Seleção de Fotos:**
+  - Criado um store Zustand (`lib/store/product-selection-store.ts`) para gerenciar o estado do produto selecionado.
+  - Criado o componente `SelectableImageCard` (`components/products/selectable-image-card.tsx`) para exibir fotos com checkbox de seleção.
+  - Criada a página de seleção de fotos (`app/(dashboard)/client/products/[id]/select-photos/page.tsx`).
+  - Modificada a página de detalhes do produto para redirecionar para a página de seleção de fotos e passar os dados do produto via Zustand.
+  - Implementada a filtragem de eventos na página de seleção de fotos para produtos com a flag "GENERIC", exibindo apenas eventos configurados para venda.
+  - Corrigido erro de tipagem em `lib/api/institution-products-api.ts` definindo `InstitutionProductDetails`.
+  - Corrigida a lógica de filtragem de eventos para usar `e.id` em vez de `e.eventId`.
+  - Adicionada funcionalidade de colapsar/expandir seções de eventos usando `shadcn/ui`'s `Collapsible` component.
+  - Melhorado o ícone de colapsar para refletir o estado (aberto/fechado) da seção.
+  - Tornada toda a área do cabeçalho da seção de evento clicável para colapsar/expandir.
+  - Adicionado um efeito de hover à área clicável do cabeçalho.
+
+## 6. Próximas Tarefas
+
+- **Implementar Regras de Negócio para Seleção de Fotos:**
+  - Criar um componente de resumo da seleção (ex: `SelectionSummary.tsx`) para exibir informações em tempo real (número de fotos selecionadas, regras do produto, mensagens de status).
+  - Implementar a lógica de validação das regras do produto (`minPhoto`, `maxPhoto`, etc.) com base nas fotos selecionadas.
+  - Controlar o estado (habilitado/desabilitado) do botão "Próximo" com base na validação das regras.
+  - Detalhes específicos das regras para cada `flag` de produto serão fornecidos posteriormente.

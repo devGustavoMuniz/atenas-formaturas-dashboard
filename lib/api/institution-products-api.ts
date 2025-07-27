@@ -2,12 +2,27 @@ import { api } from "./axios-config"
 import type { Product } from "@/lib/types"
 import type { Institution } from "./institutions-api"
 
+// Detalhes para produtos do tipo GENERIC ou DIGITAL_FILES
+interface GenericEventDetail {
+  id: string
+  minPhotos?: number
+  valorPhoto?: number
+}
+
+// Estrutura completa para o campo 'details'
+export interface InstitutionProductDetails {
+  events?: GenericEventDetail[]
+  minPhoto?: number
+  maxPhoto?: number
+  valorEncadernacao?: number
+  valorFoto?: number
+}
+
 export type InstitutionProduct = {
   id: string
   product: Product
   institution: Institution
-  details: any;
-  // ... outros campos que você possa precisar
+  details: InstitutionProductDetails | null
 }
 
 /**
@@ -37,7 +52,10 @@ export async function unlinkProductFromInstitution(institutionProductId: string)
   await api.delete(`/v1/institution/products/${institutionProductId}`)
 }
 
-export async function updateInstitutionProductDetails(institutionProductId: string, details: any): Promise<void> {
+export async function updateInstitutionProductDetails(
+  institutionProductId: string,
+  details: InstitutionProductDetails
+): Promise<void> {
   // Assumindo um endpoint PATCH para atualizar os detalhes do vínculo
-  await api.patch(`/v1/institution/products/${institutionProductId}`, { details });
+  await api.patch(`/v1/institution/products/${institutionProductId}`, { details })
 }
