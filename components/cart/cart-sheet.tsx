@@ -7,6 +7,9 @@ import { formatCurrency } from "@/lib/utils"
 import { CartItemCard } from "@/components/cart/cart-item-card"
 import { ShoppingCart } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+
 const CartItemCardPlaceholder = ({ name }: { name: string }) => (
   <div className="flex justify-between items-center p-2 border-b">
     <span>{name}</span>
@@ -17,11 +20,18 @@ const CartItemCardPlaceholder = ({ name }: { name: string }) => (
 export function CartSheet() {
   const { items, clearCart } = useCartStore((state) => state)
   const itemCount = items.length
+  const router = useRouter()
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
 
+  const handleCheckout = () => {
+    router.push("/checkout")
+    setIsSheetOpen(false)
+  }
+
   return (
-    <Sheet>
+    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
@@ -60,7 +70,9 @@ export function CartSheet() {
               <Button variant="outline" className="w-full" onClick={clearCart}>
                 Limpar Carrinho
               </Button>
-              <Button className="w-full">Finalizar Compra</Button>
+              <Button className="w-full" onClick={handleCheckout}>
+                Finalizar Compra
+              </Button>
             </div>
           </div>
         )}
