@@ -7,8 +7,9 @@ export interface AlbumDetails {
 
 export interface EventConfiguration {
   id: string; // Este será o ID do evento do contrato
-  minPhotos?: number;
-  valorPhoto?: number;
+  name: string;
+  minPhotos: number;
+  valorPhoto: number;
   date?: string; // Incluído conforme a interface
   valorPack?: number;
 }

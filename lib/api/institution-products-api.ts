@@ -1,17 +1,10 @@
 import { api } from "./axios-config"
 import type { Product } from "@/lib/types"
 import type { Institution } from "./institutions-api"
+import { EventConfiguration } from "@/lib/product-details-types"
 
-// Detalhes para produtos do tipo GENERIC ou DIGITAL_FILES
-interface GenericEventDetail {
-  id: string
-  minPhotos?: number
-  valorPhoto?: number
-}
-
-// Estrutura completa para o campo 'details'
 export interface InstitutionProductDetails {
-  events?: GenericEventDetail[]
+  events?: EventConfiguration[]
   minPhoto?: number
   maxPhoto?: number
   valorEncadernacao?: number

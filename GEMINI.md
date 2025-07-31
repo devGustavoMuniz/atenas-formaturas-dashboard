@@ -64,10 +64,19 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Tornada toda a área do cabeçalho da seção de evento clicável para colapsar/expandir.
   - Adicionado um efeito de hover à área clicável do cabeçalho.
 
+## 5. Tasks Completed (29 de julho de 2025)
+
+- **Implementação das Regras de Negócio para a Flag 'GENERIC':**
+  - Atualizado o store Zustand (`lib/store/product-selection-store.ts`) para gerenciar o estado das fotos selecionadas.
+  - Criado o componente `SelectionSummary` (`components/products/selection-summary.tsx`) para exibir o resumo da seleção e as regras por evento.
+  - Modificada a página de seleção de fotos (`app/(dashboard)/client/products/[id]/select-photos/page.tsx`) para utilizar o `selectedPhotos` do store e integrar o `SelectionSummary`.
+  - Atualizado o componente `SelectableImageCard` (`components/products/selectable-image-card.tsx`) para passar o `photoId` na função de seleção.
+  - Adicionadas as funções `formatCurrency` e `formatNumber` em `lib/utils.ts`.
+  - Corrigidas as tipagens em `lib/api/institution-products-api.ts` e `lib/product-details-types.ts` para `minPhotos`, `valorPhoto` e `name` na interface `EventConfiguration`.
+  - Ajustada a lógica de validação do botão "Próximo" (`isNextButtonEnabled`) em `select-photos/page.tsx` para que a regra de `minPhotos` por evento só seja aplicada se houver pelo menos uma foto selecionada para aquele evento.
+  - Modificado o `SelectionSummary.tsx` para exibir os detalhes de um evento apenas se houver pelo menos uma foto selecionada para ele.
+
 ## 6. Próximas Tarefas
 
 - **Implementar Regras de Negócio para Seleção de Fotos:**
-  - Criar um componente de resumo da seleção (ex: `SelectionSummary.tsx`) para exibir informações em tempo real (número de fotos selecionadas, regras do produto, mensagens de status).
-  - Implementar a lógica de validação das regras do produto (`minPhoto`, `maxPhoto`, etc.) com base nas fotos selecionadas.
-  - Controlar o estado (habilitado/desabilitado) do botão "Próximo" com base na validação das regras.
   - Detalhes específicos das regras para cada `flag` de produto serão fornecidos posteriormente.

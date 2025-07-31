@@ -5,14 +5,16 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 
 interface SelectableImageCardProps {
+  photoId: string
   src: string
   alt: string
   isSelected: boolean
-  onSelectionChange: (isSelected: boolean) => void
+  onSelectionChange: (photoId: string, isSelected: boolean) => void
   className?: string
 }
 
 export function SelectableImageCard({
+  photoId,
   src,
   alt,
   isSelected,
@@ -20,12 +22,12 @@ export function SelectableImageCard({
   className,
 }: SelectableImageCardProps) {
   const handleCardClick = () => {
-    onSelectionChange(!isSelected)
+    onSelectionChange(photoId, !isSelected)
   }
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click from firing
-    onSelectionChange(!isSelected)
+    onSelectionChange(photoId, !isSelected)
   }
 
   return (

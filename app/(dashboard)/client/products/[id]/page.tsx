@@ -190,10 +190,10 @@ export default function ProductDetailsPage() {
                     {institutionProduct.details.valorFoto && renderDetail("valorFoto", institutionProduct.details.valorFoto, "Valor por Foto")}
                   </>
                 )}
-                {(product.flag === "GENERIC" || product.flag === "DIGITAL_FILES") && institutionProduct.details.events?.length > 0 && (
+                {(product.flag === "GENERIC" || product.flag === "DIGITAL_FILES") && institutionProduct.details.events && institutionProduct.details.events.length > 0 && (
                   <>
-                    {institutionProduct.details.events[0].minPhotos && renderDetail("minPhotos", institutionProduct.details.events[0].minPhotos, "Mínimo de Fotos")}
-                    {institutionProduct.details.events[0].valorPhoto && renderDetail("valorPhoto", institutionProduct.details.events[0].valorPhoto, "Valor por Foto")}
+                    {institutionProduct.details.events![0].minPhotos && renderDetail("minPhotos", institutionProduct.details.events![0].minPhotos, "Mínimo de Fotos")}
+                    {institutionProduct.details.events![0].valorPhoto && renderDetail("valorPhoto", institutionProduct.details.events![0].valorPhoto, "Valor por Foto")}
                   </>
                 )}
               </div>
