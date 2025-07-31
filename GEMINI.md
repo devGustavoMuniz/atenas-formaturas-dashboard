@@ -116,6 +116,15 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - **Correção de Bug:**
     - Corrigido o problema em que o painel do carrinho não abria ao ser clicado, refatorando a lógica do gatilho (`SheetTrigger`).
 
-## 9. Próximas Tarefas
+## 9. Tasks Completed (31 de julho de 2025) - Continuação
 
-- Implementar a funcionalidade do botão "Finalizar Compra".
+- **Implementação da Página de Checkout:**
+  - Criada a rota e a página de checkout em `app/(dashboard)/checkout/page.tsx`.
+  - A página exibe um resumo do pedido com os itens do carrinho e um formulário para o endereço de entrega.
+  - O botão "Finalizar Compra" no painel do carrinho agora redireciona para a página de checkout.
+  - Implementada a busca de endereço por CEP de forma desacoplada (`lib/api/cep-api.ts`) e integrada ao formulário de checkout.
+  - Corrigido um erro de renderização na página de checkout que ocorria quando um item do carrinho não possuía fotos selecionadas.
+
+## 10. Próximas Tarefas
+
+- Implementar a integração com um gateway de pagamento na página de checkout.
