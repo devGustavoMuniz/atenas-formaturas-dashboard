@@ -97,6 +97,25 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - O botão "Próximo" é habilitado apenas quando a contagem de fotos selecionadas está dentro do intervalo permitido.
   - O `SelectionSummary` foi atualizado para exibir as regras do álbum e calcular o custo total com base no `valorEncadernacao` e `valorFoto`.
 
-## 8. Próximas Tarefas
+## 8. Tasks Completed (31 de julho de 2025)
 
-- Todas as regras de negócio para as flags de produto (`GENERIC`, `DIGITAL_FILES`, `ALBUM`) foram implementadas. O sistema está pronto para a próxima fase de desenvolvimento ou para a implementação de novas features.
+- **Implementação da Funcionalidade de Carrinho de Compras:**
+  - **Arquitetura:**
+    - Criado um novo store Zustand (`lib/store/cart-store.ts`) para gerenciar o estado do carrinho.
+    - Definida a estrutura de dados para os itens do carrinho em `lib/cart-types.ts`.
+  - **Componentes de UI:**
+    - Criado o painel lateral do carrinho (`components/cart/cart-sheet.tsx`) usando `shadcn/ui` Sheet.
+    - Criado o card de item do carrinho (`components/cart/cart-item-card.tsx`) para exibir um resumo de cada produto.
+    - O ícone do carrinho com contador de itens foi integrado diretamente ao `CartSheet` e adicionado ao layout principal do dashboard.
+  - **Integração e Lógica de Preço:**
+    - O botão "Próximo" na página de seleção foi substituído por "Adicionar ao Carrinho".
+    - Implementada a função `handleAddToCart` que constrói o `CartItem` com base na seleção do usuário e o adiciona ao store.
+    - A lógica de cálculo de preço foi implementada para todos os tipos de produtos, incluindo a soma de subtotais por evento para os tipos `GENERIC` e `DIGITAL_FILES` (unitário).
+    - O resumo no `CartItemCard` foi atualizado para refletir corretamente as seleções.
+    - Após adicionar um item, a seleção atual é limpa e o usuário é notificado.
+  - **Correção de Bug:**
+    - Corrigido o problema em que o painel do carrinho não abria ao ser clicado, refatorando a lógica do gatilho (`SheetTrigger`).
+
+## 9. Próximas Tarefas
+
+- Implementar a funcionalidade do botão "Finalizar Compra".

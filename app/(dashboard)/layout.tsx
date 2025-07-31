@@ -5,6 +5,7 @@ import { useState } from "react"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { UserNav } from "@/components/dashboard/user-nav"
 import { MobileSidebar } from "@/components/dashboard/mobile-sidebar"
+import { CartSheet } from "@/components/cart/cart-sheet"
 
 export default function DashboardLayout({
   children,
@@ -41,6 +42,7 @@ export default function DashboardLayout({
             <h1 className="text-lg font-semibold">Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-2">
+            <CartSheet />
             <UserNav />
           </div>
         </div>

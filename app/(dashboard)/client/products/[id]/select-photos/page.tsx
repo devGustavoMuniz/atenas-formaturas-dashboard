@@ -14,8 +14,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { AlbumDetails, DigitalFilesDetails } from "@/lib/product-details-types"
+import { useCartStore } from "@/lib/store/cart-store"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/use-toast"
+import type { CartItem, CartItemSelection } from "@/lib/cart-types"
 
 export default function SelectPhotosPage() {
+  const { toast } = useToast()
+  const router = useRouter()
+  const { addToCart } = useCartStore()
   const {
     product,
     institutionProduct,
@@ -25,6 +32,7 @@ export default function SelectPhotosPage() {
     isPackageComplete,
     setSelectedEvent,
     setPackageComplete,
+    clearSelections,
   } = useProductSelectionStore((state) => state)
   const user = useAuthStore((state) => state.user)
   const [eventGroups, setEventGroups] = useState<EventGroup[]>([])
@@ -148,6 +156,81 @@ export default function SelectPhotosPage() {
     selectedPhotosCount,
   ])
 
+  const handleAddToCart = () => {
+    if (!product || !institutionProduct) return
+
+    let selection: CartItemSelection | null = null
+    let totalPrice = 0
+
+    const flag = product.flag
+    const details = institutionProduct.details
+
+    if (flag === "ALBUM") {
+      const albumDetails = details as AlbumDetails
+      const photoIds = Object.keys(selectedPhotos).filter((k) => selectedPhotos[k])
+      selection = { type: "ALBUM", selectedPhotos: photoIds }
+      totalPrice =
+        (albumDetails.valorEncadernacao ?? 0) + photoIds.length * (albumDetails.valorFoto ?? 0)
+    } else if (isDigitalFilesPackage) {
+      const digitalDetails = details as DigitalFilesDetails
+      const eventIds = Object.keys(selectedEvents).filter((k) => selectedEvents[k])
+      selection = {
+        type: "DIGITAL_FILES_PACKAGE",
+        selectedEvents: eventIds,
+        isPackageComplete,
+      }
+      if (isPackageComplete) {
+        totalPrice = digitalDetails.valorPackTotal ?? 0
+      } else {
+        totalPrice = digitalDetails.events?.reduce((total, event) => {
+          if (selectedEvents[event.id]) {
+            return total + (event.valorPack ?? 0)
+          }
+          return total
+        }, 0) ?? 0
+      }
+    } else if (flag === "GENERIC" || (flag === "DIGITAL_FILES" && !isDigitalFilesPackage)) {
+      const genericDetails = details as GenericDetails // Reutiliza a estrutura de GENERIC
+      const photosByEvent: Record<string, string[]> = {}
+
+      totalPrice = genericDetails.events.reduce((total, eventDetail) => {
+        const eventPhotos = eventGroups
+          .find((group) => group.eventId === eventDetail.id)
+          ?.photos.filter((photo) => selectedPhotos[photo.id])
+
+        const selectedCount = eventPhotos?.length ?? 0
+        if (selectedCount > 0) {
+          photosByEvent[eventDetail.id] = eventPhotos!.map((p) => p.id)
+          return total + selectedCount * eventDetail.valorPhoto
+        }
+        return total
+      }, 0)
+
+      selection = {
+        type: flag === "GENERIC" ? "GENERIC" : "DIGITAL_FILES_UNIT",
+        selectedPhotos: photosByEvent,
+      }
+    }
+
+    if (!selection) {
+      console.error("Não foi possível determinar o tipo de seleção para o carrinho.")
+      return
+    }
+
+    const cartItem: CartItem = {
+      id: `${product.id}-${new Date().getTime()}`,
+      product,
+      institutionProduct,
+      selection,
+      totalPrice,
+    }
+
+    addToCart(cartItem)
+    toast({ title: "Produto adicionado!", description: `${product.name} foi adicionado ao seu carrinho.` })
+    clearSelections()
+    router.push("/client/products")
+  }
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -261,8 +344,8 @@ export default function SelectPhotosPage() {
       </div>
 
       <div className="mt-8 flex justify-end">
-        <Button size="lg" disabled={!isNextButtonEnabled}>
-          Próximo
+        <Button size="lg" disabled={!isNextButtonEnabled} onClick={handleAddToCart}>
+          Adicionar ao Carrinho
         </Button>
       </div>
     </div>
