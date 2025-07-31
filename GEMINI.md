@@ -64,7 +64,7 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Tornada toda a área do cabeçalho da seção de evento clicável para colapsar/expandir.
   - Adicionado um efeito de hover à área clicável do cabeçalho.
 
-## 5. Tasks Completed (29 de julho de 2025)
+## 6. Tasks Completed (29 de julho de 2025)
 
 - **Implementação das Regras de Negócio para a Flag 'GENERIC':**
   - Atualizado o store Zustand (`lib/store/product-selection-store.ts`) para gerenciar o estado das fotos selecionadas.
@@ -76,7 +76,27 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Ajustada a lógica de validação do botão "Próximo" (`isNextButtonEnabled`) em `select-photos/page.tsx` para que a regra de `minPhotos` por evento só seja aplicada se houver pelo menos uma foto selecionada para aquele evento.
   - Modificado o `SelectionSummary.tsx` para exibir os detalhes de um evento apenas se houver pelo menos uma foto selecionada para ele.
 
-## 6. Próximas Tarefas
+## 7. Tasks Completed (30 de julho de 2025)
 
-- **Implementar Regras de Negócio para Seleção de Fotos:**
-  - Detalhes específicos das regras para cada `flag` de produto serão fornecidos posteriormente.
+- **Implementação das Regras de Negócio para a Flag 'DIGITAL_FILES':**
+  - **Modo Pacote (`isAvailableUnit: false`):**
+    - Atualizado o store Zustand para gerenciar a seleção de pacotes de eventos (`selectedEvents`, `isPackageComplete`).
+    - A página de seleção agora exibe checkboxes para comprar pacotes de eventos individuais ou o pacote completo.
+    - As fotos são exibidas para visualização, mas a seleção individual é desabilitada.
+    - O `SelectionSummary` foi adaptado para calcular e exibir o valor total com base nos pacotes selecionados (`valorPack` e `valorPackTotal`).
+    - O botão "Próximo" só é habilitado quando pelo menos um pacote (individual ou completo) é selecionado.
+  - **Modo de Seleção Individual (`isAvailableUnit: true`):**
+    - O comportamento foi alinhado para ser idêntico ao da flag `GENERIC`.
+    - A página de seleção e o resumo agora aplicam as regras de `minPhotos` e `valorPhoto` por evento.
+  - **Refinamentos de UI/UX:**
+    - O título "Regras por Evento:" no resumo agora só aparece quando pelo menos uma foto é selecionada.
+    - Re-adicionado um `console.log` para fins de depuração, conforme solicitado.
+
+- **Implementação das Regras de Negócio para a Flag 'ALBUM':**
+  - Atualizada a página de seleção para impor os limites de `minPhoto` e `maxPhoto`.
+  - O botão "Próximo" é habilitado apenas quando a contagem de fotos selecionadas está dentro do intervalo permitido.
+  - O `SelectionSummary` foi atualizado para exibir as regras do álbum e calcular o custo total com base no `valorEncadernacao` e `valorFoto`.
+
+## 8. Próximas Tarefas
+
+- Todas as regras de negócio para as flags de produto (`GENERIC`, `DIGITAL_FILES`, `ALBUM`) foram implementadas. O sistema está pronto para a próxima fase de desenvolvimento ou para a implementação de novas features.

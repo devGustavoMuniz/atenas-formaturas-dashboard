@@ -11,14 +11,30 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { AlbumDetails, DigitalFilesDetails } from "@/lib/product-details-types"
 
 export default function SelectPhotosPage() {
-  const { product, institutionProduct, selectedPhotos, setSelectedPhoto } = useProductSelectionStore((state) => state)
+  const {
+    product,
+    institutionProduct,
+    selectedPhotos,
+    setSelectedPhoto,
+    selectedEvents,
+    isPackageComplete,
+    setSelectedEvent,
+    setPackageComplete,
+  } = useProductSelectionStore((state) => state)
   const user = useAuthStore((state) => state.user)
   const [eventGroups, setEventGroups] = useState<EventGroup[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
+
+  const isDigitalFilesPackage =
+    product?.flag === "DIGITAL_FILES" &&
+    (institutionProduct?.details as DigitalFilesDetails)?.isAvailableUnit === false
 
   useEffect(() => {
     if (product && institutionProduct) {
@@ -31,21 +47,22 @@ export default function SelectPhotosPage() {
       return
     }
 
-    const loadPhotos = async () => {
+    const loadData = async () => {
       setIsLoading(true)
       try {
         const data = await fetchUserEventPhotos(user.id)
+        let filteredEventGroups = data.eventGroups
 
-        if (product?.flag === "GENERIC" && institutionProduct?.details?.events) {
-          const allowedEventIds = new Set(institutionProduct.details.events.map((e) => e.id))
-          const filteredEventGroups = data.eventGroups.filter((group) => allowedEventIds.has(group.eventId))
-          setEventGroups(filteredEventGroups)
-        } else {
-          setEventGroups(data.eventGroups)
+        const details = institutionProduct?.details
+
+        if (details?.events) {
+          const allowedEventIds = new Set(details.events.map((e) => e.id))
+          filteredEventGroups = data.eventGroups.filter((group) => allowedEventIds.has(group.eventId))
         }
 
-        // Initialize all collapsible components to be open by default
-        const initialOpenStates = data.eventGroups.reduce(
+        setEventGroups(filteredEventGroups)
+
+        const initialOpenStates = filteredEventGroups.reduce(
           (acc, group) => {
             acc[group.eventId] = true
             return acc
@@ -54,17 +71,28 @@ export default function SelectPhotosPage() {
         )
         setOpenStates(initialOpenStates)
       } catch (err) {
-        console.error("Falha ao carregar as fotos do usuário:", err)
-        setError("Falha ao carregar as fotos do usuário.")
+        console.error("Falha ao carregar dados:", err)
+        setError("Falha ao carregar os dados necessários.")
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadPhotos()
+    loadData()
   }, [product, institutionProduct, user])
 
   const handlePhotoSelection = (photoId: string, isSelected: boolean) => {
+    if (product?.flag === "ALBUM" && isSelected) {
+      const details = institutionProduct?.details as AlbumDetails
+      const maxPhotos = details?.maxPhoto ?? Infinity
+      const selectedCount = Object.values(selectedPhotos).filter(Boolean).length
+
+      if (selectedCount >= maxPhotos) {
+        // Opcional: Adicionar um toast/alerta para o usuário
+        console.warn(`Você não pode selecionar mais de ${maxPhotos} fotos.`)
+        return
+      }
+    }
     setSelectedPhoto(photoId, isSelected)
   }
 
@@ -80,25 +108,45 @@ export default function SelectPhotosPage() {
   }, [selectedPhotos])
 
   const isNextButtonEnabled = useMemo(() => {
-    if (product?.flag === "GENERIC" && institutionProduct?.details?.events) {
-      const allEventsValid = institutionProduct.details.events.every((eventDetail) => {
+    if (isDigitalFilesPackage) {
+      const hasSelectedEvents = Object.values(selectedEvents).some((isSelected) => isSelected)
+      return isPackageComplete || hasSelectedEvents
+    }
+
+    if (product?.flag === "ALBUM") {
+      const details = institutionProduct?.details as AlbumDetails
+      const min = details?.minPhoto ?? 0
+      const max = details?.maxPhoto ?? Infinity
+      const count = selectedPhotosCount
+      return count >= min && count <= max
+    }
+
+    if (
+      (product?.flag === "GENERIC" || (product?.flag === "DIGITAL_FILES" && !isDigitalFilesPackage)) &&
+      institutionProduct?.details?.events
+    ) {
+      return institutionProduct.details.events.every((eventDetail) => {
         const photosForEvent = eventGroups
           .find((group) => group.eventId === eventDetail.id)
           ?.photos.filter((photo) => selectedPhotos[photo.id])
 
-        // If no photos are selected for this event, the rule doesn't apply
         if (!photosForEvent || photosForEvent.length === 0) {
           return true
         }
-
-        // If photos are selected, then the minPhotos rule must be met
         return photosForEvent.length >= eventDetail.minPhotos
       })
-      return allEventsValid
     }
-    // Default to true if no specific rules or product flag is not GENERIC
     return true
-  }, [product, institutionProduct, selectedPhotos, eventGroups])
+  }, [
+    product,
+    institutionProduct,
+    selectedPhotos,
+    eventGroups,
+    isDigitalFilesPackage,
+    isPackageComplete,
+    selectedEvents,
+    selectedPhotosCount,
+  ])
 
   if (isLoading) {
     return (
@@ -121,8 +169,32 @@ export default function SelectPhotosPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">{product?.name}</h1>
-        <p className="text-muted-foreground">Selecione as fotos que deseja incluir no seu produto.</p>
+        <p className="text-muted-foreground">
+          {isDigitalFilesPackage
+            ? "Selecione os pacotes de eventos que deseja adquirir."
+            : "Selecione as fotos que deseja incluir no seu produto."}
+        </p>
       </div>
+
+      {isDigitalFilesPackage && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Comprar Pacote Completo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="complete-package"
+                checked={isPackageComplete}
+                onCheckedChange={(checked) => setPackageComplete(Boolean(checked))}
+              />
+              <Label htmlFor="complete-package" className="font-bold">
+                Adquirir todos os eventos em um único pacote.
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
@@ -133,20 +205,35 @@ export default function SelectPhotosPage() {
               onOpenChange={() => toggleCollapsible(group.eventId)}
             >
               <Card>
-                <CollapsibleTrigger asChild>
-                  <div className="flex w-full cursor-pointer items-center justify-between rounded-t-lg transition-colors hover:bg-muted/50">
-                    <CardHeader>
-                      <CardTitle>{group.eventName}</CardTitle>
-                    </CardHeader>
-                    <div className="pr-4">
-                      {openStates[group.eventId] ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
+                <div className="flex w-full items-center justify-between rounded-t-lg transition-colors hover:bg-muted/50">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex flex-grow cursor-pointer items-center">
+                      <CardHeader>
+                        <CardTitle>{group.eventName}</CardTitle>
+                      </CardHeader>
+                      <div className="pr-4">
+                        {openStates[group.eventId] ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CollapsibleTrigger>
+                  </CollapsibleTrigger>
+                  {isDigitalFilesPackage && (
+                    <div className="flex items-center space-x-2 pr-4">
+                      <Checkbox
+                        id={`event-${group.eventId}`}
+                        checked={!!selectedEvents[group.eventId]}
+                        onCheckedChange={(checked) =>
+                          setSelectedEvent(group.eventId, Boolean(checked))
+                        }
+                        disabled={isPackageComplete}
+                      />
+                      <Label htmlFor={`event-${group.eventId}`}>Comprar este pacote</Label>
+                    </div>
+                  )}
+                </div>
                 <CollapsibleContent>
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
@@ -158,6 +245,7 @@ export default function SelectPhotosPage() {
                           alt={`Foto do evento ${group.eventName}`}
                           isSelected={!!selectedPhotos[photo.id]}
                           onSelectionChange={handlePhotoSelection}
+                          selectionEnabled={!isDigitalFilesPackage}
                         />
                       ))}
                     </div>
@@ -173,7 +261,9 @@ export default function SelectPhotosPage() {
       </div>
 
       <div className="mt-8 flex justify-end">
-        <Button size="lg" disabled={!isNextButtonEnabled}>Próximo</Button>
+        <Button size="lg" disabled={!isNextButtonEnabled}>
+          Próximo
+        </Button>
       </div>
     </div>
   )
