@@ -15,11 +15,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCartStore } from "@/lib/store/cart-store"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { formatCurrency } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { getAddressByCEP } from "@/lib/api/cep-api"
+import { createPaymentPreference } from "@/lib/api/mercado-pago-api";
 import { Loader2 } from "lucide-react"
 
 const addressFormSchema = z.object({
@@ -30,12 +32,15 @@ const addressFormSchema = z.object({
   neighborhood: z.string().min(1, "Bairro é obrigatório"),
   city: z.string().min(1, "Cidade é obrigatória"),
   state: z.string().min(2, "Estado é obrigatório").max(2, "UF inválida"),
+  areaCode: z.string().min(2, "DDD inválido").max(2, "DDD inválido"),
+  phone: z.string().min(8, "Telefone inválido").max(9, "Telefone inválido"),
 })
 
 type AddressFormValues = z.infer<typeof addressFormSchema>
 
 export default function CheckoutPage() {
   const { items } = useCartStore()
+  const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
   const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
   const total = subtotal // TODO: Adicionar lógica de frete
@@ -81,13 +86,56 @@ export default function CheckoutPage() {
     fetchAddress()
   }, [zipCodeValue, form])
 
-  const onSubmit = (data: AddressFormValues) => {
-    console.log("Dados do Endereço:", data)
-    console.log("Itens do Carrinho:", items)
-    toast.success("Pedido realizado com sucesso! (Simulação)")
-    // Aqui viria a lógica para enviar o pedido para o backend
-    // clearCart() // Opcional: limpar o carrinho após o sucesso
-  }
+  const [isCreatingPreference, setIsCreatingPreference] = useState(false)
+
+  const onSubmit = async (data: AddressFormValues) => {
+    if (!user) {
+      toast.error("Você precisa estar logado para continuar.");
+      return;
+    }
+
+    setIsCreatingPreference(true);
+
+    const nameParts = user.name.split(' ');
+    const firstName = nameParts.shift() || '';
+    const lastName = nameParts.join(' ');
+
+    const payload = {
+      items: items.map(item => ({
+        id: item.id,
+        title: item.product.name,
+        description: `Seleção de ${item.product.name}`, // ou outra descrição
+        quantity: 1,
+        unit_price: item.totalPrice,
+      })),
+      payer: {
+        name: firstName,
+        surname: lastName,
+        email: user.email,
+        phone: {
+          area_code: data.areaCode,
+          number: data.phone,
+        },
+        address: {
+          street_name: data.street,
+          street_number: data.number,
+          zip_code: data.zipCode,
+        },
+      },
+    };
+
+    try {
+      const { checkoutUrl } = await createPaymentPreference(payload);
+      window.location.href = checkoutUrl;
+
+    } catch (error) {
+      console.error(error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+      toast.error(`Erro ao iniciar pagamento: ${errorMessage}`);
+      setIsCreatingPreference(false);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -203,6 +251,34 @@ export default function CheckoutPage() {
                       )}
                     />
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="areaCode"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-1">
+                                <FormLabel>DDD</FormLabel>
+                                <FormControl>
+                                    <Input maxLength={2} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                                <FormLabel>Telefone</FormLabel>
+                                <FormControl>
+                                    <Input maxLength={9} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -219,11 +295,12 @@ export default function CheckoutPage() {
                 items.map(item => (
                   <div key={item.id} className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold">{item.productName}</p>
+                      <p className="font-semibold">{item.product.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {item.type === 'ALBUM' && item.selectedPhotos ? `${item.selectedPhotos.length} fotos` :
-                         item.type === 'DIGITAL_FILES' && !item.isAvailableUnit && item.selectedEvents ? `${item.selectedEvents.length} evento(s)` :
-                         item.selectedPhotos ? `${item.selectedPhotos.length} foto(s)` : ''}
+                        {item.selection.type === 'ALBUM' && `${item.selection.selectedPhotos.length} fotos`}
+                        {item.selection.type === 'GENERIC' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
+                        {item.selection.type === 'DIGITAL_FILES_UNIT' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
+                        {item.selection.type === 'DIGITAL_FILES_PACKAGE' && (item.selection.isPackageComplete ? 'Pacote Completo' : `${item.selection.selectedEvents.length} evento(s)`)}
                       </p>
                     </div>
                     <p className="font-medium">{formatCurrency(item.totalPrice)}</p>
@@ -249,8 +326,11 @@ export default function CheckoutPage() {
               <Button 
                 onClick={form.handleSubmit(onSubmit)} 
                 className="w-full mt-4"
-                disabled={items.length === 0}
+                disabled={items.length === 0 || isCreatingPreference}
               >
+                {isCreatingPreference ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 Confirmar e Pagar
               </Button>
             </CardContent>

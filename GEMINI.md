@@ -125,6 +125,26 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Implementada a busca de endereço por CEP de forma desacoplada (`lib/api/cep-api.ts`) e integrada ao formulário de checkout.
   - Corrigido um erro de renderização na página de checkout que ocorria quando um item do carrinho não possuía fotos selecionadas.
 
-## 10. Próximas Tarefas
+## 10. Tasks Completed (31 de julho de 2025) - Parte 2
 
-- Implementar a integração com um gateway de pagamento na página de checkout.
+- **Refatoração da Integração de Pagamento (Frontend-Only):**
+  - Alinhada a arquitetura do projeto para ser exclusivamente frontend, com a lógica de backend (como a integração com o Mercado Pago) sendo responsabilidade de um serviço externo (NestJS).
+  - Criado o arquivo `mercado-pago.md` na raiz do projeto com a especificação técnica do endpoint `POST /api/create-preference` para a equipe de backend.
+  - Removido o diretório `app/api` que continha uma implementação de rota de API no Next.js.
+  - Removida a dependência do SDK do Mercado Pago (`mercadopago`) do `package.json`.
+  - Refatorada a página de checkout (`app/(dashboard)/checkout/page.tsx`) e criada a função `createPaymentPreference` em `lib/api/mercado-pago-api.ts` para preparar a chamada ao endpoint de backend.
+  - As páginas de retorno de pagamento (`success`, `failure`, `pending`) foram mantidas, pois são rotas de frontend.
+
+## 11. Tasks Completed (3 de agosto de 2025)
+
+- **Integração do Pagamento com Backend:**
+  - Atualizada a URL da API de pagamento em `lib/api/mercado-pago-api.ts` para o endpoint de produção `/v1/mercado-pago/create-preference`.
+  - Ativada a chamada real para a API de criação de preferência de pagamento na página de checkout, redirecionando o usuário para a URL do Mercado Pago.
+- **Dinamização dos Dados do Checkout:**
+  - Adicionados campos de "DDD" e "Telefone" ao formulário de checkout e ao schema de validação Zod.
+  - O payload de pagamento agora é preenchido dinamicamente com os dados do usuário logado (nome, sobrenome, e-mail) obtidos do `auth-store`.
+  - Implementada a lógica para dividir o nome completo do usuário em nome e sobrenome, conforme exigido pela API de pagamento.
+
+## 12. Próximas Tarefas
+
+- Testar o fluxo de pagamento de ponta a ponta em ambiente de sandbox.
