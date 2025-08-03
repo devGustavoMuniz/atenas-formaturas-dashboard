@@ -144,7 +144,31 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Adicionados campos de "DDD" e "Telefone" ao formulário de checkout e ao schema de validação Zod.
   - O payload de pagamento agora é preenchido dinamicamente com os dados do usuário logado (nome, sobrenome, e-mail) obtidos do `auth-store`.
   - Implementada a lógica para dividir o nome completo do usuário em nome e sobrenome, conforme exigido pela API de pagamento.
+- **Teste de Pagamento:**
+  - Testado o fluxo de pagamento de ponta a ponta em ambiente de sandbox, com sucesso no redirecionamento e envio de dados.
 
-## 12. Próximas Tarefas
+## 12. Tasks Completed (4 de agosto de 2025)
 
-- Testar o fluxo de pagamento de ponta a ponta em ambiente de sandbox.
+- **Planejamento da Funcionalidade de Pedidos:**
+  - Definido o fluxo para salvar o pedido no backend antes de criar a preferência de pagamento.
+  - Criado o arquivo `backend-orders-api.md` com a especificação técnica (tabelas, payload, endpoint) para a equipe de backend.
+- **Implementação da Tela de Admin - Pedidos:**
+  - Criada a página de gerenciamento de pedidos em `app/(dashboard)/orders/page.tsx`.
+  - Adicionado o link "Pedidos" à navegação do administrador.
+  - Criada a função `getOrders` em `lib/api/orders-api.ts` com dados mocados para desenvolvimento da UI.
+  - Implementada a exibição dos pedidos em uma tabela com `TanStack React Query`.
+  - Adicionado o componente `OrderTableToolbar` com filtro por status de pagamento.
+- **Ajustes de UI/UX:**
+  - Corrigida a cor do badge de status "Aprovado" para verde.
+  - Reordenado o item "Pedidos" no menu de navegação do administrador.
+  - Ocultado o ícone do carrinho de compras para usuários administradores.
+
+## 13. Próximas Tarefas
+
+- **Aguardando Backend:**
+  - Aguardando a implementação do endpoint `POST /v1/orders` e do webhook de status de pagamento pela equipe de backend.
+- **Frontend (Após conclusão do backend):**
+  - Substituir os dados mocados na função `getOrders` pela chamada real à API.
+  - Modificar a página de checkout para chamar o endpoint `POST /v1/orders` antes do redirecionamento.
+  - Implementar a limpeza do carrinho de compras após o início do pagamento.
+  - Criar a página "Meus Pedidos" para o cliente, exibindo o histórico e o status dos pedidos.

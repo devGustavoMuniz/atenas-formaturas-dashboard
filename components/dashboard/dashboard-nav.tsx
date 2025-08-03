@@ -4,7 +4,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, Building, Package } from "lucide-react"
+import {
+  LayoutDashboard,
+  Users,
+  Building,
+  Package,
+  ShoppingCart,
+} from "lucide-react"
 import { useAuth } from "@/lib/auth/use-auth"
 
 interface NavItem {
@@ -28,6 +34,11 @@ const adminNavItems: NavItem[] = [
     title: "Usuários",
     href: "/users",
     icon: Users,
+  },
+  {
+    title: "Pedidos",
+    href: "/orders",
+    icon: ShoppingCart,
   },
   {
     title: "Produtos",

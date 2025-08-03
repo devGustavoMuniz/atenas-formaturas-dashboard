@@ -6,6 +6,7 @@ import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { UserNav } from "@/components/dashboard/user-nav"
 import { MobileSidebar } from "@/components/dashboard/mobile-sidebar"
 import { CartSheet } from "@/components/cart/cart-sheet"
+import { useAuth } from "@/lib/auth/use-auth"
 
 export default function DashboardLayout({
   children,
@@ -13,6 +14,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { user } = useAuth()
 
   const closeSidebar = () => {
     setIsSidebarOpen(false)
@@ -42,7 +44,7 @@ export default function DashboardLayout({
             <h1 className="text-lg font-semibold">Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-2">
-            <CartSheet />
+            {user?.role === 'client' && <CartSheet />}
             <UserNav />
           </div>
         </div>
