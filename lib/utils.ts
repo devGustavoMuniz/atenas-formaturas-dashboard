@@ -19,5 +19,8 @@ export function formatCurrency(value: number) {
 }
 
 export function formatNumber(value: number) {
-  return new Intl.NumberFormat("pt-BR").format(value)
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
 }

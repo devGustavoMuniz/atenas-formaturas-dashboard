@@ -163,10 +163,33 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Reordenado o item "Pedidos" no menu de navegação do administrador.
   - Ocultado o ícone do carrinho de compras para usuários administradores.
 
-## 13. Próximas Tarefas
+## 13. Tasks Completed (5 de agosto de 2025)
+
+- **Configuração do Ambiente de Testes (Jest e React Testing Library):**
+  - Instaladas as dependências de desenvolvimento (`jest`, `@testing-library/react`, `@testing-library/jest-dom`, `jest-environment-jsdom`, `ts-jest`, `@types/jest`).
+  - Criado e configurado o arquivo `jest.config.mjs` para o Jest.
+  - Criado o arquivo `jest.setup.mjs` para setup do ambiente de testes.
+  - Adicionado o script `test` ao `package.json`.
+  - Corrigido erro de `SyntaxError: Invalid or unexpected token` renomeando `jest.setup.js` para `jest.setup.mjs` e ajustando a configuração do `jest.config.mjs`.
+  - Corrigido erro de `Property 'toHaveClass' does not exist on type 'JestMatchers<ChildNode | null>'` adicionando `"types": ["@testing-library/jest-dom"]` ao `tsconfig.json`.
+- **Implementação de Testes Unitários:**
+  - Criado `lib/utils.test.ts`.
+  - Testes implementados para `formatCurrency` (todos passando).
+  - Testes implementados para `formatNumber` (todos passando após ajuste na implementação da função para arredondar).
+- **Implementação de Testes de Componentes:**
+  - Criado `components/ui/badge.test.tsx`.
+  - Testes implementados para o componente `Badge` (todos passando, incluindo a variante `success` customizada).
+  - Criado `components/products/selection-summary.test.tsx`.
+
+## 14. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do endpoint `POST /v1/orders` e do webhook de status de pagamento pela equipe de backend.
+- **Frontend (Testes):**
+  - Corrigir o erro `SyntaxError: Invalid or unexpected token` que ainda impede a execução dos testes do `SelectionSummary`.
+  - Finalizar a implementação e garantir que os testes do `SelectionSummary` passem.
+  - Implementar testes para o componente `OrderTableToolbar`.
+  - Implementar testes de integração para a página `OrdersPage`.
 - **Frontend (Após conclusão do backend):**
   - Substituir os dados mocados na função `getOrders` pela chamada real à API.
   - Modificar a página de checkout para chamar o endpoint `POST /v1/orders` antes do redirecionamento.
