@@ -17,14 +17,14 @@ export function OrderTableToolbar() {
       params.set('paymentStatus', status)
     }
     params.set('page', '1') // Reset to first page when filter changes
-    router.push(`?${params.toString()}`)
+    router.push(`/orders?${params.toString()}`)
   }
 
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams)
     params.delete('paymentStatus')
     params.set('page', '1')
-    router.push(`?${params.toString()}`)
+    router.push(`/orders?${params.toString()}`)
   }
 
   return (
