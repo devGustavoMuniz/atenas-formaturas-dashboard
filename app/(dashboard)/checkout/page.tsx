@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { getAddressByCEP } from "@/lib/api/cep-api"
 import { createPaymentPreference } from "@/lib/api/mercado-pago-api";
+import { createOrder, CreateOrderPayload } from "@/lib/api/orders-api";
 import { Loader2 } from "lucide-react"
 
 const addressFormSchema = z.object({
@@ -39,7 +40,7 @@ const addressFormSchema = z.object({
 type AddressFormValues = z.infer<typeof addressFormSchema>
 
 export default function CheckoutPage() {
-  const { items } = useCartStore()
+  const { items, clearCart } = useCartStore()
   const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
   const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
@@ -100,39 +101,83 @@ export default function CheckoutPage() {
     const firstName = nameParts.shift() || '';
     const lastName = nameParts.join(' ');
 
-    const payload = {
-      items: items.map(item => ({
-        id: item.id,
-        title: item.product.name,
-        description: `Seleção de ${item.product.name}`, // ou outra descrição
-        quantity: 1,
-        unit_price: item.totalPrice,
-      })),
+    const orderPayload: CreateOrderPayload = {
+      cartItems: items.map(item => {
+        let productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM';
+        if (item.product.flag === 'GENERIC') {
+          productType = 'GENERIC';
+        } else if (item.product.flag === 'DIGITAL_FILES') {
+          productType = 'DIGITAL_FILES';
+        } else if (item.product.flag === 'ALBUM') {
+          productType = 'ALBUM';
+        } else {
+          // Fallback ou tratamento de erro para tipos desconhecidos
+          productType = 'GENERIC';
+        }
+
+        let selectionDetails: any = {};
+        if (item.selection.type === 'GENERIC' || item.selection.type === 'DIGITAL_FILES_UNIT') {
+          selectionDetails.photos = Object.entries(item.selection.selectedPhotos).flatMap(([eventId, photoIds]) =>
+            photoIds.map(photoId => ({
+              id: photoId,
+              eventId: eventId,
+            }))
+          );
+        } else if (item.selection.type === 'DIGITAL_FILES_PACKAGE') {
+          selectionDetails.events = item.selection.selectedEvents.map(event => ({
+            id: event,
+            isPackage: true,
+          }));
+          selectionDetails.isFullPackage = item.selection.isPackageComplete;
+        } else if (item.selection.type === 'ALBUM') {
+          selectionDetails.albumPhotos = item.selection.selectedPhotos;
+        }
+
+        return {
+          productId: item.product.id,
+          productName: item.product.name,
+          productType: productType,
+          totalPrice: item.totalPrice,
+          selectionDetails: selectionDetails,
+        };
+      }),
+      shippingDetails: {
+        zipCode: data.zipCode,
+        street: data.street,
+        number: data.number,
+        complement: data.complement,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+      },
       payer: {
-        name: firstName,
-        surname: lastName,
+        firstName: firstName,
+        lastName: lastName,
         email: user.email,
         phone: {
-          area_code: data.areaCode,
+          areaCode: data.areaCode,
           number: data.phone,
-        },
-        address: {
-          street_name: data.street,
-          street_number: data.number,
-          zip_code: data.zipCode,
         },
       },
     };
 
     try {
-      const { checkoutUrl } = await createPaymentPreference(payload);
-      window.location.href = checkoutUrl;
+      // 1. Criar o pedido no backend
+      const { orderId, mercadoPagoCheckoutUrl } = await createOrder(orderPayload);
+
+      // 2. Criar a preferência de pagamento com o ID do pedido (Mercado Pago)
+      // O backend agora é responsável por criar a preferência de pagamento e retornar a URL
+      // Não precisamos mais construir o payload do Mercado Pago aqui, apenas usar o que o backend retornou.
+
+      // 3. Limpar o carrinho e redirecionar para o Mercado Pago
+      clearCart();
+      window.location.href = mercadoPagoCheckoutUrl;
 
     } catch (error) {
       console.error(error);
       const errorMessage =
         error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
-      toast.error(`Erro ao iniciar pagamento: ${errorMessage}`);
+      toast.error(`Erro ao finalizar compra: ${errorMessage}`);
       setIsCreatingPreference(false);
     }
   };

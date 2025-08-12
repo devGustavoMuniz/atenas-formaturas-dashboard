@@ -24,3 +24,12 @@ export function formatNumber(value: number) {
     maximumFractionDigits: 0,
   }).format(value)
 }
+
+export function formatDate(dateString: string) {
+  if (!dateString) return ''
+  return new Intl.DateTimeFormat('pt-BR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date(dateString))
+}

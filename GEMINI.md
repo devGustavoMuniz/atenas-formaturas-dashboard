@@ -181,17 +181,38 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Testes implementados para o componente `Badge` (todos passando, incluindo a variante `success` customizada).
   - Criado `components/products/selection-summary.test.tsx`.
 
-## 14. Próximas Tarefas
+## 14. Tasks Completed (6 de agosto de 2025)
+
+- **Backend API de Pedidos:**
+  - Finalizada a implementação do endpoint `POST /v1/orders`.
+  - Criado o arquivo `backend-orders-get-api.md` com a especificação técnica para os endpoints `GET` de consulta de pedidos, solicitando a implementação à equipe de backend.
+
+## 15. Tasks Completed (11 de agosto de 2025)
+
+- **Implementação da Tela de Admin - Consulta de Pedidos:**
+  - Criado o arquivo de tipos `lib/order-types.ts` com base na especificação da API.
+  - Implementada a função `getOrders` em `lib/api/orders-api.ts` para buscar a lista de pedidos da API, com suporte a filtros e paginação.
+  - A página de listagem de pedidos (`app/(dashboard)/orders/page.tsx`) foi refatorada para consumir os dados da API, com estado gerenciado por parâmetros na URL.
+  - A barra de ferramentas (`OrderTableToolbar`) foi ajustada para manipular os filtros de status via URL.
+  - Corrigido um erro de renderização causado pela ausência do objeto `user` na resposta da API.
+- **Implementação da Tela de Detalhes do Pedido:**
+  - Adicionada a função `getOrderById` em `lib/api/orders-api.ts`.
+  - Criada a nova página de detalhes do pedido em `app/(dashboard)/orders/[id]/page.tsx`.
+  - Adicionado um botão "Detalhes" na tabela de pedidos para navegar até a página de detalhes de cada pedido.
+- **Melhora de UX - Exibição do Nome do Cliente:**
+  - Criado o componente reutilizável `UserName` (`components/users/user-name.tsx`) que busca e exibe o nome do usuário a partir do `userId`.
+  - O `userId` foi substituído pelo nome do cliente na listagem e nos detalhes dos pedidos, melhorando a clareza da interface.
+
+## 16. Próximas Tarefas
 
 - **Aguardando Backend:**
-  - Aguardando a implementação do endpoint `POST /v1/orders` e do webhook de status de pagamento pela equipe de backend.
+  - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
 - **Frontend (Testes):**
   - Corrigir o erro `SyntaxError: Invalid or unexpected token` que ainda impede a execução dos testes do `SelectionSummary`.
   - Finalizar a implementação e garantir que os testes do `SelectionSummary` passem.
   - Implementar testes para o componente `OrderTableToolbar`.
-  - Implementar testes de integração para a página `OrdersPage`.
+  - Implementar testes de integração para a página `OrdersPage` e `OrderDetailsPage`.
 - **Frontend (Após conclusão do backend):**
-  - Substituir os dados mocados na função `getOrders` pela chamada real à API.
   - Modificar a página de checkout para chamar o endpoint `POST /v1/orders` antes do redirecionamento.
   - Implementar a limpeza do carrinho de compras após o início do pagamento.
   - Criar a página "Meus Pedidos" para o cliente, exibindo o histórico e o status dos pedidos.

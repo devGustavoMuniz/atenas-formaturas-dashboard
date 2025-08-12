@@ -1,49 +1,76 @@
 import { api } from '@/lib/api/axios-config'
+import { OrderDto, OrderListResponseDto } from '@/lib/order-types'
 
-// TODO: Substituir pela interface real quando o backend estiver pronto
-export interface Order {
-  id: string
-  customerName: string
-  totalAmount: number
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
-  createdAt: string
+interface GetOrdersParams {
+  pageIndex?: number
+  pageSize?: number
+  paymentStatus?: string
 }
 
-// Função para buscar os pedidos da API
-// Por enquanto, retorna dados mocados
-export const getOrders = async (): Promise<Order[]> => {
-  console.log('Buscando pedidos da API...')
-  // Simula uma chamada de API com um pequeno atraso
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  // Dados mocados
-  const mockOrders: Order[] = [
-    {
-      id: 'order-123',
-      customerName: 'João da Silva',
-      totalAmount: 150.75,
-      status: 'APPROVED',
-      createdAt: new Date().toISOString(),
+export const getOrders = async ({
+  pageIndex = 0,
+  pageSize = 10,
+  paymentStatus,
+}: GetOrdersParams): Promise<OrderListResponseDto> => {
+  const response = await api.get<OrderListResponseDto>('/v1/orders', {
+    params: {
+      page: pageIndex + 1, // API is 1-based, table is 0-based
+      limit: pageSize,
+      paymentStatus: paymentStatus || undefined,
     },
-    {
-      id: 'order-456',
-      customerName: 'Maria Oliveira',
-      totalAmount: 250.0,
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'order-789',
-      customerName: 'Pedro Martins',
-      totalAmount: 99.9,
-      status: 'REJECTED',
-      createdAt: new Date().toISOString(),
-    },
-  ]
+  })
+  return response.data
+}
 
-  // Quando o backend estiver pronto, a chamada real será algo como:
-  // const { data } = await api.get('/v1/orders')
-  // return data
+export const getOrderById = async (id: string): Promise<OrderDto> => {
+  const response = await api.get<OrderDto>(`/v1/orders/${id}`)
+  return response.data
+}
 
-  return mockOrders
+
+// A função createOrder foi mantida conforme encontrada no arquivo original.
+// As interfaces CartItemDto e CreateOrderPayload são necessárias para ela.
+
+export interface CartItemDto {
+  productId: string
+  productName: string
+  productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM'
+  totalPrice: number
+  selectionDetails: {
+    photos?: Array<{ id: string; eventId: string }>
+    events?: Array<{ id: string; isPackage: boolean }>
+    isFullPackage?: boolean
+    albumPhotos?: string[]
+  }
+}
+
+export interface CreateOrderPayload {
+  cartItems: CartItemDto[]
+  shippingDetails: {
+    zipCode: string
+    street: string
+    number: string
+    complement?: string
+    neighborhood: string
+    city: string
+    state: string
+  }
+  payer: {
+    firstName: string
+    lastName: string
+    email: string
+    phone: {
+      areaCode: string
+      number: string
+    }
+  }
+}
+
+export const createOrder = async (
+  payload: CreateOrderPayload,
+): Promise<{ orderId: string; mercadoPagoCheckoutUrl: string }> => {
+  const { data } = await api.post<
+    { orderId: string; mercadoPagoCheckoutUrl: string }
+  >('/v1/orders', payload)
+  return data
 }
