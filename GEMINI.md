@@ -203,7 +203,24 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Criado o componente reutilizável `UserName` (`components/users/user-name.tsx`) que busca e exibe o nome do usuário a partir do `userId`.
   - O `userId` foi substituído pelo nome do cliente na listagem e nos detalhes dos pedidos, melhorando a clareza da interface.
 
-## 16. Próximas Tarefas
+## 16. Tasks Completed (12 de agosto de 2025)
+
+- **Correção de Erro de Renderização no Vercel:**
+  - Corrigido o erro `useSearchParams() should be wrapped in a suspense boundary at page "/orders"`.
+  - A página de Pedidos (`app/(dashboard)/orders/page.tsx`) foi refatorada para usar `React.Suspense`.
+  - A lógica do lado do cliente, que utiliza `useSearchParams`, foi extraída para um novo componente (`app/(dashboard)/orders/orders-page-content.tsx`).
+  - A página principal agora é um Componente de Servidor que renderiza o componente do cliente dentro de um limite de `Suspense`, resolvendo o problema de renderização que ocorria no deploy do Vercel.
+  - Ajustada a navegação no `OrderTableToolbar` para ser mais explícita, incluindo o caminho `/orders`.
+
+## 17. Tasks Completed (21 de agosto de 2025)
+
+- **Correção de Bug no Formulário de Edição de Produto:**
+  - Resolvido um problema onde o campo "Categoria" (flag) não era preenchido corretamente ao editar um produto.
+  - O problema era causado por um erro de renderização no componente `<Select>` do `shadcn/ui` quando seu valor era definido de forma assíncrona e o campo estava desabilitado.
+  - A solução foi adicionar uma `key` única (usando o `product.id`) ao componente `FormField` da categoria. Isso força o React a remontar o componente quando o produto é carregado, garantindo que o valor correto seja exibido.
+  - O `useEffect` foi revertido para usar `form.reset(product)`, que é a abordagem recomendada pelo `react-hook-form`.
+
+## 18. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
