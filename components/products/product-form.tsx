@@ -196,6 +196,7 @@ export function ProductForm({ productId }: { productId?: string }) {
                         <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome do Produto</FormLabel><FormControl><Input placeholder="Ex: Álbum de Luxo" {...field} /></FormControl><FormMessage /></FormItem>} />
                         
                         <FormField
+                          key={product?.id} // Garante a remontagem do campo quando o produto muda
                           control={form.control}
                           name="flag"
                           render={({ field }) => (
