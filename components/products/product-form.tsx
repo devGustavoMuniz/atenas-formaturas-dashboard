@@ -200,22 +200,22 @@ export function ProductForm({ productId }: { productId?: string }) {
                           control={form.control}
                           name="flag"
                           render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Categoria</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione uma flag" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="ALBUM">Álbum</SelectItem>
-                                  <SelectItem value="GENERIC">Produto com seleção de fotos</SelectItem>
-                                  <SelectItem value="DIGITAL_FILES">Arquivos Digitais</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
+                              <FormItem>
+                                <FormLabel>Categoria</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={isEditing} key={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione uma flag" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="ALBUM">Álbum</SelectItem>
+                                    <SelectItem value="GENERIC">Produto com seleção de fotos</SelectItem>
+                                    <SelectItem value="DIGITAL_FILES">Arquivos Digitais</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
                           )}
                         />
 
