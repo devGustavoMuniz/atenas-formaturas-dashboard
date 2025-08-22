@@ -225,7 +225,14 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Atualizada a validação (Zod) para refletir a mudança.
   - Ajustada a lógica de submissão para extrair o DDD e o número de telefone do campo unificado antes de enviar ao backend.
 
-## 18. Próximas Tarefas
+## 18. Tasks Completed (22 de agosto de 2025)
+
+- **Refatoração do Fluxo de Produtos `DIGITAL_FILES`:**
+  - Modificado o componente `ClientProductCard` para, em produtos com a flag `DIGITAL_FILES`, buscar os detalhes específicos da instituição e salvá-los no estado global (`Zustand`) antes de redirecionar o usuário.
+  - A navegação agora vai diretamente para a página de seleção de fotos (`.../select-photos`), pulando a página de detalhes do produto, mas sem perder os dados necessários para a seleção.
+  - Adicionado um estado de carregamento e feedback visual ao botão durante a busca de dados.
+
+## 19. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
