@@ -24,6 +24,7 @@ import { getAddressByCEP } from "@/lib/api/cep-api"
 import { createPaymentPreference } from "@/lib/api/mercado-pago-api";
 import { createOrder, CreateOrderPayload } from "@/lib/api/orders-api";
 import { Loader2 } from "lucide-react"
+import { IMaskInput } from "react-imask"
 
 const addressFormSchema = z.object({
   zipCode: z.string().min(8, "CEP inválido").max(9, "CEP inválido"),
@@ -33,8 +34,10 @@ const addressFormSchema = z.object({
   neighborhood: z.string().min(1, "Bairro é obrigatório"),
   city: z.string().min(1, "Cidade é obrigatória"),
   state: z.string().min(2, "Estado é obrigatório").max(2, "UF inválida"),
-  areaCode: z.string().min(2, "DDD inválido").max(2, "DDD inválido"),
-  phone: z.string().min(8, "Telefone inválido").max(9, "Telefone inválido"),
+  phone: z.string().refine(phone => {
+    const cleaned = phone.replace(/\D/g, '');
+    return cleaned.length >= 10 && cleaned.length <= 11;
+  }, "Telefone inválido (inclua o DDD)"),
 })
 
 type AddressFormValues = z.infer<typeof addressFormSchema>
@@ -101,6 +104,10 @@ export default function CheckoutPage() {
     const firstName = nameParts.shift() || '';
     const lastName = nameParts.join(' ');
 
+    const cleanedPhone = data.phone.replace(/\D/g, '');
+    const areaCode = cleanedPhone.substring(0, 2);
+    const phoneNumber = cleanedPhone.substring(2);
+
     const orderPayload: CreateOrderPayload = {
       cartItems: items.map(item => {
         let productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM';
@@ -155,8 +162,8 @@ export default function CheckoutPage() {
         lastName: lastName,
         email: user.email,
         phone: {
-          areaCode: data.areaCode,
-          number: data.phone,
+          areaCode: areaCode,
+          number: phoneNumber,
         },
       },
     };
@@ -296,28 +303,22 @@ export default function CheckoutPage() {
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="areaCode"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-1">
-                                <FormLabel>DDD</FormLabel>
-                                <FormControl>
-                                    <Input maxLength={2} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     <FormField
                         control={form.control}
                         name="phone"
                         render={({ field }) => (
-                            <FormItem className="md:col-span-2">
-                                <FormLabel>Telefone</FormLabel>
+                            <FormItem className="md:col-span-1">
+                                <FormLabel>Telefone com DDD</FormLabel>
                                 <FormControl>
-                                    <Input maxLength={9} {...field} />
+                                    <IMaskInput
+                                        mask={["(00) 0000-0000", "(00) 00000-0000"]}
+                                        unmask={false}
+                                        value={field.value}
+                                        onAccept={(value) => field.onChange(value)}
+                                        placeholder="(00) 00000-0000"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
