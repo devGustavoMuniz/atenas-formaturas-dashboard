@@ -220,6 +220,11 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - A solução foi adicionar uma `key` única (usando o `product.id`) ao componente `FormField` da categoria. Isso força o React a remontar o componente quando o produto é carregado, garantindo que o valor correto seja exibido.
   - O `useEffect` foi revertido para usar `form.reset(product)`, que é a abordagem recomendada pelo `react-hook-form`.
 
+- **Refatoração do Formulário de Checkout (Telefone):**
+  - Unificados os campos "DDD" e "Telefone" em um único campo para melhorar a experiência do usuário.
+  - Atualizada a validação (Zod) para refletir a mudança.
+  - Ajustada a lógica de submissão para extrair o DDD e o número de telefone do campo unificado antes de enviar ao backend.
+
 ## 18. Próximas Tarefas
 
 - **Aguardando Backend:**
