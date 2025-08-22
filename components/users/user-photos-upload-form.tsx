@@ -119,6 +119,16 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
     }));
   };
 
+  const handleRemoveAllFiles = (eventId: string) => {
+    if (selectedFiles[eventId]) {
+      selectedFiles[eventId].forEach(file => URL.revokeObjectURL(file.preview));
+    }
+    setSelectedFiles(prev => ({
+      ...prev,
+      [eventId]: [],
+    }));
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     toast({ title: "Iniciando upload...", description: "Por favor, aguarde." });
@@ -236,22 +246,27 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
                     onDrop={(acceptedFiles) => handleFileChange(event.id, acceptedFiles)}
                   />
                   {selectedFiles[event.id] && selectedFiles[event.id].length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2 mt-4">
-                      {selectedFiles[event.id].map((file, index) => (
-                        <ImagePreviewCard 
-                          key={file.id} // Use unique ID as key
-                          src={file.preview}
-                          alt={file.name}
-                          onRemove={() => handleRemoveFile(event.id, file.id)}
-                          progress={file.progress}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  {selectedFiles[event.id] && (
-                    <div className="text-xs text-muted-foreground mt-2">
-                      {selectedFiles[event.id]?.length} arquivo(s) selecionado(s).
-                    </div>
+                    <>
+                      <div className="flex flex-wrap justify-center gap-2 mt-4">
+                        {selectedFiles[event.id].map((file) => (
+                          <ImagePreviewCard 
+                            key={file.id}
+                            src={file.preview}
+                            alt={file.name}
+                            onRemove={() => handleRemoveFile(event.id, file.id)}
+                            progress={file.progress}
+                          />
+                        ))}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <div className="text-xs text-muted-foreground">
+                          {selectedFiles[event.id]?.length} arquivo(s) selecionado(s).
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => handleRemoveAllFiles(event.id)}>
+                          Remover Todos
+                        </Button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -262,7 +277,7 @@ export function UserPhotosUploadForm({ userId }: UserPhotosUploadFormProps) {
         <div className="mt-6 flex justify-end">
           <Button 
             onClick={handleSubmit} 
-            disabled={isSubmitting || Object.keys(selectedFiles).length === 0}
+            disabled={isSubmitting || Object.values(selectedFiles).flat().length === 0}
           >
             {isSubmitting ? "Enviando..." : "Enviar Fotos"}
           </Button>

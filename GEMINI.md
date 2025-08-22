@@ -232,7 +232,13 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - A navegação agora vai diretamente para a página de seleção de fotos (`.../select-photos`), pulando a página de detalhes do produto, mas sem perder os dados necessários para a seleção.
   - Adicionado um estado de carregamento e feedback visual ao botão durante a busca de dados.
 
-## 19. Próximas Tarefas
+## 19. Tasks Completed (23 de agosto de 2025)
+
+- **Melhorias no Formulário de Upload de Fotos do Usuário:**
+  - Adicionada a função `handleRemoveAllFiles` e um botão "Remover Todos" para limpar a seleção de fotos pendentes de upload em uma aba de evento.
+  - Corrigido um bug na lógica do botão "Enviar Fotos", que agora é desabilitado corretamente quando não há nenhum arquivo selecionado em nenhuma das abas.
+
+## 20. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
