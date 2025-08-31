@@ -340,13 +340,17 @@ export default function SelectPhotosPage() {
         </div>
         <div>
           <SelectionSummary selectedPhotosCount={selectedPhotosCount} eventGroups={eventGroups} />
+          <div className="mt-8">
+            <Button
+              size="lg"
+              disabled={!isNextButtonEnabled}
+              onClick={handleAddToCart}
+              className="w-full"
+            >
+              Adicionar ao Carrinho
+            </Button>
+          </div>
         </div>
-      </div>
-
-      <div className="mt-8 flex justify-end">
-        <Button size="lg" disabled={!isNextButtonEnabled} onClick={handleAddToCart}>
-          Adicionar ao Carrinho
-        </Button>
       </div>
     </div>
   )
