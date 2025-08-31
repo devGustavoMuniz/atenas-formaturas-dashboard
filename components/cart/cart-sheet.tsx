@@ -66,12 +66,12 @@ export function CartSheet() {
               <span>Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="w-full" onClick={clearCart}>
-                Limpar Carrinho
-              </Button>
-              <Button className="w-full" onClick={handleCheckout}>
+            <div className="flex flex-col items-center gap-2">
+              <Button className="w-full" size="lg" onClick={handleCheckout}>
                 Finalizar Compra
+              </Button>
+              <Button variant="ghost" onClick={clearCart} className="text-sm">
+                Limpar Carrinho
               </Button>
             </div>
           </div>

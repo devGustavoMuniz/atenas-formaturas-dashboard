@@ -238,7 +238,17 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Adicionada a função `handleRemoveAllFiles` e um botão "Remover Todos" para limpar a seleção de fotos pendentes de upload em uma aba de evento.
   - Corrigido um bug na lógica do botão "Enviar Fotos", que agora é desabilitado corretamente quando não há nenhum arquivo selecionado em nenhuma das abas.
 
-## 20. Próximas Tarefas
+## 20. Tasks Completed (31 de agosto de 2025)
+
+- **Melhorias de UX na Seleção de Fotos e Carrinho:**
+  - **Página de Seleção de Fotos:**
+    - Reposicionado o botão "Adicionar ao Carrinho" para ficar abaixo do resumo da seleção, melhorando a usabilidade em telas com muitas fotos.
+    - O botão "Adicionar ao Carrinho" agora ocupa 100% da largura da coluna para maior destaque.
+  - **Carrinho de Compras (`CartSheet` e `CartItemCard`):**
+    - O botão "Remover" em cada item do carrinho foi substituído por um ícone de lixeira para uma interface mais limpa.
+    - O rodapé do carrinho foi redesenhado: o botão "Finalizar Compra" agora tem mais destaque (maior e com largura total), enquanto o botão "Limpar Carrinho" foi transformado em um botão secundário, menor e com texto reduzido, para evitar cliques acidentais.
+
+## 21. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.

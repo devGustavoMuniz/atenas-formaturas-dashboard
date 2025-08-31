@@ -4,6 +4,7 @@ import type { CartItem } from "@/lib/cart-types"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/lib/store/cart-store"
 import { formatCurrency } from "@/lib/utils"
+import { Trash2 } from "lucide-react"
 
 interface CartItemCardProps {
   item: CartItem
@@ -40,8 +41,8 @@ export function CartItemCard({ item }: CartItemCardProps) {
         <p className="text-sm text-muted-foreground">{getSelectionSummary(item)}</p>
         <p className="text-lg font-bold">{formatCurrency(item.totalPrice)}</p>
       </div>
-      <Button variant="destructive" size="sm" onClick={() => removeFromCart(item.id)}>
-        Remover
+      <Button variant="destructive" size="icon" onClick={() => removeFromCart(item.id)}>
+        <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   )
