@@ -253,6 +253,9 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Corrigido um problema de incompatibilidade de versão entre o `embla-carousel-react` e o plugin `embla-carousel-autoplay` para garantir o funcionamento.
   - O carrossel agora avança automaticamente a cada 4 segundos e pausa quando o usuário interage com ele.
 
+- **Melhoria na Tabela de Usuários:**
+  - Adicionada a funcionalidade de ordenação por "Nº do Contrato" na tabela de listagem de usuários, espelhando o comportamento da tabela de instituições para manter a consistência da interface.
+
 ## 21. Próximas Tarefas
 
 - **Aguardando Backend:**
