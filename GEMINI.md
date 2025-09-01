@@ -268,6 +268,10 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Corrigido um bug crítico de permissão onde a página inicial (`/`) redirecionava todos os usuários para o dashboard de admin, independentemente do seu cargo.
   - A solução envolveu modificar o store de autenticação para gerenciar o estado de hidratação e reescrever a página inicial para aguardar essa hidratação antes de redirecionar os usuários para seus respectivos dashboards (`/dashboard` para admin, `/client/dashboard` para cliente) com base em seu cargo.
 
+- **Criação das Páginas de Status de Pagamento:**
+  - Desenvolvidas as páginas de feedback pós-pagamento (`/payment/success`, `/payment/failure`, `/payment/pending`).
+  - Cada página exibe uma mensagem clara, um ícone e um botão de ação para orientar o usuário após a tentativa de compra.
+
 ## 21. Próximas Tarefas
 
 - **Aguardando Backend:**
