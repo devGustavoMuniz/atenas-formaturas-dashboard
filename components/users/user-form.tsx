@@ -602,7 +602,7 @@ export function UserForm({ userId }: UserFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cargo</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} key={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um cargo" />

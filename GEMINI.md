@@ -260,6 +260,10 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Corrigido um bug visual onde a borda de foco da barra de busca era cortada nas telas de listagem.
   - A solução envolveu adicionar um padding ao redor dos componentes de toolbar para garantir que houvesse espaço para o anel de foco ser renderizado corretamente, sem adicionar elementos visuais indesejados.
 
+- **Correção de Bug no Formulário de Usuário:**
+  - Resolvido um bug complexo no campo "Cargo" da tela de edição de usuário, onde o valor correto não era exibido de forma consistente após o carregamento dos dados.
+  - A solução final envolveu tornar o componente `<Select>` totalmente controlado (usando a prop `value`) e adicionar uma `key` dinâmica para forçar sua remontagem quando o valor é alterado, garantindo a sincronização da UI com o estado do formulário.
+
 ## 21. Próximas Tarefas
 
 - **Aguardando Backend:**
