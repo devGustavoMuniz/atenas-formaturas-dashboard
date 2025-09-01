@@ -1,14 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
+import Autoplay from "embla-carousel-autoplay"
 import { fetchProductById } from "@/lib/api/products-api"
-import { fetchInstitutionProducts, type InstitutionProduct } from "@/lib/api/institution-products-api"
+import {
+  fetchInstitutionProducts,
+  type InstitutionProduct,
+} from "@/lib/api/institution-products-api"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { useProductSelectionStore } from "@/lib/store/product-selection-store"
 import type { Product } from "@/lib/types"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -18,10 +28,15 @@ export default function ProductDetailsPage() {
   const { id: productId } = useParams<{ id: string }>()
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
-  const setSelectedProduct = useProductSelectionStore((state) => state.setSelectedProduct)
+  const setSelectedProduct = useProductSelectionStore(
+    (state) => state.setSelectedProduct
+  )
+
+  const plugin = useRef(Autoplay({ delay: 4000, stopOnInteraction: true }))
 
   const [product, setProduct] = useState<Product | null>(null)
-  const [institutionProduct, setInstitutionProduct] = useState<InstitutionProduct | null>(null)
+  const [institutionProduct, setInstitutionProduct] =
+    useState<InstitutionProduct | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,7 +58,9 @@ export default function ProductDetailsPage() {
         const productData = await fetchProductById(productId)
         setProduct(productData)
 
-        const institutionProductsData = await fetchInstitutionProducts(user.institutionId)
+        const institutionProductsData = await fetchInstitutionProducts(
+          user.institutionId
+        )
         const specificInstitutionProduct = institutionProductsData.find(
           (instProduct) => instProduct.product.id === productId
         )
@@ -51,7 +68,9 @@ export default function ProductDetailsPage() {
         if (specificInstitutionProduct) {
           setInstitutionProduct(specificInstitutionProduct)
         } else {
-          setError("Detalhes específicos para este produto não encontrados para sua instituição.")
+          setError(
+            "Detalhes específicos para este produto não encontrados para sua instituição."
+          )
         }
       } catch (err) {
         console.error("Falha ao carregar os detalhes do produto:", err)
@@ -88,7 +107,7 @@ export default function ProductDetailsPage() {
             <Skeleton className="h-5 w-full" />
             <Skeleton className="h-5 w-5/6" />
             <Separator className="my-4" />
-            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-6 w-1/s4" />
             <Skeleton className="h-5 w-1/2" />
             <Skeleton className="h-5 w-1/2" />
             <Button className="mt-auto w-full" disabled>
@@ -101,26 +120,44 @@ export default function ProductDetailsPage() {
   }
 
   if (error) {
-    return <div className="container mx-auto px-4 py-8 text-center text-red-500">{error}</div>
+    return (
+      <div className="container mx-auto px-4 py-8 text-center text-red-500">
+        {error}
+      </div>
+    )
   }
 
   if (!product) {
-    return <div className="container mx-auto px-4 py-8 text-center">Produto não encontrado.</div>
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        Produto não encontrado.
+      </div>
+    )
   }
 
   const renderDetail = (key: string, value: any, label?: string) => {
-    const formattedKey = label || key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-    let displayValue = typeof value === 'boolean' ? (value ? 'Sim' : 'Não') : value;
+    const formattedKey =
+      label ||
+      key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())
+    let displayValue = typeof value === "boolean" ? (value ? "Sim" : "Não") : value
 
     // Formatar valores específicos como moeda (Real Brasileiro)
-    if (typeof value === 'number' && (key === 'valorFoto' || key === 'valorPhoto' || key === 'valorEncadernacao')) {
-      displayValue = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(value);
-    } else if (typeof value === 'number' && (key === 'minPhoto' || key === 'maxPhoto' || key === 'minPhotos')) {
+    if (
+      typeof value === "number" &&
+      (key === "valorFoto" ||
+        key === "valorPhoto" ||
+        key === "valorEncadernacao")
+    ) {
+      displayValue = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(value)
+    } else if (
+      typeof value === "number" &&
+      (key === "minPhoto" || key === "maxPhoto" || key === "minPhotos")
+    ) {
       // Adicionar sufixo "foto" ou "fotos"
-      displayValue = `${value} ${value === 1 ? 'foto' : 'fotos'}`;
+      displayValue = `${value} ${value === 1 ? "foto" : "fotos"}`
     }
 
     return (
@@ -128,15 +165,20 @@ export default function ProductDetailsPage() {
         <span className="font-medium text-muted-foreground">{formattedKey}:</span>
         <span>{displayValue}</span>
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">
         {/* Coluna do Carrossel */}
         <div className="w-full">
-          <Carousel className="w-full">
+          <Carousel
+            plugins={[plugin.current]}
+            className="w-full"
+            onMouseEnter={plugin.current.stop}
+            onMouseLeave={plugin.current.reset}
+          >
             <CarouselContent>
               {product.photos && product.photos.length > 0 ? (
                 product.photos.map((photo, index) => (
@@ -157,12 +199,12 @@ export default function ProductDetailsPage() {
                 <CarouselItem>
                   <Card>
                     <CardContent className="relative aspect-square p-0">
-                       <Image
-                          src="/placeholder.jpg"
-                          alt="Placeholder"
-                          fill
-                          className="object-cover"
-                        />
+                      <Image
+                        src="/placeholder.jpg"
+                        alt="Placeholder"
+                        fill
+                        className="object-cover"
+                      />
                     </CardContent>
                   </Card>
                 </CarouselItem>
@@ -184,28 +226,65 @@ export default function ProductDetailsPage() {
                 <h3 className="text-lg font-semibold">Detalhes da Compra</h3>
                 {product.flag === "ALBUM" && (
                   <>
-                    {institutionProduct.details.minPhoto && renderDetail("minPhoto", institutionProduct.details.minPhoto, "Mínimo de Fotos")}
-                    {institutionProduct.details.maxPhoto && renderDetail("maxPhoto", institutionProduct.details.maxPhoto, "Máximo de Fotos")}
-                    {institutionProduct.details.valorEncadernacao && renderDetail("valorEncadernacao", institutionProduct.details.valorEncadernacao, "Valor da Encadernação")}
-                    {institutionProduct.details.valorFoto && renderDetail("valorFoto", institutionProduct.details.valorFoto, "Valor por Foto")}
+                    {institutionProduct.details.minPhoto &&
+                      renderDetail(
+                        "minPhoto",
+                        institutionProduct.details.minPhoto,
+                        "Mínimo de Fotos"
+                      )}
+                    {institutionProduct.details.maxPhoto &&
+                      renderDetail(
+                        "maxPhoto",
+                        institutionProduct.details.maxPhoto,
+                        "Máximo de Fotos"
+                      )}
+                    {institutionProduct.details.valorEncadernacao &&
+                      renderDetail(
+                        "valorEncadernacao",
+                        institutionProduct.details.valorEncadernacao,
+                        "Valor da Encadernação"
+                      )}
+                    {institutionProduct.details.valorFoto &&
+                      renderDetail(
+                        "valorFoto",
+                        institutionProduct.details.valorFoto,
+                        "Valor por Foto"
+                      )}
                   </>
                 )}
-                {(product.flag === "GENERIC" || product.flag === "DIGITAL_FILES") && institutionProduct.details.events && institutionProduct.details.events.length > 0 && (
-                  <>
-                    {institutionProduct.details.events![0].minPhotos && renderDetail("minPhotos", institutionProduct.details.events![0].minPhotos, "Mínimo de Fotos")}
-                    {institutionProduct.details.events![0].valorPhoto && renderDetail("valorPhoto", institutionProduct.details.events![0].valorPhoto, "Valor por Foto")}
-                  </>
-                )}
+                {(product.flag === "GENERIC" ||
+                  product.flag === "DIGITAL_FILES") &&
+                  institutionProduct.details.events &&
+                  institutionProduct.details.events.length > 0 && (
+                    <>
+                      {institutionProduct.details.events![0].minPhotos &&
+                        renderDetail(
+                          "minPhotos",
+                          institutionProduct.details.events![0].minPhotos,
+                          "Mínimo de Fotos"
+                        )}
+                      {institutionProduct.details.events![0].valorPhoto &&
+                        renderDetail(
+                          "valorPhoto",
+                          institutionProduct.details.events![0].valorPhoto,
+                          "Valor por Foto"
+                        )}
+                    </>
+                  )}
               </div>
               <Separator className="my-6" />
             </>
           )}
 
-          <p className="mt-4 text-muted-foreground flex-1">
+          <p className="mt-4 flex-1 text-muted-foreground">
             {product.description || "Sem descrição detalhada."}
           </p>
 
-          <Button size="lg" className="mt-6 w-full" onClick={handleAcquireProduct}>
+          <Button
+            size="lg"
+            className="mt-6 w-full"
+            onClick={handleAcquireProduct}
+          >
             Adquirir Produto
           </Button>
         </div>

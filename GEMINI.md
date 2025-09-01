@@ -248,6 +248,11 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - O botão "Remover" em cada item do carrinho foi substituído por um ícone de lixeira para uma interface mais limpa.
     - O rodapé do carrinho foi redesenhado: o botão "Finalizar Compra" agora tem mais destaque (maior e com largura total), enquanto o botão "Limpar Carrinho" foi transformado em um botão secundário, menor e com texto reduzido, para evitar cliques acidentais.
 
+- **Funcionalidade de Autoplay no Carrossel de Produtos:**
+  - Adicionado autoplay ao carrossel de imagens na página de detalhes do produto.
+  - Corrigido um problema de incompatibilidade de versão entre o `embla-carousel-react` e o plugin `embla-carousel-autoplay` para garantir o funcionamento.
+  - O carrossel agora avança automaticamente a cada 4 segundos e pausa quando o usuário interage com ele.
+
 ## 21. Próximas Tarefas
 
 - **Aguardando Backend:**
