@@ -256,6 +256,10 @@ By following these guidelines, Gemini can provide more accurate and consistent a
 - **Melhoria na Tabela de Usuários:**
   - Adicionada a funcionalidade de ordenação por "Nº do Contrato" na tabela de listagem de usuários, espelhando o comportamento da tabela de instituições para manter a consistência da interface.
 
+- **Correção de Estilo na Barra de Busca:**
+  - Corrigido um bug visual onde a borda de foco da barra de busca era cortada nas telas de listagem.
+  - A solução envolveu adicionar um padding ao redor dos componentes de toolbar para garantir que houvesse espaço para o anel de foco ser renderizado corretamente, sem adicionar elementos visuais indesejados.
+
 ## 21. Próximas Tarefas
 
 - **Aguardando Backend:**
