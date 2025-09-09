@@ -39,8 +39,8 @@ const formatCurrency = (value: number | undefined): string => {
 const albumDetailsSchema: z.ZodType<AlbumDetails> = z.object({
   minPhoto: z.coerce.number().min(1, "Mínimo de 1 foto."),
   maxPhoto: z.coerce.number().min(1, "Mínimo de 1 foto."),
-  valorEncadernacao: z.any().transform(v => parseCurrency(v)).refine(v => v !== undefined && v > 0, "Valor é obrigatório."),
-  valorFoto: z.any().transform(v => parseCurrency(v)).refine(v => v !== undefined && v > 0, "Valor é obrigatório."),
+  valorEncadernacao: z.any().transform(v => parseCurrency(v)).refine(v => v !== undefined && v >= 0, "Valor é obrigatório."),
+  valorFoto: z.any().transform(v => parseCurrency(v)).refine(v => v !== undefined && v >= 0, "Valor é obrigatório."),
 });
 
 const eventConfigurationSchema: z.ZodType<Partial<EventConfiguration>> = z.object({
@@ -54,7 +54,7 @@ const eventConfigurationSchema: z.ZodType<Partial<EventConfiguration>> = z.objec
 const genericDetailsSchema: z.ZodType<GenericDetails> = z.object({
   events: z.array(
     eventConfigurationSchema.refine(data => data.minPhotos && data.minPhotos > 0, { message: "Mínimo de 1 foto.", path: ["minPhotos"] })
-                         .refine(data => data.valorPhoto && data.valorPhoto > 0, { message: "Valor obrigatório.", path: ["valorPhoto"]})
+                         .refine(data => data.valorPhoto !== undefined && data.valorPhoto >= 0, { message: "Valor obrigatório.", path: ["valorPhoto"]})
   ).default([]),
 });
 
@@ -63,15 +63,15 @@ const digitalFilesDetailsSchema: z.ZodType<DigitalFilesDetails> = z.object({
   valorPackTotal: z.any().transform(v => parseCurrency(v)).optional(),
   events: z.array(eventConfigurationSchema).default([]),
 }).superRefine((data, ctx) => {
-    if (!data.isAvailableUnit && (!data.valorPackTotal || data.valorPackTotal <= 0)) {
+    if (!data.isAvailableUnit && (data.valorPackTotal === undefined || data.valorPackTotal < 0)) {
         ctx.addIssue({ code: 'custom', message: 'Valor do pacote completo é obrigatório.', path: ['valorPackTotal'] });
     }
     data.events.forEach((event, index) => {
         if(data.isAvailableUnit) {
             if(!event.minPhotos || event.minPhotos < 1) ctx.addIssue({ code: 'custom', message: 'Mínimo de 1 foto.', path: [`events.${index}.minPhotos`]});
-            if(!event.valorPhoto || event.valorPhoto <= 0) ctx.addIssue({ code: 'custom', message: 'Valor obrigatório.', path: [`events.${index}.valorPhoto`]});
+            if(event.valorPhoto === undefined || event.valorPhoto < 0) ctx.addIssue({ code: 'custom', message: 'Valor obrigatório.', path: [`events.${index}.valorPhoto`]});
         } else {
-            if(!event.valorPack || event.valorPack <= 0) ctx.addIssue({ code: 'custom', message: 'Valor obrigatório.', path: [`events.${index}.valorPack`]});
+            if(event.valorPack === undefined || event.valorPack < 0) ctx.addIssue({ code: 'custom', message: 'Valor obrigatório.', path: [`events.${index}.valorPack`]});
         }
     });
 });

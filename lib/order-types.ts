@@ -20,6 +20,7 @@ export interface OrderItemDto {
 
 export interface OrderDto {
   id: string;
+  displayId: string;
   userId: string;
   totalAmount: number;
   paymentStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
