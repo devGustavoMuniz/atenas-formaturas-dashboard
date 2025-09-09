@@ -49,14 +49,14 @@ const adminNavItems: NavItem[] = [
 
 const clientNavItems: NavItem[] = [
   {
-    title: "Dashboard",
-    href: "/client/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
     title: "Produtos",
     href: "/client/products",
     icon: Package,
+  },
+  {
+    title: "Galeria",
+    href: "/client/dashboard",
+    icon: LayoutDashboard,
   },
 ]
 

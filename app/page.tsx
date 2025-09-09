@@ -19,7 +19,7 @@ export default function Home() {
       if (user.role === "admin") {
         router.replace("/dashboard")
       } else {
-        router.replace("/client/dashboard")
+        router.replace("/client/products")
       }
     } else {
       router.replace("/login")

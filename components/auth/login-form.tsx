@@ -60,7 +60,7 @@ export function LoginForm() {
       console.log("User object after login:", user);
       console.log("User role:", user?.role);
       if (user?.role === "client") {
-        router.push("/client/dashboard")
+        router.push("/client/products")
       } else {
         router.push("/dashboard")
       }

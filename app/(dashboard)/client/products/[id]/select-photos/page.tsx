@@ -320,17 +320,25 @@ export default function SelectPhotosPage() {
                 <CollapsibleContent>
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                      {group.photos.map((photo) => (
-                        <SelectableImageCard
-                          key={photo.id}
-                          photoId={photo.id}
-                          src={photo.signedUrl}
-                          alt={`Foto do evento ${group.eventName}`}
-                          isSelected={!!selectedPhotos[photo.id]}
-                          onSelectionChange={handlePhotoSelection}
-                          selectionEnabled={!isDigitalFilesPackage}
-                        />
-                      ))}
+                      {group.photos.map((photo) => {
+                        const isPhotoSelected = !!selectedPhotos[photo.id]
+                        const isLimitReached = product?.flag === "ALBUM" && 
+                          selectedPhotosCount >= ((institutionProduct?.details as AlbumDetails)?.maxPhoto ?? Infinity)
+                        const isPhotoDisabled = isLimitReached && !isPhotoSelected
+
+                        return (
+                          <SelectableImageCard
+                            key={photo.id}
+                            photoId={photo.id}
+                            src={photo.signedUrl}
+                            alt={`Foto do evento ${group.eventName}`}
+                            isSelected={isPhotoSelected}
+                            onSelectionChange={handlePhotoSelection}
+                            selectionEnabled={!isDigitalFilesPackage}
+                            disabled={isPhotoDisabled}
+                          />
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </CollapsibleContent>

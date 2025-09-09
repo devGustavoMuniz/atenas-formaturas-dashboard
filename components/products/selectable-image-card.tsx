@@ -12,6 +12,7 @@ interface SelectableImageCardProps {
   onSelectionChange: (photoId: string, isSelected: boolean) => void
   className?: string
   selectionEnabled?: boolean // Nova propriedade
+  disabled?: boolean // Nova propriedade para desabilitar seleção
 }
 
 export function SelectableImageCard({
@@ -22,16 +23,19 @@ export function SelectableImageCard({
   onSelectionChange,
   className,
   selectionEnabled = true, // Valor padrão é true
+  disabled = false, // Valor padrão é false
 }: SelectableImageCardProps) {
   const handleCardClick = () => {
-    if (selectionEnabled) {
+    // Sempre permite o clique na imagem para visualização
+    // A seleção só é bloqueada se disabled=true E a foto não estiver selecionada
+    if (selectionEnabled && !(disabled && !isSelected)) {
       onSelectionChange(photoId, !isSelected)
     }
   }
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Impede que o clique no card seja acionado
-    if (selectionEnabled) {
+    if (selectionEnabled && !(disabled && !isSelected)) {
       onSelectionChange(photoId, !isSelected)
     }
   }
@@ -57,7 +61,11 @@ export function SelectableImageCard({
           <Checkbox
             checked={isSelected}
             onClick={handleCheckboxClick}
-            className="absolute right-2 top-2 z-10 h-6 w-6 bg-background/80 hover:bg-background/90"
+            disabled={disabled && !isSelected}
+            className={cn(
+              "absolute right-2 top-2 z-10 h-6 w-6 bg-background/80 hover:bg-background/90",
+              disabled && !isSelected && "opacity-50 cursor-not-allowed"
+            )}
           />
         </>
       )}

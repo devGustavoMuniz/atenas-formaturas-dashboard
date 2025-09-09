@@ -272,7 +272,30 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Desenvolvidas as páginas de feedback pós-pagamento (`/payment/success`, `/payment/failure`, `/payment/pending`).
   - Cada página exibe uma mensagem clara, um ícone e um botão de ação para orientar o usuário após a tentativa de compra.
 
-## 21. Próximas Tarefas
+## 21. Tasks Completed (9 de setembro de 2025)
+
+- **Melhoria de UX - Feedback Visual para Limite de Fotos em Álbuns:**
+  - Resolvido um problema de UX onde usuários tentavam selecionar fotos em álbuns após atingir o limite máximo (`maxPhoto`) sem receber feedback visual.
+  - **Modificações no `SelectableImageCard`:**
+    - Adicionada a prop `disabled?: boolean` para controlar o estado visual da checkbox.
+    - Implementada lógica que permite desselecionar fotos já selecionadas mesmo no limite, mas bloqueia a seleção de novas fotos quando `disabled=true`.
+    - Aplicados estilos visuais na checkbox desabilitada: `opacity-50 cursor-not-allowed`.
+    - **Preservada a funcionalidade de visualização**: clique na imagem continua abrindo em tela cheia independentemente do estado de desabilitação.
+  - **Modificações na página de seleção de fotos:**
+    - Implementada lógica para calcular automaticamente quais fotos devem aparecer como desabilitadas em produtos do tipo `ALBUM`.
+    - A desabilitação ocorre apenas quando: produto é do tipo `ALBUM` + limite atingido (`selectedPhotosCount >= maxPhoto`) + foto não está selecionada.
+    - Fotos já selecionadas permanecem sempre selecionáveis para permitir que o usuário ajuste sua seleção.
+
+## 22. Tasks Completed (9 de setembro de 2025) - Continuação
+
+- **Melhorias de UX e Navegação do Cliente:**
+  - **Redirecionamento inicial alterado**: Usuários clientes agora são direcionados para `/client/products` em vez de `/client/dashboard` tanto no login quanto no acesso direto à aplicação.
+    - Modificados os arquivos `app/page.tsx` e `components/auth/login-form.tsx` para refletir essa mudança.
+  - **Reorganização do menu lateral**: Invertida a ordem dos itens "Dashboard" e "Produtos" no menu de navegação do cliente, priorizando "Produtos" como primeiro item.
+  - **Renomeação do item de menu**: Item "Dashboard" renomeado para "Galeria" no menu do cliente, refletindo melhor sua função de visualização de fotos.
+  - **Atualização do header**: Alterado o texto "Admin Dashboard" para "Atenas Formaturas" no header da aplicação, tornando-o mais apropriado para todos os tipos de usuários e destacando a marca.
+
+## 23. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
