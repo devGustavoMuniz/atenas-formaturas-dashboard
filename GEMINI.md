@@ -294,6 +294,11 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - **Reorganização do menu lateral**: Invertida a ordem dos itens "Dashboard" e "Produtos" no menu de navegação do cliente, priorizando "Produtos" como primeiro item.
   - **Renomeação do item de menu**: Item "Dashboard" renomeado para "Galeria" no menu do cliente, refletindo melhor sua função de visualização de fotos.
   - **Atualização do header**: Alterado o texto "Admin Dashboard" para "Atenas Formaturas" no header da aplicação, tornando-o mais apropriado para todos os tipos de usuários e destacando a marca.
+- **Melhoria no fluxo do carrinho**: Implementado carrinho persistente que permanece aberto após adicionar produtos e redirecionar para a tela de produtos.
+  - Adicionado estado global `isOpen` no cart store (`lib/store/cart-store.ts`) para controlar a visibilidade do carrinho.
+  - Refatorado o `CartSheet` para usar o estado global em vez de estado local.
+  - Modificada a função `handleAddToCart` para abrir o carrinho automaticamente após adicionar um item (`setCartOpen(true)`).
+  - Melhor experiência do usuário: após seleção de fotos, o usuário é redirecionado com o carrinho aberto, facilitando a visualização e gestão dos itens.
 
 ## 23. Próximas Tarefas
 

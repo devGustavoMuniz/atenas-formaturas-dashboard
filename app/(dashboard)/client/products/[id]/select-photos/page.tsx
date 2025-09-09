@@ -22,7 +22,7 @@ import type { CartItem, CartItemSelection } from "@/lib/cart-types"
 export default function SelectPhotosPage() {
   const { toast } = useToast()
   const router = useRouter()
-  const { addToCart } = useCartStore()
+  const { addToCart, setCartOpen } = useCartStore()
   const {
     product,
     institutionProduct,
@@ -228,6 +228,7 @@ export default function SelectPhotosPage() {
     addToCart(cartItem)
     toast({ title: "Produto adicionado!", description: `${product.name} foi adicionado ao seu carrinho.` })
     clearSelections()
+    setCartOpen(true)
     router.push("/client/products")
   }
 
