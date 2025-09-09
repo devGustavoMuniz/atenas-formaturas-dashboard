@@ -71,7 +71,7 @@ export default function OrderDetailsPage() {
         <h1 className="text-2xl font-bold">Detalhes do Pedido: {order.displayId}</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Resumo</CardTitle>
@@ -85,7 +85,7 @@ export default function OrderDetailsPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Endereço de Entrega</CardTitle>
           </CardHeader>
