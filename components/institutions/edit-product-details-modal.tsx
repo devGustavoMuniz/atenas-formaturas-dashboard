@@ -21,7 +21,17 @@ import { AlbumDetails, EventConfiguration, GenericDetails, DigitalFilesDetails }
 const parseCurrency = (value: string | number | undefined): number | undefined => {
     if (value === undefined || value === null || value === "") return undefined;
     if (typeof value === 'number') return value;
-    const stringValue = String(value).replace("R$", "").trim().replace(/\./g, "").replace(",", ".");
+    
+    let stringValue = String(value).replace("R$", "").trim();
+    
+    // Se contém vírgula, assume formato brasileiro (1.234,56)
+    if (stringValue.includes(",")) {
+        // Remove pontos (separadores de milhares) e substitui vírgula por ponto (decimal)
+        stringValue = stringValue.replace(/\./g, "").replace(",", ".");
+    }
+    // Se não contém vírgula, pode ser formato americano (1234.56) ou número inteiro
+    // Neste caso, mantém como está
+    
     const numberValue = parseFloat(stringValue);
     return isNaN(numberValue) ? undefined : numberValue;
 };
@@ -158,15 +168,15 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
             const initialValues: any = {
                 minPhoto: details.minPhoto,
                 maxPhoto: details.maxPhoto,
-                valorEncadernacao: details.valorEncadernacao,
-                valorFoto: details.valorFoto,
+                valorEncadernacao: formatCurrency(details.valorEncadernacao),
+                valorFoto: formatCurrency(details.valorFoto),
                 isAvailableUnit: !!details.isAvailableUnit,
-                valorPackTotal: details.valorPackTotal,
+                valorPackTotal: formatCurrency(details.valorPackTotal),
                 events: (details.events || []).map((evt: any) => ({
                     id: evt.id,
                     minPhotos: evt.minPhotos,
-                    valorPhoto: evt.valorPhoto,
-                    valorPack: evt.valorPack
+                    valorPhoto: formatCurrency(evt.valorPhoto),
+                    valorPack: formatCurrency(evt.valorPack)
                 }))
             };
             reset(initialValues);

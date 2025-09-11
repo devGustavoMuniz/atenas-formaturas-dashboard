@@ -25,6 +25,7 @@ export interface OrderDto {
   totalAmount: number;
   paymentStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   paymentGatewayId?: string;
+  contractNumber: string;
   shippingAddress: {
     zipCode: string;
     street: string;

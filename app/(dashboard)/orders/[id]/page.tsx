@@ -80,7 +80,7 @@ export default function OrderDetailsPage() {
             <p><strong>Status:</strong> <Badge variant={getStatusVariant(order.paymentStatus)}>{order.paymentStatus}</Badge></p>
             <p><strong>Data:</strong> {formatDate(order.createdAt)}</p>
             <p><strong>Valor Total:</strong> {formatCurrency(order.totalAmount)}</p>
-            <p><strong>Cliente:</strong> <UserName userId={order.userId} /></p>
+            <p><strong>Cliente:</strong> ({order.contractNumber}) <UserName userId={order.userId} /></p>
             {order.paymentGatewayId && <p><strong>ID do Pagamento:</strong> {order.paymentGatewayId}</p>}
           </CardContent>
         </Card>
