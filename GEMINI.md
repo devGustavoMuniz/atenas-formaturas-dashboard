@@ -300,7 +300,24 @@ By following these guidelines, Gemini can provide more accurate and consistent a
   - Modificada a função `handleAddToCart` para abrir o carrinho automaticamente após adicionar um item (`setCartOpen(true)`).
   - Melhor experiência do usuário: após seleção de fotos, o usuário é redirecionado com o carrinho aberto, facilitando a visualização e gestão dos itens.
 
-## 23. Próximas Tarefas
+## 23. Tasks Completed (9 de setembro de 2025) - Parte 2
+
+- **Correção de Validações no Modal de Edição de Produtos:**
+  - Ajustadas as validações de valores monetários para permitir valor R$ 0,00 em todos os campos de valor.
+  - **Modificações realizadas**:
+    - `valorEncadernacao` e `valorFoto` (Album): `v > 0` → `v >= 0`
+    - `valorPhoto` (Generic): Ajustada lógica para aceitar valor zero
+    - `valorPackTotal`, `valorPhoto` e `valorPack` (Digital Files): `<= 0` → `< 0`
+  - Agora permite configuração de produtos gratuitos ou com valores zerados.
+
+- **Correção de Bug na Formatação de Valores Monetários:**
+  - Resolvido problema onde valores decimais pequenos (ex: 0,01) eram exibidos incorretamente como R$ 1,00 no frontend.
+  - **Problemas corrigidos**:
+    - **Função `parseCurrency`**: Corrigida lógica que removia pontos indiscriminadamente, causando conversão incorreta de "0.01" para "001".
+    - **Inicialização do formulário**: Valores numéricos do backend agora são formatados adequadamente antes de popular os campos do formulário.
+  - **Resultado**: Valores como 0,01 do backend agora aparecem corretamente como R$ 0,01 no frontend.
+
+## 24. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
