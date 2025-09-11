@@ -23,7 +23,7 @@ export interface OrderDto {
   displayId: string;
   userId: string;
   totalAmount: number;
-  paymentStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  paymentStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
   paymentGatewayId?: string;
   contractNumber: string;
   shippingAddress: {

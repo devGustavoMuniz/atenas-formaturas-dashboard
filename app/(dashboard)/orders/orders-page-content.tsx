@@ -45,6 +45,8 @@ export function OrdersPageContent() {
     switch (status) {
       case 'APPROVED':
         return 'success'
+      case 'COMPLETED':
+        return 'secondary'
       case 'PENDING':
         return 'warning'
       case 'REJECTED':
@@ -74,6 +76,7 @@ export function OrdersPageContent() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>ID</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Data</TableHead>
               <TableHead>Status</TableHead>
@@ -84,6 +87,9 @@ export function OrdersPageContent() {
           <TableBody>
             {result?.data.map((order) => (
               <TableRow key={order.id}>
+                <TableCell>
+                  <span className="font-mono text-sm">{order.displayId}</span>
+                </TableCell>
                 <TableCell>
                   <UserName userId={order.userId} />
                 </TableCell>

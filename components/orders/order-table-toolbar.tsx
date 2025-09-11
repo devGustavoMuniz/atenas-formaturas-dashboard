@@ -38,6 +38,7 @@ export function OrderTableToolbar() {
             <SelectItem value="all">Todos os Status</SelectItem>
             <SelectItem value="PENDING">Pendente</SelectItem>
             <SelectItem value="APPROVED">Aprovado</SelectItem>
+            <SelectItem value="COMPLETED">Concluído</SelectItem>
             <SelectItem value="REJECTED">Recusado</SelectItem>
             <SelectItem value="CANCELLED">Cancelado</SelectItem>
           </SelectContent>

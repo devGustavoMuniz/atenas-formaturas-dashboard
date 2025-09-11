@@ -1,23 +1,26 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
 import { UserName } from '@/components/users/user-name'
-import { getOrderById } from '@/lib/api/orders-api'
+import { getOrderById, updateOrderStatus } from '@/lib/api/orders-api'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useToast } from '@/components/ui/use-toast'
 import { OrderDto } from '@/lib/order-types'
 
 export default function OrderDetailsPage() {
   const params = useParams()
   const id = params.id as string
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
@@ -25,12 +28,30 @@ export default function OrderDetailsPage() {
     enabled: !!id,
   })
 
+  const { mutate: markAsCompleted, isPending } = useMutation({
+    mutationFn: () => updateOrderStatus(id, 'COMPLETED'),
+    onSuccess: () => {
+      toast({ title: "Pedido marcado como concluído com sucesso!" })
+      queryClient.invalidateQueries({ queryKey: ['order', id] })
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+    },
+    onError: (error: any) => {
+      toast({ 
+        variant: "destructive", 
+        title: "Erro ao marcar pedido como concluído", 
+        description: error.message 
+      })
+    },
+  })
+
   const getStatusVariant = (status: OrderDto['paymentStatus']) => {
     switch (status) {
       case 'APPROVED':
         return 'success'
-      case 'PENDING':
+      case 'COMPLETED':
         return 'secondary'
+      case 'PENDING':
+        return 'warning'
       case 'REJECTED':
       case 'CANCELLED':
         return 'destructive'
@@ -62,13 +83,25 @@ export default function OrderDetailsPage() {
 
   return (
     <div className="container mx-auto p-4 space-y-4">
-      <div className="flex items-center gap-4">
-        <Link href="/orders">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/orders">
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Detalhes do Pedido: {order.displayId}</h1>
+        </div>
+        
+        {order.paymentStatus === 'APPROVED' && (
+          <Button 
+            onClick={() => markAsCompleted()}
+            disabled={isPending}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isPending ? 'Processando...' : 'Marcar como Concluído'}
           </Button>
-        </Link>
-        <h1 className="text-2xl font-bold">Detalhes do Pedido: {order.displayId}</h1>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

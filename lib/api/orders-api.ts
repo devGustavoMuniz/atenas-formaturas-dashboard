@@ -74,3 +74,13 @@ export const createOrder = async (
   >('/v1/orders', payload)
   return data
 }
+
+export const updateOrderStatus = async (
+  orderId: string,
+  status: string
+): Promise<OrderDto> => {
+  const { data } = await api.put<OrderDto>(`/v1/orders/${orderId}/status`, {
+    status
+  })
+  return data
+}
