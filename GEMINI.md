@@ -334,9 +334,33 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - Integração com componente existente `ImagePreviewCard` para visualização em zoom.
     - **UX aprimorada**: Indicadores visuais (ícone de imagem, contador de fotos, setas expansíveis), hover effects, e grid responsivo com espaçamento adequado.
 
-## 25. Próximas Tarefas
+## 25. Tasks Completed (12 de setembro de 2025) - Continuação
+
+- **Expansão do Wizard de Usuários:**
+  - **Novos campos adicionados**: Expandido o formulário de criação/edição de usuários com campos adicionais:
+    - **CPF**: Campo obrigatório com máscara de formatação (000.000.000-00) na etapa "Informações Básicas", posicionado após o campo "Cargo".
+    - **Medidas da Beca**: Campo opcional para medidas de beca na etapa "Informações Básicas", posicionado após o campo CPF.
+    - **Endereço completo**: Nova etapa "Endereço" adicionada ao wizard com todos os campos do checkout:
+      - CEP com busca automática via API ViaCEP (funcionalidade idêntica ao checkout).
+      - Campos de endereço: Rua, Número, Complemento, Cidade, Estado.
+      - Layout otimizado: CEP e Bairro na primeira linha, conforme solicitado.
+      - Todos os campos de endereço são opcionais.
+  - **Estrutura do wizard atualizada**: 
+    - Expandido de 3 para 4 etapas: "Informações Básicas", "Informações Adicionais", "Endereço", "Foto de Perfil".
+    - Navegação entre etapas mantida com botões "Voltar" e "Próximo".
+  - **Schema e validações**: Atualizados `userFormSchema`, valores padrão, lógica de limpeza de dados e tratamento de campos opcionais.
+  - **Compatibilidade**: Alterações aplicadas tanto na criação (`/users/new`) quanto na edição (`/users/[id]/edit`) de usuários, pois ambas utilizam o mesmo componente `UserForm`.
+
+- **Melhoria na Interface dos Formulários:**
+  - **Remoção de títulos duplicados**: Eliminados títulos redundantes nos CardHeaders dos formulários:
+    - **Usuários**: Removido título "Novo Usuário"/"Editar Usuário" do card, mantendo apenas a descrição.
+    - **Contratos**: Removido título "Novo Contrato"/"Editar Contrato" do card, mantendo apenas a descrição.
+  - **Resultado**: Interface mais limpa com títulos únicos no topo das páginas e descrições contextuais nos cards.
+
+## 26. Próximas Tarefas
 
 - **Aguardando Backend:**
+  - Implementação dos novos campos de usuário (CPF, becaMeasures, campos de endereço) na API de usuários.
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
 - **Frontend (Testes):**
   - Corrigir o erro `SyntaxError: Invalid or unexpected token` que ainda impede a execução dos testes do `SelectionSummary`.

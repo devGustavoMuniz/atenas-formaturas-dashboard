@@ -167,7 +167,6 @@ description: "O contrato foi atualizado com sucesso.",
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-            <CardTitle>{isEditing ? "Editar Contrato" : "Novo Contrato"}</CardTitle>
             <CardDescription>
             {isEditing
                 ? "Atualize as informações do contrato existente."

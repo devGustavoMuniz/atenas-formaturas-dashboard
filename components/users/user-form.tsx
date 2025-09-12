@@ -20,10 +20,11 @@ import { ImageCropper } from "@/components/users/image-cropper"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react"
+import { Check, ChevronsUpDown, Eye, EyeOff, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { IMaskInput } from "react-imask"
+import { getAddressByCEP } from "@/lib/api/cep-api"
 
 // Função para converter o valor monetário formatado de volta para número
 const parseCurrency = (value: string | number | undefined): number | undefined => {
@@ -70,12 +71,24 @@ const userFormSchema = z.object({
   role: z.enum(["admin", "client"], {
     required_error: "Selecione um cargo.",
   }),
+  cpf: z.string().min(14, {
+    message: "CPF inválido.",
+  }),
+  becaMeasures: z.string().optional(),
   fatherName: z.string().optional(),
   fatherPhone: z.string().optional(),
   motherName: z.string().optional(),
   motherPhone: z.string().optional(),
   driveLink: z.string().optional(),
   creditValue: z.any().transform(v => parseCurrency(v)).optional(),
+  // Address fields
+  zipCode: z.string().min(8, "CEP inválido").max(9, "CEP inválido").optional(),
+  street: z.string().optional(),
+  number: z.string().optional(),
+  complement: z.string().optional(),
+  neighborhood: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().min(2, "Estado é obrigatório").max(2, "UF inválida").optional(),
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
@@ -142,8 +155,9 @@ export function UserForm({ userId }: UserFormProps) {
   const [profileImageFilename, setProfileImageFilename] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [passwordValue, setPasswordValue] = useState("")
+  const [isFetchingCep, setIsFetchingCep] = useState(false)
 
-  const steps = ["basic", "additional", "profile"]
+  const steps = ["basic", "additional", "address", "profile"]
 
   const { data: user, isLoading: isLoadingUser } = useQuery({
     queryKey: ["user", userId],
@@ -169,14 +183,57 @@ export function UserForm({ userId }: UserFormProps) {
       observations: "",
       password: "",
       role: "client",
+      cpf: "",
+      becaMeasures: "",
       fatherName: "",
       fatherPhone: "",
       motherName: "",
       motherPhone: "",
       driveLink: "",
       creditValue: undefined,
+      zipCode: "",
+      street: "",
+      number: "",
+      complement: "",
+      neighborhood: "",
+      city: "",
+      state: "",
     },
   })
+
+  const zipCodeValue = form.watch("zipCode")
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      const cep = zipCodeValue?.replace(/\D/g, "") || ""
+      if (cep.length === 8) {
+        setIsFetchingCep(true)
+        try {
+          const address = await getAddressByCEP(cep)
+          if (address) {
+            form.setValue("street", address.logradouro)
+            form.setValue("neighborhood", address.bairro)
+            form.setValue("city", address.localidade)
+            form.setValue("state", address.uf)
+            form.setFocus("number")
+          } else {
+            toast({
+              variant: "destructive",
+              title: "CEP não encontrado",
+            })
+          }
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Falha ao buscar CEP",
+          })
+        } finally {
+          setIsFetchingCep(false)
+        }
+      }
+    }
+    fetchAddress()
+  }, [zipCodeValue, form, toast])
 
   useEffect(() => {
     if (user && isEditing) {
@@ -184,12 +241,21 @@ export function UserForm({ userId }: UserFormProps) {
         ...user,
         observations: user.observations || "",
         password: "********",
+        cpf: user.cpf || "",
+        becaMeasures: user.becaMeasures || "",
         fatherName: user.fatherName || "",
         fatherPhone: user.fatherPhone || "",
         motherName: user.motherName || "",
         motherPhone: user.motherPhone || "",
         driveLink: user.driveLink || "",
         creditValue: user.creditValue,
+        zipCode: user.zipCode || "",
+        street: user.street || "",
+        number: user.number || "",
+        complement: user.complement || "",
+        neighborhood: user.neighborhood || "",
+        city: user.city || "",
+        state: user.state || "",
       })
       setProfileImage(user.profileImage || null)
       setProfileImageFilename(user.profileImage || null)
@@ -225,7 +291,7 @@ export function UserForm({ userId }: UserFormProps) {
     Object.keys(cleanedData).forEach((key) => {
       if (
         cleanedData[key] === "" &&
-        ["observations", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink"].includes(key)
+        ["observations", "becaMeasures", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink", "zipCode", "street", "number", "complement", "neighborhood", "city", "state"].includes(key)
       ) {
         delete cleanedData[key]
       }
@@ -421,7 +487,6 @@ export function UserForm({ userId }: UserFormProps) {
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <CardTitle>{isEditing ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
           <CardDescription>
             {isEditing
               ? "Atualize as informações do usuário existente."
@@ -432,9 +497,10 @@ export function UserForm({ userId }: UserFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs value={steps[currentStep]} onValueChange={(value) => setCurrentStep(steps.indexOf(value))} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
               <TabsTrigger value="additional">Informações Adicionais</TabsTrigger>
+              <TabsTrigger value="address">Endereço</TabsTrigger>
               <TabsTrigger value="profile">Foto de Perfil</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -617,6 +683,41 @@ export function UserForm({ userId }: UserFormProps) {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="cpf"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CPF</FormLabel>
+                      <FormControl>
+                        <IMaskInput
+                          mask="000.000.000-00"
+                          unmask={false}
+                          value={field.value}
+                          onAccept={(value) => field.onChange(value)}
+                          placeholder="000.000.000-00"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="becaMeasures"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medidas da Beca (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Medidas da beca (opcional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <FormField
@@ -771,6 +872,119 @@ export function UserForm({ userId }: UserFormProps) {
           )}
 
           {currentStep === 2 && (
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="zipCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CEP (Opcional)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input placeholder="00000-000" {...field} />
+                          {isFetchingCep && (
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="neighborhood"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bairro (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do bairro" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="street"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rua (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome da rua" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="complement"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Complemento (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Apartamento, bloco, etc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome da cidade" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estado - UF (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input maxLength={2} placeholder="SP" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex justify-between mt-4">
+                <Button type="button" variant="outline" onClick={prevStep}>
+                  Voltar
+                </Button>
+                <Button type="button" onClick={nextStep} className="bg-yellow-500 text-black hover:bg-yellow-400">
+                  Próximo
+                </Button>
+              </div>
+            </CardContent>
+          )}
+
+          {currentStep === 3 && (
             <CardContent className="space-y-4 pt-6">
               <div className="flex flex-col items-center space-y-6">
                 <div className="flex flex-col items-center gap-4">
