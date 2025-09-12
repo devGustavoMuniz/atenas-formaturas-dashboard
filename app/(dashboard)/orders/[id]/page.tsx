@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
 
 import { UserName } from '@/components/users/user-name'
 import { getOrderById, updateOrderStatus } from '@/lib/api/orders-api'
@@ -15,12 +16,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/use-toast'
 import { OrderDto } from '@/lib/order-types'
+import { OrderItemPhotos } from '@/components/orders/order-item-photos'
 
 export default function OrderDetailsPage() {
   const params = useParams()
   const id = params.id as string
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
@@ -43,6 +46,18 @@ export default function OrderDetailsPage() {
       })
     },
   })
+
+  const toggleItemExpansion = (itemId: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId)
+      } else {
+        newSet.add(itemId)
+      }
+      return newSet
+    })
+  }
 
   const getStatusVariant = (status: OrderDto['paymentStatus']) => {
     switch (status) {
@@ -141,16 +156,57 @@ export default function OrderDetailsPage() {
                 <TableHead>Produto</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead className="text-right">Preço</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.productName}</TableCell>
-                  <TableCell>{item.productType}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.itemPrice)}</TableCell>
-                </TableRow>
-              ))}
+              {order.items.map((item) => {
+                const photos = item.details.filter(detail => detail.photoUrl)
+                const isExpanded = expandedItems.has(item.id)
+                const hasPhotos = photos.length > 0
+
+                return (
+                  <>
+                    <TableRow 
+                      key={item.id}
+                      className={hasPhotos ? "cursor-pointer hover:bg-muted/50" : ""}
+                      onClick={hasPhotos ? () => toggleItemExpansion(item.id) : undefined}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {hasPhotos && (
+                            <Image className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          {item.productName}
+                          {hasPhotos && (
+                            <span className="text-xs text-muted-foreground ml-auto">
+                              {photos.length} foto{photos.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.productType}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.itemPrice)}</TableCell>
+                      <TableCell>
+                        {hasPhotos && (
+                          isExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    {hasPhotos && (
+                      <TableRow key={`${item.id}-photos`}>
+                        <TableCell colSpan={4} className="p-0 border-0">
+                          <OrderItemPhotos item={item} isExpanded={isExpanded} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                )
+              })}
             </TableBody>
           </Table>
         </CardContent>

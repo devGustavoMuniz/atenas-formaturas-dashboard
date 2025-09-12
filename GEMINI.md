@@ -317,7 +317,24 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - **Inicialização do formulário**: Valores numéricos do backend agora são formatados adequadamente antes de popular os campos do formulário.
   - **Resultado**: Valores como 0,01 do backend agora aparecem corretamente como R$ 0,01 no frontend.
 
-## 24. Próximas Tarefas
+## 24. Tasks Completed (12 de setembro de 2025)
+
+- **Melhorias no Módulo de Pedidos:**
+  - **Coluna ID adicionada na listagem**: Adicionada nova coluna "ID" como primeira coluna na tabela de pedidos, exibindo o `displayId` com fonte monoespaçada para melhor legibilidade.
+  - **Funcionalidade "Marcar como Concluído"**:
+    - Implementado novo endpoint `updateOrderStatus` em `lib/api/orders-api.ts` para `PUT /v1/orders/{id}/status`.
+    - Adicionado novo status `'COMPLETED'` ao tipo `OrderDto` e em todos os componentes relacionados.
+    - Criado botão "Marcar como Concluído" na tela de detalhes do pedido, visível apenas para pedidos com status `'APPROVED'`.
+    - Badge "COMPLETED" configurada com cor cinza (`secondary`) para diferenciação visual do status "APPROVED".
+    - Adicionada opção "Concluído" no filtro da toolbar de pedidos.
+  - **Visualização de Fotos dos Pedidos**:
+    - Atualizado `OrderItemDetailsDto` para incluir campo `photoUrl?: string`.
+    - Criado componente `OrderItemPhotos` para exibir fotos selecionadas em cada item do pedido.
+    - Implementada funcionalidade de linha expansível: toda a linha do item é clicável quando contém fotos.
+    - Integração com componente existente `ImagePreviewCard` para visualização em zoom.
+    - **UX aprimorada**: Indicadores visuais (ícone de imagem, contador de fotos, setas expansíveis), hover effects, e grid responsivo com espaçamento adequado.
+
+## 25. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
