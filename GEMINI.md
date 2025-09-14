@@ -357,10 +357,19 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - **Contratos**: Removido título "Novo Contrato"/"Editar Contrato" do card, mantendo apenas a descrição.
   - **Resultado**: Interface mais limpa com títulos únicos no topo das páginas e descrições contextuais nos cards.
 
+- **Integração com Backend - Estrutura de Endereço:**
+  - **Correção da estrutura de dados**: Ajustado o formulário de usuários para corresponder ao formato esperado pelo backend.
+  - **Problema identificado**: Backend espera campos de endereço em objeto aninhado `address: { zipCode, street, ... }` em vez de campos individuais.
+  - **Solução implementada**:
+    - **UX preservada**: Campos continuam individuais na interface do usuário.
+    - **Transformação de dados**: Função `cleanFormData` modificada para agrupar campos de endereço em objeto `address` antes do envio.
+    - **Extração de dados**: Lógica de edição ajustada para extrair campos de `user.address.*` usando optional chaining.
+    - **Payload otimizado**: Campos vazios são removidos e objeto `address` só é incluído se tiver dados.
+  - **Compatibilidade**: Funciona tanto para criação quanto edição de usuários, mantendo a mesma UX.
+
 ## 26. Próximas Tarefas
 
 - **Aguardando Backend:**
-  - Implementação dos novos campos de usuário (CPF, becaMeasures, campos de endereço) na API de usuários.
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
 - **Frontend (Testes):**
   - Corrigir o erro `SyntaxError: Invalid or unexpected token` que ainda impede a execução dos testes do `SelectionSummary`.

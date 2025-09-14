@@ -249,13 +249,14 @@ export function UserForm({ userId }: UserFormProps) {
         motherPhone: user.motherPhone || "",
         driveLink: user.driveLink || "",
         creditValue: user.creditValue,
-        zipCode: user.zipCode || "",
-        street: user.street || "",
-        number: user.number || "",
-        complement: user.complement || "",
-        neighborhood: user.neighborhood || "",
-        city: user.city || "",
-        state: user.state || "",
+        // Extract address fields from nested address object
+        zipCode: user.address?.zipCode || "",
+        street: user.address?.street || "",
+        number: user.address?.number || "",
+        complement: user.address?.complement || "",
+        neighborhood: user.address?.neighborhood || "",
+        city: user.address?.city || "",
+        state: user.address?.state || "",
       })
       setProfileImage(user.profileImage || null)
       setProfileImageFilename(user.profileImage || null)
@@ -288,10 +289,39 @@ export function UserForm({ userId }: UserFormProps) {
   const cleanFormData = (data: Record<string, any>) => {
     const cleanedData = { ...data }
 
+    // Extract address fields
+    const addressFields = {
+      zipCode: cleanedData.zipCode,
+      street: cleanedData.street,
+      number: cleanedData.number,
+      complement: cleanedData.complement,
+      neighborhood: cleanedData.neighborhood,
+      city: cleanedData.city,
+      state: cleanedData.state,
+    }
+
+    // Remove address fields from main object
+    Object.keys(addressFields).forEach(key => {
+      delete cleanedData[key]
+    })
+
+    // Clean empty address fields
+    Object.keys(addressFields).forEach((key) => {
+      if (addressFields[key] === "") {
+        delete addressFields[key]
+      }
+    })
+
+    // Add address object if it has any fields
+    if (Object.keys(addressFields).length > 0) {
+      cleanedData.address = addressFields
+    }
+
+    // Clean other optional fields
     Object.keys(cleanedData).forEach((key) => {
       if (
         cleanedData[key] === "" &&
-        ["observations", "becaMeasures", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink", "zipCode", "street", "number", "complement", "neighborhood", "city", "state"].includes(key)
+        ["observations", "becaMeasures", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink"].includes(key)
       ) {
         delete cleanedData[key]
       }
