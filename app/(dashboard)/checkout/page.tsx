@@ -23,6 +23,7 @@ import { useEffect, useState } from "react"
 import { getAddressByCEP } from "@/lib/api/cep-api"
 import { createPaymentPreference } from "@/lib/api/mercado-pago-api";
 import { createOrder, CreateOrderPayload } from "@/lib/api/orders-api";
+import { fetchUserById } from "@/lib/api/users-api";
 import { Loader2 } from "lucide-react"
 import { IMaskInput } from "react-imask"
 
@@ -59,10 +60,42 @@ export default function CheckoutPage() {
       neighborhood: "",
       city: "",
       state: "",
+      phone: "",
     },
   })
 
   const zipCodeValue = form.watch("zipCode")
+
+  // Auto-fill user data on component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user?.id) {
+        try {
+          const fullUserData = await fetchUserById(user.id)
+          
+          // Set phone if available
+          if (fullUserData.phone) {
+            form.setValue("phone", fullUserData.phone)
+          }
+          
+          // Set address fields if available
+          if (fullUserData.address) {
+            if (fullUserData.address.zipCode) form.setValue("zipCode", fullUserData.address.zipCode)
+            if (fullUserData.address.street) form.setValue("street", fullUserData.address.street)
+            if (fullUserData.address.number) form.setValue("number", fullUserData.address.number)
+            if (fullUserData.address.complement) form.setValue("complement", fullUserData.address.complement)
+            if (fullUserData.address.neighborhood) form.setValue("neighborhood", fullUserData.address.neighborhood)
+            if (fullUserData.address.city) form.setValue("city", fullUserData.address.city)
+            if (fullUserData.address.state) form.setValue("state", fullUserData.address.state)
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados do usuário:", error)
+        }
+      }
+    }
+
+    loadUserData()
+  }, [user?.id, form])
 
   useEffect(() => {
     const fetchAddress = async () => {

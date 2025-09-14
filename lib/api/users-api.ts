@@ -20,6 +20,15 @@ export type User = {
   profileImage?: string
   status: "active" | "inactive"
   createdAt: string
+  address?: {
+    zipCode: string
+    street: string
+    number: string
+    complement?: string
+    neighborhood: string
+    city: string
+    state: string
+  }
 }
 
 export type UserStats = {

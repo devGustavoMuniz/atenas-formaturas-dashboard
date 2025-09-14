@@ -382,7 +382,31 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - **Zero quebra** de funcionalidades existentes.
     - **Transição gradual** e segura.
 
-## 26. Próximas Tarefas
+## 26. Tasks Completed (14 de setembro de 2025)
+
+- **Auto-preenchimento de Dados no Checkout:**
+  - **Funcionalidade implementada**: Tela de checkout agora preenche automaticamente os campos de endereço e telefone com os dados do usuário logado.
+  - **Implementação**:
+    - **Requisição automática**: Adicionado `useEffect` que executa `fetchUserById()` ao carregar a página para buscar dados completos do usuário.
+    - **Estrutura de dados atualizada**: Tipos `User` atualizados em `lib/types.ts` e `lib/api/users-api.ts` para incluir objeto `address`:
+      ```typescript
+      address?: {
+        zipCode: string
+        street: string
+        number: string
+        complement?: string
+        neighborhood: string
+        city: string
+        state: string
+      }
+      ```
+    - **Preenchimento automático**: Campos do formulário são populados automaticamente se os dados estiverem disponíveis:
+      - **Telefone**: `user.phone`
+      - **Endereço**: `user.address.zipCode`, `user.address.street`, etc.
+    - **Tratamento de erros**: Implementado try-catch para lidar com falhas na requisição.
+  - **Experiência do usuário melhorada**: Usuários não precisam mais preencher dados já cadastrados, agilizando o processo de checkout.
+
+## 27. Próximas Tarefas
 
 - **Aguardando Backend:**
   - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
