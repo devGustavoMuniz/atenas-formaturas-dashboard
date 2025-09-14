@@ -69,21 +69,10 @@ const genericDetailsSchema: z.ZodType<GenericDetails> = z.object({
 });
 
 const digitalFilesDetailsSchema: z.ZodType<DigitalFilesDetails> = z.object({
-  isAvailableUnit: z.boolean().default(false),
-  valorPackTotal: z.any().transform(v => parseCurrency(v)).optional(),
-  events: z.array(eventConfigurationSchema).default([]),
-}).superRefine((data, ctx) => {
-    if (!data.isAvailableUnit && (data.valorPackTotal === undefined || data.valorPackTotal < 0)) {
-        ctx.addIssue({ code: 'custom', message: 'Valor do pacote completo é obrigatório.', path: ['valorPackTotal'] });
-    }
-    data.events.forEach((event, index) => {
-        if(data.isAvailableUnit) {
-            if(!event.minPhotos || event.minPhotos < 1) ctx.addIssue({ code: 'custom', message: 'Mínimo de 1 foto.', path: [`events.${index}.minPhotos`]});
-            if(event.valorPhoto === undefined || event.valorPhoto < 0) ctx.addIssue({ code: 'custom', message: 'Valor obrigatório.', path: [`events.${index}.valorPhoto`]});
-        } else {
-            if(event.valorPack === undefined || event.valorPack < 0) ctx.addIssue({ code: 'custom', message: 'Valor obrigatório.', path: [`events.${index}.valorPack`]});
-        }
-    });
+  events: z.array(
+    eventConfigurationSchema.refine(data => data.minPhotos && data.minPhotos > 0, { message: "Mínimo de 1 foto.", path: ["minPhotos"] })
+                         .refine(data => data.valorPhoto !== undefined && data.valorPhoto >= 0, { message: "Valor obrigatório.", path: ["valorPhoto"]})
+  ).default([]),
 });
 
 const getDetailsSchema = (flag: string) => {
@@ -126,20 +115,15 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
             
             const detailsPayload = { ...data };
             if (product.flag === 'DIGITAL_FILES') {
+                // Sempre forçar modo individual (isAvailableUnit: true)
+                detailsPayload.isAvailableUnit = true;
                 if (detailsPayload.events) {
-                    detailsPayload.events = detailsPayload.events.map((event: any) => {
-                        const cleanEvent: any = { id: event.id };
-                        if (data.isAvailableUnit) {
-                            cleanEvent.minPhotos = event.minPhotos;
-                            cleanEvent.valorPhoto = event.valorPhoto;
-                        } else {
-                            cleanEvent.valorPack = event.valorPack;
-                        }
-                        return cleanEvent;
-                    });
+                    detailsPayload.events = detailsPayload.events.map((event: any) => ({
+                        id: event.id,
+                        minPhotos: event.minPhotos,
+                        valorPhoto: event.valorPhoto,
+                    }));
                 }
-                if(data.isAvailableUnit) delete detailsPayload.valorPackTotal;
-
             } else if (product.flag === 'GENERIC') {
                  if (detailsPayload.events) {
                     detailsPayload.events = detailsPayload.events.map((event: any) => ({
@@ -170,13 +154,10 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
                 maxPhoto: details.maxPhoto,
                 valorEncadernacao: formatCurrency(details.valorEncadernacao),
                 valorFoto: formatCurrency(details.valorFoto),
-                isAvailableUnit: !!details.isAvailableUnit,
-                valorPackTotal: formatCurrency(details.valorPackTotal),
                 events: (details.events || []).map((evt: any) => ({
                     id: evt.id,
                     minPhotos: evt.minPhotos,
                     valorPhoto: formatCurrency(evt.valorPhoto),
-                    valorPack: formatCurrency(evt.valorPack)
                 }))
             };
             reset(initialValues);
@@ -186,7 +167,6 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
     if (!institutionProduct) return null;
 
     const { product } = institutionProduct;
-    const isAvailableUnit = watch("isAvailableUnit");
 
     const handleEventToggle = (eventId: string, isChecked: boolean) => {
         const fieldIndex = fields.findIndex(field => field.id === eventId);
@@ -217,14 +197,8 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
                         </div>
                         {isEnabled && (
                             <div className="grid grid-cols-2 gap-4 pl-8">
-                                {product.flag === 'DIGITAL_FILES' && !isAvailableUnit ? (
-                                    <FormField name={`events.${fieldIndex}.valorPack`} control={control} render={({ field }) => <FormItem><FormLabel>Valor do Pacote</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
-                                ) : (
-                                    <>
-                                        <FormField name={`events.${fieldIndex}.minPhotos`} control={control} render={({ field }) => <FormItem><FormLabel>Mín. Fotos</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>} />
-                                        <FormField name={`events.${fieldIndex}.valorPhoto`} control={control} render={({ field }) => <FormItem><FormLabel>Valor/Foto</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
-                                    </>
-                                )}
+                                <FormField name={`events.${fieldIndex}.minPhotos`} control={control} render={({ field }) => <FormItem><FormLabel>Mín. Fotos</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>} />
+                                <FormField name={`events.${fieldIndex}.valorPhoto`} control={control} render={({ field }) => <FormItem><FormLabel>Valor/Foto</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
                             </div>
                         )}
                     </div>
@@ -247,17 +221,7 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
             case "GENERIC":
                 return renderEventList(); 
             case "DIGITAL_FILES":
-                return (
-                    <div className="space-y-4">
-                        <FormField name="isAvailableUnit" control={control} render={({ field }) => <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Permitir venda separadamente?</FormLabel></div><FormControl><Switch checked={!!field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>} />
-                        
-                        {!isAvailableUnit && (
-                             <FormField name="valorPackTotal" control={control} render={({ field }) => <FormItem><FormLabel>Valor do Pacote Completo</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
-                        )}
-                        
-                        {renderEventList()}
-                    </div>
-                );
+                return renderEventList();
             default:
                 return <p>Este produto não possui detalhes configuráveis.</p>
         }

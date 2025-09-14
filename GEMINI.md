@@ -367,6 +367,21 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - **Payload otimizado**: Campos vazios são removidos e objeto `address` só é incluído se tiver dados.
   - **Compatibilidade**: Funciona tanto para criação quanto edição de usuários, mantendo a mesma UX.
 
+- **Remoção do Modo Pacote para DIGITAL_FILES:**
+  - **Análise das categorias**: Identificação completa das categorias existentes (ALBUM, GENERIC, DIGITAL_FILES) e seus pontos de utilização no sistema.
+  - **Estratégia cirúrgica**: Implementada remoção do modo pacote apenas no ponto de configuração, preservando todo o código existente.
+  - **Alterações no modal de configuração** (`edit-product-details-modal.tsx`):
+    - **Schema simplificado**: Removidos campos `isAvailableUnit` e `valorPackTotal` do `digitalFilesDetailsSchema`.
+    - **Interface limpa**: Eliminados Switch "Permitir venda separadamente?" e campo "Valor do Pacote Completo".
+    - **Comportamento unificado**: DIGITAL_FILES agora renderiza interface idêntica ao GENERIC (apenas lista de eventos).
+    - **Processamento forçado**: `isAvailableUnit: true` sempre enviado na API para novos produtos DIGITAL_FILES.
+    - **Campos padronizados**: Eventos sempre mostram "Mín. Fotos" e "Valor/Foto" (sem diferenciação condicional).
+  - **Resultado**: 
+    - **Novos produtos DIGITAL_FILES** sempre configurados no modo individual (comportamento idêntico ao GENERIC).
+    - **Produtos existentes** configurados como pacote continuam funcionando até serem reconfigurados.
+    - **Zero quebra** de funcionalidades existentes.
+    - **Transição gradual** e segura.
+
 ## 26. Próximas Tarefas
 
 - **Aguardando Backend:**
