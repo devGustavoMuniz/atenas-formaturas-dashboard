@@ -108,6 +108,7 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
         name: "events",
         keyName: "key",
     });
+    // aaaa
 
     const { mutate: updateDetails, isPending } = useMutation({
         mutationFn: (data: any) => {
