@@ -32,7 +32,9 @@ export default function ProductDetailsPage() {
     (state) => state.setSelectedProduct
   )
 
-  const plugin = useRef(Autoplay({ delay: 4000, stopOnInteraction: true }))
+  const plugin = useRef(
+    Autoplay({ delay: 3000, stopOnInteraction: false, stopOnMouseEnter: true })
+  )
 
   const [product, setProduct] = useState<Product | null>(null)
   const [institutionProduct, setInstitutionProduct] =

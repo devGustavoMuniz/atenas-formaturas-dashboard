@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { AlbumDetails, DigitalFilesDetails } from "@/lib/product-details-types"
+import { AlbumDetails, DigitalFilesDetails, GenericDetails } from "@/lib/product-details-types"
 import { useCartStore } from "@/lib/store/cart-store"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
@@ -141,7 +141,7 @@ export default function SelectPhotosPage() {
         if (!photosForEvent || photosForEvent.length === 0) {
           return true
         }
-        return photosForEvent.length >= eventDetail.minPhotos
+        return photosForEvent.length >= (eventDetail.minPhotos ?? 0)
       })
     }
     return true
@@ -201,7 +201,7 @@ export default function SelectPhotosPage() {
         const selectedCount = eventPhotos?.length ?? 0
         if (selectedCount > 0) {
           photosByEvent[eventDetail.id] = eventPhotos!.map((p) => p.id)
-          return total + selectedCount * eventDetail.valorPhoto
+          return total + selectedCount * (eventDetail.valorPhoto ?? 0)
         }
         return total
       }, 0)

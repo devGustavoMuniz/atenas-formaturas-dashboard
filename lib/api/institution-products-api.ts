@@ -9,6 +9,8 @@ export interface InstitutionProductDetails {
   maxPhoto?: number
   valorEncadernacao?: number
   valorFoto?: number
+  isAvailableUnit?: boolean
+  valorPackTotal?: number
 }
 
 export type InstitutionProduct = {

@@ -26,7 +26,9 @@ export default function DashboardLayout({
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-2 md:hidden">
             <MobileSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} closeSidebar={closeSidebar} />
-            <h1 className="text-lg font-semibold">Dashboard</h1>
+            <h1 className="text-lg font-semibold">
+              {user?.role === 'client' ? 'Atenas Formaturas' : 'Dashboard'}
+            </h1>
           </div>
           <div className="hidden md:flex md:items-center md:gap-2">
             <svg

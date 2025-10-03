@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: {
     template: '%s - Atenas Formaturas',
-    default: 'Dashboard - Atenas Formaturas',
+    default: 'Atenas Formaturas',
   },
   description: "Admin dashboard template with Next.js",
   generator: 'v0.dev',

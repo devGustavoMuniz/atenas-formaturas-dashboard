@@ -24,37 +24,7 @@ export function ClientProductCard({ product }: ClientProductCardProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleProductClick = async () => {
-    if (product.flag === "DIGITAL_FILES") {
-      if (!user?.institutionId) {
-        toast.error("Você não está associado a uma instituição.")
-        return
-      }
-      setIsLoading(true)
-      try {
-        const institutionProductsData = await fetchInstitutionProducts(
-          user.institutionId
-        )
-        const specificInstitutionProduct = institutionProductsData.find(
-          (instProduct) => instProduct.product.id === product.id
-        )
-
-        if (specificInstitutionProduct) {
-          setSelectedProduct(product, specificInstitutionProduct)
-          router.push(`/client/products/${product.id}/select-photos`)
-        } else {
-          toast.error(
-            "Detalhes do produto não encontrados para sua instituição."
-          )
-        }
-      } catch (error) {
-        toast.error("Falha ao carregar os detalhes do produto.")
-        console.error("Failed to fetch product details:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    } else {
       router.push(`/client/products/${product.id}`)
-    }
   }
 
   return (

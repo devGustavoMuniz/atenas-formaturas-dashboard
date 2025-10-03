@@ -367,20 +367,9 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - **Payload otimizado**: Campos vazios são removidos e objeto `address` só é incluído se tiver dados.
   - **Compatibilidade**: Funciona tanto para criação quanto edição de usuários, mantendo a mesma UX.
 
-- **Remoção do Modo Pacote para DIGITAL_FILES:**
-  - **Análise das categorias**: Identificação completa das categorias existentes (ALBUM, GENERIC, DIGITAL_FILES) e seus pontos de utilização no sistema.
-  - **Estratégia cirúrgica**: Implementada remoção do modo pacote apenas no ponto de configuração, preservando todo o código existente.
-  - **Alterações no modal de configuração** (`edit-product-details-modal.tsx`):
-    - **Schema simplificado**: Removidos campos `isAvailableUnit` e `valorPackTotal` do `digitalFilesDetailsSchema`.
-    - **Interface limpa**: Eliminados Switch "Permitir venda separadamente?" e campo "Valor do Pacote Completo".
-    - **Comportamento unificado**: DIGITAL_FILES agora renderiza interface idêntica ao GENERIC (apenas lista de eventos).
-    - **Processamento forçado**: `isAvailableUnit: true` sempre enviado na API para novos produtos DIGITAL_FILES.
-    - **Campos padronizados**: Eventos sempre mostram "Mín. Fotos" e "Valor/Foto" (sem diferenciação condicional).
-  - **Resultado**: 
-    - **Novos produtos DIGITAL_FILES** sempre configurados no modo individual (comportamento idêntico ao GENERIC).
-    - **Produtos existentes** configurados como pacote continuam funcionando até serem reconfigurados.
-    - **Zero quebra** de funcionalidades existentes.
-    - **Transição gradual** e segura.
+- **~~Remoção do Modo Pacote para DIGITAL_FILES~~ (REVERTIDO em 1 de outubro de 2025):**
+  - Esta funcionalidade foi revertida conforme solicitação do cliente.
+  - O modo pacote foi restaurado para produtos DIGITAL_FILES.
 
 ## 26. Tasks Completed (14 de setembro de 2025)
 
@@ -406,16 +395,76 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - **Tratamento de erros**: Implementado try-catch para lidar com falhas na requisição.
   - **Experiência do usuário melhorada**: Usuários não precisam mais preencher dados já cadastrados, agilizando o processo de checkout.
 
-## 27. Próximas Tarefas
+## 27. Tasks Completed (1 de outubro de 2025)
 
-- **Aguardando Backend:**
-  - Aguardando a implementação do webhook de status de pagamento pela equipe de backend.
-- **Frontend (Testes):**
-  - Corrigir o erro `SyntaxError: Invalid or unexpected token` que ainda impede a execução dos testes do `SelectionSummary`.
-  - Finalizar a implementação e garantir que os testes do `SelectionSummary` passem.
-  - Implementar testes para o componente `OrderTableToolbar`.
-  - Implementar testes de integração para a página `OrdersPage` e `OrderDetailsPage`.
-- **Frontend (Após conclusão do backend):**
-  - Modificar a página de checkout para chamar o endpoint `POST /v1/orders` antes do redirecionamento.
-  - Implementar a limpeza do carrinho de compras após o início do pagamento.
-  - Criar a página "Meus Pedidos" para o cliente, exibindo o histórico e o status dos pedidos.
+- **Reversão da Remoção do Modo Pacote para DIGITAL_FILES:**
+  - **Contexto**: A funcionalidade de modo pacote havia sido removida anteriormente (item 25), mas o cliente solicitou sua restauração.
+  - **Alterações no modal de configuração** (`components/institutions/edit-product-details-modal.tsx`):
+    - **Schema restaurado**: Adicionados novamente os campos `isAvailableUnit` e `valorPackTotal` ao `digitalFilesDetailsSchema`.
+    - **Validação condicional**: Implementada validação complexa usando `superRefine` para validar campos diferentes dependendo do modo:
+      - **Modo individual** (`isAvailableUnit: true`): Valida `minPhotos` e `valorPhoto` para cada evento.
+      - **Modo pacote** (`isAvailableUnit: false`): Valida `valorPack` para cada evento e `valorPackTotal` obrigatório.
+    - **Interface restaurada**:
+      - Adicionado Switch "Permitir venda separadamente?" para alternar entre os modos.
+      - Campo "Valor do Pacote Completo" exibido condicionalmente quando modo pacote está ativo.
+      - Renderização condicional nos eventos: mostra "Mín. Fotos" e "Valor/Foto" no modo individual, ou "Valor do Pacote" no modo pacote.
+    - **Lógica de processamento**: Restaurada lógica que envia campos diferentes para a API dependendo do modo selecionado.
+    - **Inicialização de dados**: Formulário agora carrega corretamente `isAvailableUnit`, `valorPackTotal` e `valorPack` dos detalhes existentes.
+  - **Resultado**:
+    - Produtos DIGITAL_FILES podem ser configurados tanto no modo individual quanto no modo pacote.
+    - Mantida compatibilidade com produtos existentes.
+    - Interface limpa e intuitiva para alternar entre os dois modos.
+
+## 28. Tasks Completed (2 de outubro de 2025)
+
+- **Correção do Autoplay do Carrossel de Fotos:**
+  - **Contexto**: O cliente reportou que o autoplay do carrossel na página de detalhes do produto não estava funcionando.
+  - **Diagnóstico do problema** (`app/(dashboard)/client/products/[id]/page.tsx:35`):
+    - Plugin Autoplay configurado com `stopOnInteraction: true`, que interrompe permanentemente o autoplay após qualquer interação do usuário (clique, arrasto).
+    - Comportamento indesejado: uma vez que o usuário interagisse com o carrossel, o autoplay nunca mais retomava.
+  - **Solução implementada**:
+    - Alterada a configuração do plugin Autoplay:
+      ```typescript
+      const plugin = useRef(
+        Autoplay({ delay: 3000, stopOnInteraction: false, stopOnMouseEnter: true })
+      )
+      ```
+    - **Parâmetros ajustados**:
+      - `delay: 3000`: Intervalo de 3 segundos entre slides.
+      - `stopOnInteraction: false`: Autoplay continua funcionando mesmo após interações (cliques/arrasto).
+      - `stopOnMouseEnter: true`: Autoplay pausa temporariamente quando o mouse está sobre o carrossel.
+    - **Comportamento dos handlers** (linhas 179-180):
+      - `onMouseEnter`: Para o autoplay temporariamente.
+      - `onMouseLeave`: Retoma o autoplay automaticamente.
+  - **Resultado**:
+    - Autoplay funciona continuamente a cada 3 segundos.
+    - Pausa inteligente quando o usuário interage ou posiciona o mouse sobre o carrossel.
+    - Retoma automaticamente quando o mouse sai da área do carrossel.
+    - Experiência de visualização melhorada para os clientes.
+
+- **Remoção da Palavra "Dashboard" para Clientes:**
+  - **Contexto**: Solicitação para que clientes não vejam a palavra "Dashboard" no título e cabeçalho.
+  - **Alterações realizadas**:
+    - **Metadata global** (`app/layout.tsx:14`):
+      - Alterado `default: 'Dashboard - Atenas Formaturas'` para `default: 'Atenas Formaturas'`.
+    - **Header mobile** (`app/(dashboard)/layout.tsx:29-31`):
+      - Implementada renderização condicional no H1 baseada no role do usuário:
+        - **Cliente**: Exibe "Atenas Formaturas"
+        - **Admin**: Exibe "Dashboard"
+  - **Resultado**:
+    - Título do navegador e header mobile adaptados ao tipo de usuário.
+    - Interface mais adequada para clientes sem perder a identidade administrativa para admins.
+
+- **Adição de Botão de Visualizar Senha na Tela de Login:**
+  - **Contexto**: Solicitação para adicionar funcionalidade de visualizar senha na tela de login, similar ao formulário de cadastro.
+  - **Alterações no formulário de login** (`components/auth/login-form.tsx`):
+    - **Importações** (linha 8): Adicionados ícones `Eye` e `EyeOff` do lucide-react.
+    - **Estado** (linha 44): Criado estado `showPassword` para controlar visibilidade da senha.
+    - **Campo de senha** (linhas 108-123):
+      - Input com tipo dinâmico baseado em `showPassword` (`type={showPassword ? "text" : "password"}`).
+      - Botão posicionado absolutamente à direita do campo com ícone toggle.
+      - Ícone alterna entre `Eye` (senha oculta) e `EyeOff` (senha visível).
+  - **Resultado**:
+    - Usuários podem visualizar a senha digitada clicando no ícone.
+    - Melhor usabilidade e consistência com o formulário de cadastro.
+    - UX aprimorada para evitar erros de digitação.
