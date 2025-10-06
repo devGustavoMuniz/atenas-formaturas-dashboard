@@ -383,8 +383,8 @@ export function UserForm({ userId }: UserFormProps) {
   })
 
   const presignedUrlMutation = useMutation({
-    mutationFn: async ({ contentType, formData }: { contentType: string; formData: UserFormValues }) => {
-      const response = await getPresignedUrl({ contentType })
+    mutationFn: async ({ contentType, customIdentifier, formData }: { contentType: string; customIdentifier: string; formData: UserFormValues }) => {
+      const response = await getPresignedUrl({ contentType, customIdentifier })
       return {
         presignedData: response,
         formData,
@@ -454,6 +454,7 @@ export function UserForm({ userId }: UserFormProps) {
     if (profileImageFile) {
       presignedUrlMutation.mutate({
         contentType: profileImageFile.type,
+        customIdentifier: profileImageFile.name,
         formData: data,
       })
     } else {

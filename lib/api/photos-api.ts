@@ -4,6 +4,7 @@ interface PresignedUrlRequest {
   contentType: string;
   quantity: number;
   mediaType: 'image' | 'video';
+  customIdentifier: string;
 }
 
 interface PresignedUrlResponse {
@@ -12,14 +13,13 @@ interface PresignedUrlResponse {
 }
 
 export const getPresignedUrls = async (files: File[]): Promise<PresignedUrlResponse[]> => {
-  const requests = files.map(file => ({
-    contentType: file.type,
-    quantity: 1, 
-    mediaType: 'image',
-  }));
-
-  const batchPromises = requests.map(request =>
-    api.post("/v1/storage/presigned-url", request)
+  const batchPromises = files.map(file =>
+    api.post("/v1/storage/presigned-url", {
+      contentType: file.type,
+      quantity: 1,
+      mediaType: 'image' as const,
+      customIdentifier: file.name,
+    })
   );
 
   const responses = await Promise.all(batchPromises);

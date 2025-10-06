@@ -171,9 +171,16 @@ export async function fetchUserStats(): Promise<UserStats> {
 // Função para obter URL presigned para upload de imagem
 export async function getPresignedUrl({
   contentType,
+  customIdentifier,
 }: {
   contentType: string
+  customIdentifier: string
 }): Promise<{ uploadUrl: string; filename: string }> {
-  const response = await api.post("/v1/storage/presigned-url", { contentType, quantity: 1, mediaType: "image" })
+  const response = await api.post("/v1/storage/presigned-url", {
+    contentType,
+    quantity: 1,
+    mediaType: "image",
+    customIdentifier,
+  })
   return response.data
 }

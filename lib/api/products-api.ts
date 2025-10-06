@@ -38,13 +38,18 @@ export async function deleteProduct(id: string): Promise<void> {
 // --- ALTERADO AQUI ---
 /**
  * Obtém URLs de upload assinadas (presigned URLs) para lotes de arquivos.
- * O corpo da requisição segue o padrão: { contentType, quantity, mediaType }
+ * O corpo da requisição segue o padrão: { contentType, quantity, mediaType, customIdentifier }
  */
-export async function getPresignedUrlsForProduct(requests: { contentType: string; quantity: number; mediaType: 'image' | 'video' }[]): Promise<{ uploadUrl: string; filename: string }[]> {
-    console.log(`Obtendo URLs assinadas para os seguintes lotes:`, requests)
+export async function getPresignedUrlsForProduct(requests: { contentType: string; mediaType: 'image' | 'video'; customIdentifier: string }[]): Promise<{ uploadUrl: string; filename: string }[]> {
+    console.log(`Obtendo URLs assinadas para os seguintes arquivos:`, requests)
 
     const batchPromises = requests.map(request =>
-        api.post("/v1/storage/presigned-url", request)
+        api.post("/v1/storage/presigned-url", {
+            contentType: request.contentType,
+            quantity: 1,
+            mediaType: request.mediaType,
+            customIdentifier: request.customIdentifier,
+        })
     );
 
     const responses = await Promise.all(batchPromises);

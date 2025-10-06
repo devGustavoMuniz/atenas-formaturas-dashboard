@@ -111,51 +111,36 @@ export function ProductForm({ productId }: { productId?: string }) {
         if (filesToUpload.length > 0) {
             setUploadProgress(0);
             try {
-                const groupedFiles = filesToUpload.reduce<Record<string, File[]>>((acc, filePreview) => {
-                    const key = filePreview.file.type;
-                    if (!acc[key]) {
-                        acc[key] = [];
-                    }
-                    acc[key].push(filePreview.file);
-                    return acc;
-                }, {});
-    
-                const presignedUrlRequests = Object.entries(groupedFiles).map(([contentType, files]) => ({
-                    contentType,
-                    quantity: files.length,
-                    mediaType: contentType.startsWith('image/') ? 'image' : 'video' as 'image' | 'video',
+                const presignedUrlRequests = filesToUpload.map(filePreview => ({
+                    contentType: filePreview.file.type,
+                    mediaType: filePreview.file.type.startsWith('image/') ? 'image' : 'video' as 'image' | 'video',
+                    customIdentifier: filePreview.file.name,
                 }));
-    
+
                 const presignedUrlResponses = await getPresignedUrlsForProduct(presignedUrlRequests);
-                
+
                 let uploadedCount = 0;
-                let urlIndex = 0;
-    
-                for (const contentType in groupedFiles) {
-                    const files = groupedFiles[contentType];
-                    for (const file of files) {
-                        if (urlIndex >= presignedUrlResponses.length) {
-                            throw new Error("Mismatch between number of files and presigned URLs received.");
+
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    const filePreview = filesToUpload[i];
+                    const file = filePreview.file;
+                    const { uploadUrl, filename } = presignedUrlResponses[i];
+
+                    await axiosApi.put(uploadUrl, file, {
+                        headers: { 'Content-Type': file.type },
+                        onUploadProgress: (progressEvent) => {
+                           const individualProgress = progressEvent.total ? (progressEvent.loaded / progressEvent.total) : 0;
+                           const overallProgress = ((uploadedCount + individualProgress) / filesToUpload.length) * 100;
+                           setUploadProgress(overallProgress);
                         }
-                        
-                        const { uploadUrl, filename } = presignedUrlResponses[urlIndex++];
-                        
-                        await axiosApi.put(uploadUrl, file, {
-                            headers: { 'Content-Type': file.type },
-                            onUploadProgress: (progressEvent) => {
-                               const individualProgress = progressEvent.total ? (progressEvent.loaded / progressEvent.total) : 0;
-                               const overallProgress = ((uploadedCount + individualProgress) / filesToUpload.length) * 100;
-                               setUploadProgress(overallProgress);
-                            }
-                        });
-                        
-                        uploadedCount++;
-                        
-                        if(file.type.startsWith('image/')) {
-                            newPhotoUrls.push(filename);
-                        } else {
-                            newVideoUrls.push(filename);
-                        }
+                    });
+
+                    uploadedCount++;
+
+                    if(file.type.startsWith('image/')) {
+                        newPhotoUrls.push(filename);
+                    } else {
+                        newVideoUrls.push(filename);
                     }
                 }
     
