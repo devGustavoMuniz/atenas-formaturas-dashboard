@@ -33,3 +33,23 @@ export function formatDate(dateString: string) {
     day: 'numeric',
   }).format(new Date(dateString))
 }
+
+export function translatePaymentStatus(status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED') {
+  const translations = {
+    PENDING: 'Pagamento Pendente',
+    APPROVED: 'Aprovado',
+    REJECTED: 'Recusado',
+    CANCELLED: 'Cancelado',
+    COMPLETED: 'Concluído',
+  }
+  return translations[status] || status
+}
+
+export function translateProductType(type: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM') {
+  const translations = {
+    GENERIC: 'Produto com seleção de fotos',
+    DIGITAL_FILES: 'Arquivos digitais',
+    ALBUM: 'Álbum',
+  }
+  return translations[type] || type
+}

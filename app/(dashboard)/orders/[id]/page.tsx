@@ -8,7 +8,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
 
 import { UserName } from '@/components/users/user-name'
 import { getOrderById, updateOrderStatus } from '@/lib/api/orders-api'
-import { formatDate, formatCurrency } from '@/lib/utils'
+import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -109,10 +109,10 @@ export default function OrderDetailsPage() {
         </div>
         
         {order.paymentStatus === 'APPROVED' && (
-          <Button 
+          <Button
             onClick={() => markAsCompleted()}
             disabled={isPending}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             {isPending ? 'Processando...' : 'Marcar como Concluído'}
           </Button>
@@ -125,11 +125,10 @@ export default function OrderDetailsPage() {
             <CardTitle>Resumo</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p><strong>Status:</strong> <Badge variant={getStatusVariant(order.paymentStatus)}>{order.paymentStatus}</Badge></p>
+            <p><strong>Status:</strong> <Badge variant={getStatusVariant(order.paymentStatus)}>{translatePaymentStatus(order.paymentStatus)}</Badge></p>
             <p><strong>Data:</strong> {formatDate(order.createdAt)}</p>
             <p><strong>Valor Total:</strong> {formatCurrency(order.totalAmount)}</p>
             <p><strong>Cliente:</strong> ({order.contractNumber}) <UserName userId={order.userId} /></p>
-            {order.paymentGatewayId && <p><strong>ID do Pagamento:</strong> {order.paymentGatewayId}</p>}
           </CardContent>
         </Card>
 
@@ -185,7 +184,7 @@ export default function OrderDetailsPage() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{item.productType}</TableCell>
+                      <TableCell>{translateProductType(item.productType)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(item.itemPrice)}</TableCell>
                       <TableCell>
                         {hasPhotos && (
