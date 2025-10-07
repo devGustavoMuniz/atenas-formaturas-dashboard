@@ -3,6 +3,7 @@
 import type React from "react"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { UserNav } from "@/components/dashboard/user-nav"
+import { UserCredit } from "@/components/dashboard/user-credit"
 import { CartSheet } from "@/components/cart/cart-sheet"
 import { useAuth } from "@/lib/auth/use-auth"
 import {
@@ -55,6 +56,7 @@ export default function DashboardLayout({
               </h1>
             </div>
             <div className="flex items-center gap-2">
+              <UserCredit />
               {user?.role === 'client' && <CartSheet />}
               <UserNav />
             </div>
