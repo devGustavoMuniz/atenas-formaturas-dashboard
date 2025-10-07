@@ -3,6 +3,7 @@ export interface OrderItemDetailsDto {
   id: string;
   orderItemId: string;
   photoUrl?: string;
+  photoName?: string;
   photoId?: string;
   eventId?: string;
   isPackage?: boolean;
