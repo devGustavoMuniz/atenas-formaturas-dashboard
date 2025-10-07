@@ -468,3 +468,24 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - Usuários podem visualizar a senha digitada clicando no ícone.
     - Melhor usabilidade e consistência com o formulário de cadastro.
     - UX aprimorada para evitar erros de digitação.
+
+## 29. Tasks Completed (6 de outubro de 2025)
+
+- **Melhorias de UX na Tela de Seleção de Fotos (Mobile):**
+  - **Contexto**: Solicitação para melhorar a experiência mobile na página de seleção de fotos.
+  - **Alterações na página de seleção de fotos** (`app/(dashboard)/client/products/[id]/select-photos/page.tsx`):
+    - **Reordenação de elementos no mobile**:
+      - Implementado sistema de ordenação usando Flexbox `order` property para mobile vs desktop.
+      - **Mobile**: 1) Resumo da Seleção → 2) Botão "Adicionar ao Carrinho" → 3) Card "Comprar Pacote Completo" (se aplicável) → 4) Eventos com fotos.
+      - **Desktop**: Mantida ordem original com card de pacote acima de tudo e resumo/botão na lateral direita.
+    - **Lógica de exibição do card "Comprar Pacote Completo"**:
+      - Criada variável `shouldShowPackageOption` (linha 47): `isDigitalFilesPackage && eventGroups.length > 1`.
+      - Card só é exibido quando produto é DIGITAL_FILES em modo pacote E há mais de 1 evento disponível.
+      - Separados cards para desktop (`hidden lg:block`) e mobile (`block lg:hidden`) com IDs únicos nos checkboxes.
+    - **Auto-seleção de evento único**:
+      - Adicionado `useEffect` (linhas 94-98) que detecta quando há apenas 1 evento em produtos DIGITAL_FILES.
+      - Checkbox do evento é automaticamente marcada quando `isDigitalFilesPackage && eventGroups.length === 1`.
+  - **Resultado**:
+    - Melhor usabilidade mobile com informações importantes (resumo e botão) no topo.
+    - Interface mais limpa quando há apenas 1 evento (sem opção redundante de pacote).
+    - Experiência otimizada com evento único pré-selecionado.

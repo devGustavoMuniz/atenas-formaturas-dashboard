@@ -44,6 +44,8 @@ export default function SelectPhotosPage() {
     product?.flag === "DIGITAL_FILES" &&
     (institutionProduct?.details as DigitalFilesDetails)?.isAvailableUnit === false
 
+  const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
+
   useEffect(() => {
     if (product && institutionProduct) {
       console.log("Detalhes do produto recebidos:", { institutionProduct })
@@ -88,6 +90,12 @@ export default function SelectPhotosPage() {
 
     loadData()
   }, [product, institutionProduct, user])
+
+  useEffect(() => {
+    if (isDigitalFilesPackage && eventGroups.length === 1) {
+      setSelectedEvent(eventGroups[0].eventId, true)
+    }
+  }, [isDigitalFilesPackage, eventGroups, setSelectedEvent])
 
   const handlePhotoSelection = (photoId: string, isSelected: boolean) => {
     if (product?.flag === "ALBUM" && isSelected) {
@@ -260,7 +268,7 @@ export default function SelectPhotosPage() {
         </p>
       </div>
 
-      {isDigitalFilesPackage && (
+      {shouldShowPackageOption && (
         <Card className="mb-8 hidden lg:block">
           <CardHeader>
             <CardTitle>Comprar Pacote Completo</CardTitle>
@@ -361,7 +369,7 @@ export default function SelectPhotosPage() {
               Adicionar ao Carrinho
             </Button>
           </div>
-          {isDigitalFilesPackage && (
+          {shouldShowPackageOption && (
             <Card className="order-3 mt-8 block lg:hidden">
               <CardHeader>
                 <CardTitle>Comprar Pacote Completo</CardTitle>
