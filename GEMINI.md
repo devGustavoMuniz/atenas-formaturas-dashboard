@@ -489,3 +489,74 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - Melhor usabilidade mobile com informações importantes (resumo e botão) no topo.
     - Interface mais limpa quando há apenas 1 evento (sem opção redundante de pacote).
     - Experiência otimizada com evento único pré-selecionado.
+
+## 30. Tasks Completed (7 de outubro de 2025)
+
+- **Implementação da Sidebar Colapsável:**
+  - **Contexto**: Necessidade de implementar funcionalidade de recolher a sidebar para mostrar apenas ícones, aumentando área de conteúdo.
+  - **Refatoração do layout** (`app/(dashboard)/layout.tsx`):
+    - Substituído layout customizado por componentes `shadcn/ui` Sidebar (`SidebarProvider`, `Sidebar`, `SidebarInset`).
+    - Implementado `collapsible="icon"` para permitir colapsar sidebar.
+    - Removido componente `MobileSidebar` (funcionalidade nativa do shadcn/ui).
+    - Adicionado `SidebarHeader` com logo e título "Atenas Formaturas" dentro da sidebar.
+    - Removida duplicação do título na topbar (desktop).
+  - **Atualização do DashboardNav** (`components/dashboard/dashboard-nav.tsx`):
+    - Refatorado para usar `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton`.
+    - Implementada prop `tooltip` que mostra automaticamente o nome do item quando sidebar está colapsada.
+    - Restaurado styling do item ativo: texto e ícone em amarelo (`text-yellow-500`) com fundo `bg-muted`.
+    - Adicionado hover effect (`hover:bg-muted`) nos itens não ativos.
+    - Aumentado padding vertical (`py-5`) e espaçamento entre itens (`gap-2`).
+  - **Ajustes no componente base** (`components/ui/sidebar.tsx`):
+    - Alterada largura da sidebar colapsada de `3rem` para `4rem` (linha 26) para melhor centralização do logo.
+    - Modificado `sidebarMenuButtonVariants` para centralizar ícones quando colapsado: `group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0`.
+  - **Adicionado span com classe** `group-data-[collapsible=icon]:hidden` nos títulos dos itens para ocultá-los quando sidebar está colapsada.
+  - **Resultado**:
+    - Sidebar totalmente funcional com toggle via botão (`SidebarTrigger`) no header.
+    - Atalho de teclado `Cmd+B` / `Ctrl+B` para colapsar/expandir.
+    - Estado persiste em cookie automaticamente.
+    - No mobile, funciona como drawer lateral.
+    - Modo colapsado: largura 4rem, mostra apenas ícones centralizados, tooltips ao hover.
+    - Modo expandido: largura 16rem, mostra ícones + texto.
+
+- **Exibição de Crédito do Usuário na Topbar:**
+  - **Contexto**: Necessidade de exibir o saldo de crédito do usuário logado (campo `creditValue`) na topbar.
+  - **Verificação da estrutura de dados**:
+    - Campo `creditValue?: number` já existia no tipo `User` (`lib/types.ts` linha 16).
+    - Zustand store (`auth-store.ts`) já estava configurado para persistir o usuário completo incluindo `creditValue`.
+    - `auth-provider.tsx` busca usuário completo via `fetchUserById()` no login e refresh, sincronizando com Zustand.
+  - **Criado componente UserCredit** (`components/dashboard/user-credit.tsx`):
+    - Consome `user` do `useAuthStore`.
+    - Renderiza apenas para clientes (`user.role === 'client'`).
+    - Exibe ícone de carteira (`Wallet`) em amarelo.
+    - Formata valor com `formatCurrency()` (moeda brasileira).
+    - Fallback para R$ 0,00 quando `creditValue` é `undefined`.
+    - Design: card com borda, fundo `bg-muted`, padding `px-3 py-2`.
+  - **Integração no layout** (`app/(dashboard)/layout.tsx`):
+    - Importado e adicionado `<UserCredit />` na topbar.
+    - Posicionado antes do `CartSheet` e `UserNav`.
+  - **Resultado**:
+    - Usuários clientes veem seu saldo de crédito atualizado em tempo real na topbar.
+    - Componente reutilizável e com design consistente.
+    - Backend já retorna o campo via API, componente atualiza automaticamente.
+
+- **Melhorias na Visualização de Fotos nos Pedidos:**
+  - **Contexto**: Necessidade de exibir o nome do arquivo de cada foto selecionada na tela de detalhes do pedido, mas miniaturas eram pequenas demais.
+  - **Solução escolhida**: Cards compactos com thumbnail 80x80 e nome embaixo (Opção 3).
+  - **Adicionado campo `photoName`** ao tipo `OrderItemDetailsDto` (`lib/order-types.ts` linha 6).
+  - **Criado componente PhotoCard** (`components/orders/photo-card.tsx`):
+    - Card com padding, borda, e fundo (`bg-card`).
+    - Thumbnail 80x80 (w-20 h-20) arredondado com borda.
+    - Nome do arquivo embaixo, centralizado, truncado em 1 linha (`truncate`).
+    - Atributo `title` mostra nome completo ao passar o mouse (tooltip nativo).
+    - Hover effect: fundo `bg-muted/50`, overlay escuro + ícone de zoom na thumbnail.
+    - Click abre modal com imagem em fullscreen (Dialog).
+  - **Refatorado OrderItemPhotos** (`components/orders/order-item-photos.tsx`):
+    - Substituído `ImagePreviewCard` por `PhotoCard`.
+    - Grid responsivo ajustado: `grid-cols-3` (mobile) → `sm:grid-cols-4` (tablet) → `md:grid-cols-5` (desktop).
+    - Gap reduzido para `gap-4` (16px) entre cards.
+    - Fallback: se `photoName` não existir, exibe "Foto N".
+  - **Resultado**:
+    - Nome de cada arquivo visível e legível.
+    - Layout mais organizado e profissional.
+    - Cards maiores facilitam identificação das fotos.
+    - Responsivo em todos os tamanhos de tela.
