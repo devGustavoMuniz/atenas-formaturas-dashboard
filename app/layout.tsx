@@ -13,8 +13,7 @@ export const metadata: Metadata = {
     template: '%s - Atenas Formaturas',
     default: 'Atenas Formaturas',
   },
-  description: "Admin dashboard template with Next.js",
-  generator: 'v0.dev',
+  description: "Atenas Formaturas",
   icons: {
     icon: '/favicon.png',
   },
