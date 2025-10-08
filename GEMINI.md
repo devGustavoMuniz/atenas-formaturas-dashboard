@@ -560,3 +560,26 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - Layout mais organizado e profissional.
     - Cards maiores facilitam identificação das fotos.
     - Responsivo em todos os tamanhos de tela.
+
+## 31. Tasks Completed (8 de outubro de 2025)
+
+- **Visualização de Crédito Aplicado no Checkout:**
+  - **Contexto**: Necessidade de informar visualmente ao usuário quanto de crédito será aplicado na compra e qual o valor real a ser pago no Mercado Pago.
+  - **Implementação da lógica de cálculo** (`app/(dashboard)/checkout/page.tsx:53-56`):
+    - Adicionada variável `userCredit` que obtém o saldo de crédito do usuário logado (`user?.creditValue ?? 0`).
+    - Implementado cálculo `creditApplied` usando `Math.min(userCredit, subtotal)` para aplicar o crédito disponível até o limite do subtotal.
+    - Calculado `amountToPay` (valor final a pagar) subtraindo o crédito aplicado do subtotal.
+  - **Interface visual no resumo do pedido** (`app/(dashboard)/checkout/page.tsx:397-418`):
+    - Adicionada linha "Crédito aplicado" em verde com ícone de carteira (`Wallet`) quando `creditApplied > 0`.
+    - Linha mostra o valor negativo formatado (ex: `-R$ 350,00`) para indicar desconto.
+    - Renderização condicional: linha só aparece quando há crédito sendo aplicado.
+    - Alterado texto do total de "Total" para "Valor a pagar" quando há crédito aplicado.
+    - Valor final destacado em verde (`text-green-600 dark:text-green-500`) para ênfase.
+    - Subtotal e frete ajustados para `text-muted-foreground` para dar mais destaque ao valor final.
+  - **Importações**: Adicionado ícone `Wallet` do `lucide-react` (linha 29).
+  - **Resultado**:
+    - Usuário visualiza claramente quanto de crédito possui e quanto será aplicado.
+    - Interface mostra o cálculo completo: Subtotal → Crédito aplicado → Valor a pagar.
+    - Melhor transparência no processo de checkout.
+    - Funciona para crédito parcial (abate o disponível) e crédito total (valor a pagar = R$ 0,00).
+    - Quando não há crédito, a interface permanece igual ao comportamento anterior.
