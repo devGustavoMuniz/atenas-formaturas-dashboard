@@ -599,3 +599,38 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - Melhor aproveitamento do espaço horizontal em telas grandes.
     - Proporção quadrada mantém consistência visual entre produtos com imagens de diferentes dimensões.
     - Grid responsivo se adapta perfeitamente a diferentes tamanhos de tela.
+
+- **Refatoração do Campo "Medidas da Beca" no CRUD de Usuários:**
+  - **Contexto**: Necessidade de alterar o campo "Medidas da Beca" de texto simples para objeto estruturado, conforme especificação do backend.
+  - **Estrutura de dados alterada** de `string` para objeto:
+    ```typescript
+    becaMeasures?: {
+      comprimento?: string
+      cintura?: string
+      busto?: string
+      quadril?: string
+    }
+    ```
+  - **Schema Zod atualizado** (`components/users/user-form.tsx:77-82`):
+    - Mudou de `z.string().optional()` para `z.object()` com 4 campos opcionais.
+  - **Interface do formulário** (`components/users/user-form.tsx:913-972`):
+    - Criada seção "Medidas da Beca (Opcional)" na aba **"Informações Adicionais"** (anteriormente estava em "Informações Básicas").
+    - 4 campos separados em grid 2x2: Comprimento, Cintura, Busto, Quadril.
+    - Placeholders com exemplos (Ex: 150cm, 70cm, 85cm, 90cm).
+  - **Lógica de limpeza aprimorada** (`components/users/user-form.tsx:330-347`):
+    - Remove campos vazios do objeto `becaMeasures`.
+    - Remove o objeto inteiro se todos os campos estiverem vazios.
+    - Envia ao backend apenas os campos preenchidos.
+  - **Valores default** (`components/users/user-form.tsx:192-197`):
+    - Inicializa com objeto contendo os 4 campos vazios.
+  - **Modo de edição** (`components/users/user-form.tsx:255-260`):
+    - Carrega o objeto `becaMeasures` do backend.
+    - Fallback para objeto vazio se não houver dados.
+  - **Tipos atualizados**:
+    - `lib/types.ts:11-17`: Adicionado `cpf?` e `becaMeasures?` ao tipo `User`.
+    - `lib/api/users-api.ts:14-20`: Espelhada a mesma estrutura.
+  - **Resultado**:
+    - Estrutura de dados alinhada com backend.
+    - Campos organizados na aba "Informações Adicionais" para melhor fluxo de cadastro.
+    - Interface mais intuitiva com campos separados e etiquetados.
+    - Funciona tanto para criação quanto edição de usuários.
