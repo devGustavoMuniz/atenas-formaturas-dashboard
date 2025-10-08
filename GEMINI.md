@@ -583,3 +583,19 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - Melhor transparência no processo de checkout.
     - Funciona para crédito parcial (abate o disponível) e crédito total (valor a pagar = R$ 0,00).
     - Quando não há crédito, a interface permanece igual ao comportamento anterior.
+
+- **Melhorias no Layout da Listagem de Produtos do Cliente:**
+  - **Contexto**: Necessidade de melhorar a apresentação visual dos produtos na página `/client/products`.
+  - **Cards com proporção quadrada** (`components/products/client-product-card.tsx:32`):
+    - Alterada a classe do container da imagem de `h-80 w-full` para `w-full aspect-square`.
+    - Imagens dos produtos agora mantêm proporção 1:1 (quadrada) independente do tamanho da tela.
+    - Utilizando a classe `aspect-square` do Tailwind para garantir proporção consistente.
+  - **Grid com 4 colunas** (`app/(dashboard)/client/products/page.tsx:48, 65`):
+    - Alterado o grid de `lg:grid-cols-3` para `lg:grid-cols-4`.
+    - Layout responsivo: 1 coluna (mobile) → 2 colunas (tablet/md) → 4 colunas (desktop/lg).
+    - Skeleton de loading também ajustado para `w-full aspect-square` e grid de 4 colunas.
+  - **Resultado**:
+    - Cards uniformes e visualmente mais agradáveis.
+    - Melhor aproveitamento do espaço horizontal em telas grandes.
+    - Proporção quadrada mantém consistência visual entre produtos com imagens de diferentes dimensões.
+    - Grid responsivo se adapta perfeitamente a diferentes tamanhos de tela.

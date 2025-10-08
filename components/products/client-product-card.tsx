@@ -29,7 +29,7 @@ export function ClientProductCard({ product }: ClientProductCardProps) {
 
   return (
     <div className="flex flex-col gap-2 rounded-md border p-4 shadow-sm">
-      <div className="relative h-80 w-full">
+      <div className="relative w-full aspect-square">
         <Image
           src={product.photos[0] || "/placeholder.jpg"}
           alt={product.name}
