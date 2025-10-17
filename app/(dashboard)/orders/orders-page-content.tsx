@@ -7,17 +7,10 @@ import Link from 'next/link'
 import { UserName } from '@/components/users/user-name'
 import { getOrders } from '@/lib/api/orders-api'
 import { OrderDto } from '@/lib/order-types'
-import { formatDate, formatCurrency } from '@/lib/utils'
+import { formatDate, formatCurrency, translatePaymentStatus } from '@/lib/utils'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { OrderTableToolbar } from '@/components/orders/order-table-toolbar'
@@ -96,7 +89,7 @@ export function OrdersPageContent() {
                 <TableCell>{formatDate(order.createdAt)}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(order.paymentStatus)}>
-                    {order.paymentStatus}
+                    {translatePaymentStatus(order.paymentStatus)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
@@ -112,45 +105,24 @@ export function OrdersPageContent() {
           </TableBody>
         </Table>
       </div>
-      {result && result.meta.totalPages > 1 && (
-        <Pagination className="mt-4">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePageChange(result.meta.currentPage - 1)
-                }}
-                className={
-                  result.meta.currentPage === 1
-                    ? 'pointer-events-none text-muted-foreground'
-                    : ''
-                }
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <span className="p-2">
-                Página {result.meta.currentPage} de {result.meta.totalPages}
-              </span>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePageChange(result.meta.currentPage + 1)
-                }}
-                className={
-                  result.meta.currentPage === result.meta.totalPages
-                    ? 'pointer-events-none text-muted-foreground'
-                    : ''
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(pageIndex - 1)}
+          disabled={pageIndex === 1}
+        >
+          Anterior
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(pageIndex + 1)}
+          disabled={!result || pageIndex >= result.meta.totalPages}
+        >
+          Próximo
+        </Button>
+      </div>
     </>
   )
 }

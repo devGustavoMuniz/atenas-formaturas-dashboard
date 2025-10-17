@@ -2,8 +2,6 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +10,12 @@ import {
   ShoppingCart,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth/use-auth"
+import {
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar"
 
 interface NavItem {
   title: string
@@ -60,36 +64,35 @@ const clientNavItems: NavItem[] = [
   },
 ]
 
-interface DashboardNavProps {
-  closeSidebar?: () => void
-}
-
-export function DashboardNav({ closeSidebar }: DashboardNavProps) {
+export function DashboardNav() {
   const pathname = usePathname()
   const { user } = useAuth()
 
   const currentNavItems = user?.role === "admin" ? adminNavItems : clientNavItems
 
   return (
-    <nav className="grid items-start gap-2 p-4">
-      {currentNavItems.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+    <SidebarGroup>
+      <SidebarMenu className="gap-2">
+        {currentNavItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
 
-        return (
-          <Button
-            key={item.href}
-            variant={isActive ? "secondary" : "ghost"}
-            className={cn("justify-start gap-2", isActive && "bg-muted font-medium text-yellow-500")}
-            asChild
-            onClick={closeSidebar}
-          >
-            <Link href={item.href}>
-              <item.icon className={cn("h-4 w-4", isActive && "text-yellow-500")} />
-              {item.title}
-            </Link>
-          </Button>
-        )
-      })}
-    </nav>
+          return (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive}
+                tooltip={item.title}
+                className={isActive ? "bg-muted text-yellow-500 data-[active=true]:text-yellow-500 px-3 py-5" : "hover:bg-muted px-3 py-5"}
+              >
+                <Link href={item.href}>
+                  <item.icon className={isActive ? "text-yellow-500" : ""} />
+                  <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )
+        })}
+      </SidebarMenu>
+    </SidebarGroup>
   )
 }

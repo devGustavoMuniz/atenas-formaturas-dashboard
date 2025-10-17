@@ -26,6 +26,7 @@ import { createOrder, CreateOrderPayload } from "@/lib/api/orders-api";
 import { fetchUserById } from "@/lib/api/users-api";
 import { Loader2 } from "lucide-react"
 import { IMaskInput } from "react-imask"
+import { Wallet } from "lucide-react"
 
 const addressFormSchema = z.object({
   zipCode: z.string().min(8, "CEP inválido").max(9, "CEP inválido"),
@@ -48,7 +49,11 @@ export default function CheckoutPage() {
   const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
   const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
-  const total = subtotal // TODO: Adicionar lógica de frete
+
+  // Cálculo do crédito aplicado
+  const userCredit = user?.creditValue ?? 0
+  const creditApplied = Math.min(userCredit, subtotal)
+  const amountToPay = subtotal - creditApplied
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
@@ -390,17 +395,26 @@ export default function CheckoutPage() {
               )}
               <Separator />
               <div className="flex justify-between">
-                <p>Subtotal</p>
-                <p>{formatCurrency(subtotal)}</p>
+                <p className="text-muted-foreground">Subtotal</p>
+                <p className="text-muted-foreground">{formatCurrency(subtotal)}</p>
               </div>
+              {creditApplied > 0 && (
+                <div className="flex justify-between items-center text-green-600 dark:text-green-500">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4" />
+                    <p>Crédito aplicado</p>
+                  </div>
+                  <p className="font-medium">-{formatCurrency(creditApplied)}</p>
+                </div>
+              )}
               <div className="flex justify-between">
-                <p>Frete</p>
-                <p>Grátis</p>
+                <p className="text-muted-foreground">Frete</p>
+                <p className="text-muted-foreground">Grátis</p>
               </div>
               <Separator />
               <div className="flex justify-between font-bold text-lg">
-                <p>Total</p>
-                <p>{formatCurrency(total)}</p>
+                <p>{creditApplied > 0 ? 'Valor a pagar' : 'Total'}</p>
+                <p className="text-green-600 dark:text-green-500">{formatCurrency(amountToPay)}</p>
               </div>
               <Button 
                 onClick={form.handleSubmit(onSubmit)} 

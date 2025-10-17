@@ -44,6 +44,8 @@ export default function SelectPhotosPage() {
     product?.flag === "DIGITAL_FILES" &&
     (institutionProduct?.details as DigitalFilesDetails)?.isAvailableUnit === false
 
+  const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
+
   useEffect(() => {
     if (product && institutionProduct) {
       console.log("Detalhes do produto recebidos:", { institutionProduct })
@@ -88,6 +90,12 @@ export default function SelectPhotosPage() {
 
     loadData()
   }, [product, institutionProduct, user])
+
+  useEffect(() => {
+    if (isDigitalFilesPackage && eventGroups.length === 1) {
+      setSelectedEvent(eventGroups[0].eventId, true)
+    }
+  }, [isDigitalFilesPackage, eventGroups, setSelectedEvent])
 
   const handlePhotoSelection = (photoId: string, isSelected: boolean) => {
     if (product?.flag === "ALBUM" && isSelected) {
@@ -260,19 +268,19 @@ export default function SelectPhotosPage() {
         </p>
       </div>
 
-      {isDigitalFilesPackage && (
-        <Card className="mb-8">
+      {shouldShowPackageOption && (
+        <Card className="mb-8 hidden lg:block">
           <CardHeader>
             <CardTitle>Comprar Pacote Completo</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="complete-package"
+                id="complete-package-desktop"
                 checked={isPackageComplete}
                 onCheckedChange={(checked) => setPackageComplete(Boolean(checked))}
               />
-              <Label htmlFor="complete-package" className="font-bold">
+              <Label htmlFor="complete-package-desktop" className="font-bold">
                 Adquirir todos os eventos em um único pacote.
               </Label>
             </div>
@@ -281,7 +289,7 @@ export default function SelectPhotosPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 space-y-4">
+        <div className="order-2 lg:order-1 lg:col-span-2 space-y-4">
           {eventGroups.map((group) => (
             <Collapsible
               key={group.eventId}
@@ -347,9 +355,11 @@ export default function SelectPhotosPage() {
             </Collapsible>
           ))}
         </div>
-        <div>
-          <SelectionSummary selectedPhotosCount={selectedPhotosCount} eventGroups={eventGroups} />
-          <div className="mt-8">
+        <div className="order-1 lg:order-2 flex flex-col">
+          <div className="order-1">
+            <SelectionSummary selectedPhotosCount={selectedPhotosCount} eventGroups={eventGroups} />
+          </div>
+          <div className="order-2 mt-8">
             <Button
               size="lg"
               disabled={!isNextButtonEnabled}
@@ -359,6 +369,25 @@ export default function SelectPhotosPage() {
               Adicionar ao Carrinho
             </Button>
           </div>
+          {shouldShowPackageOption && (
+            <Card className="order-3 mt-8 block lg:hidden">
+              <CardHeader>
+                <CardTitle>Comprar Pacote Completo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="complete-package-mobile"
+                    checked={isPackageComplete}
+                    onCheckedChange={(checked) => setPackageComplete(Boolean(checked))}
+                  />
+                  <Label htmlFor="complete-package-mobile" className="font-bold">
+                    Adquirir todos os eventos em um único pacote.
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

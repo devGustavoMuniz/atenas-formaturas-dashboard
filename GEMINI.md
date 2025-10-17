@@ -468,3 +468,169 @@ By following these guidelines, Gemini can provide more accurate and consistent a
     - Usuários podem visualizar a senha digitada clicando no ícone.
     - Melhor usabilidade e consistência com o formulário de cadastro.
     - UX aprimorada para evitar erros de digitação.
+
+## 29. Tasks Completed (6 de outubro de 2025)
+
+- **Melhorias de UX na Tela de Seleção de Fotos (Mobile):**
+  - **Contexto**: Solicitação para melhorar a experiência mobile na página de seleção de fotos.
+  - **Alterações na página de seleção de fotos** (`app/(dashboard)/client/products/[id]/select-photos/page.tsx`):
+    - **Reordenação de elementos no mobile**:
+      - Implementado sistema de ordenação usando Flexbox `order` property para mobile vs desktop.
+      - **Mobile**: 1) Resumo da Seleção → 2) Botão "Adicionar ao Carrinho" → 3) Card "Comprar Pacote Completo" (se aplicável) → 4) Eventos com fotos.
+      - **Desktop**: Mantida ordem original com card de pacote acima de tudo e resumo/botão na lateral direita.
+    - **Lógica de exibição do card "Comprar Pacote Completo"**:
+      - Criada variável `shouldShowPackageOption` (linha 47): `isDigitalFilesPackage && eventGroups.length > 1`.
+      - Card só é exibido quando produto é DIGITAL_FILES em modo pacote E há mais de 1 evento disponível.
+      - Separados cards para desktop (`hidden lg:block`) e mobile (`block lg:hidden`) com IDs únicos nos checkboxes.
+    - **Auto-seleção de evento único**:
+      - Adicionado `useEffect` (linhas 94-98) que detecta quando há apenas 1 evento em produtos DIGITAL_FILES.
+      - Checkbox do evento é automaticamente marcada quando `isDigitalFilesPackage && eventGroups.length === 1`.
+  - **Resultado**:
+    - Melhor usabilidade mobile com informações importantes (resumo e botão) no topo.
+    - Interface mais limpa quando há apenas 1 evento (sem opção redundante de pacote).
+    - Experiência otimizada com evento único pré-selecionado.
+
+## 30. Tasks Completed (7 de outubro de 2025)
+
+- **Implementação da Sidebar Colapsável:**
+  - **Contexto**: Necessidade de implementar funcionalidade de recolher a sidebar para mostrar apenas ícones, aumentando área de conteúdo.
+  - **Refatoração do layout** (`app/(dashboard)/layout.tsx`):
+    - Substituído layout customizado por componentes `shadcn/ui` Sidebar (`SidebarProvider`, `Sidebar`, `SidebarInset`).
+    - Implementado `collapsible="icon"` para permitir colapsar sidebar.
+    - Removido componente `MobileSidebar` (funcionalidade nativa do shadcn/ui).
+    - Adicionado `SidebarHeader` com logo e título "Atenas Formaturas" dentro da sidebar.
+    - Removida duplicação do título na topbar (desktop).
+  - **Atualização do DashboardNav** (`components/dashboard/dashboard-nav.tsx`):
+    - Refatorado para usar `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton`.
+    - Implementada prop `tooltip` que mostra automaticamente o nome do item quando sidebar está colapsada.
+    - Restaurado styling do item ativo: texto e ícone em amarelo (`text-yellow-500`) com fundo `bg-muted`.
+    - Adicionado hover effect (`hover:bg-muted`) nos itens não ativos.
+    - Aumentado padding vertical (`py-5`) e espaçamento entre itens (`gap-2`).
+  - **Ajustes no componente base** (`components/ui/sidebar.tsx`):
+    - Alterada largura da sidebar colapsada de `3rem` para `4rem` (linha 26) para melhor centralização do logo.
+    - Modificado `sidebarMenuButtonVariants` para centralizar ícones quando colapsado: `group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0`.
+  - **Adicionado span com classe** `group-data-[collapsible=icon]:hidden` nos títulos dos itens para ocultá-los quando sidebar está colapsada.
+  - **Resultado**:
+    - Sidebar totalmente funcional com toggle via botão (`SidebarTrigger`) no header.
+    - Atalho de teclado `Cmd+B` / `Ctrl+B` para colapsar/expandir.
+    - Estado persiste em cookie automaticamente.
+    - No mobile, funciona como drawer lateral.
+    - Modo colapsado: largura 4rem, mostra apenas ícones centralizados, tooltips ao hover.
+    - Modo expandido: largura 16rem, mostra ícones + texto.
+
+- **Exibição de Crédito do Usuário na Topbar:**
+  - **Contexto**: Necessidade de exibir o saldo de crédito do usuário logado (campo `creditValue`) na topbar.
+  - **Verificação da estrutura de dados**:
+    - Campo `creditValue?: number` já existia no tipo `User` (`lib/types.ts` linha 16).
+    - Zustand store (`auth-store.ts`) já estava configurado para persistir o usuário completo incluindo `creditValue`.
+    - `auth-provider.tsx` busca usuário completo via `fetchUserById()` no login e refresh, sincronizando com Zustand.
+  - **Criado componente UserCredit** (`components/dashboard/user-credit.tsx`):
+    - Consome `user` do `useAuthStore`.
+    - Renderiza apenas para clientes (`user.role === 'client'`).
+    - Exibe ícone de carteira (`Wallet`) em amarelo.
+    - Formata valor com `formatCurrency()` (moeda brasileira).
+    - Fallback para R$ 0,00 quando `creditValue` é `undefined`.
+    - Design: card com borda, fundo `bg-muted`, padding `px-3 py-2`.
+  - **Integração no layout** (`app/(dashboard)/layout.tsx`):
+    - Importado e adicionado `<UserCredit />` na topbar.
+    - Posicionado antes do `CartSheet` e `UserNav`.
+  - **Resultado**:
+    - Usuários clientes veem seu saldo de crédito atualizado em tempo real na topbar.
+    - Componente reutilizável e com design consistente.
+    - Backend já retorna o campo via API, componente atualiza automaticamente.
+
+- **Melhorias na Visualização de Fotos nos Pedidos:**
+  - **Contexto**: Necessidade de exibir o nome do arquivo de cada foto selecionada na tela de detalhes do pedido, mas miniaturas eram pequenas demais.
+  - **Solução escolhida**: Cards compactos com thumbnail 80x80 e nome embaixo (Opção 3).
+  - **Adicionado campo `photoName`** ao tipo `OrderItemDetailsDto` (`lib/order-types.ts` linha 6).
+  - **Criado componente PhotoCard** (`components/orders/photo-card.tsx`):
+    - Card com padding, borda, e fundo (`bg-card`).
+    - Thumbnail 80x80 (w-20 h-20) arredondado com borda.
+    - Nome do arquivo embaixo, centralizado, truncado em 1 linha (`truncate`).
+    - Atributo `title` mostra nome completo ao passar o mouse (tooltip nativo).
+    - Hover effect: fundo `bg-muted/50`, overlay escuro + ícone de zoom na thumbnail.
+    - Click abre modal com imagem em fullscreen (Dialog).
+  - **Refatorado OrderItemPhotos** (`components/orders/order-item-photos.tsx`):
+    - Substituído `ImagePreviewCard` por `PhotoCard`.
+    - Grid responsivo ajustado: `grid-cols-3` (mobile) → `sm:grid-cols-4` (tablet) → `md:grid-cols-5` (desktop).
+    - Gap reduzido para `gap-4` (16px) entre cards.
+    - Fallback: se `photoName` não existir, exibe "Foto N".
+  - **Resultado**:
+    - Nome de cada arquivo visível e legível.
+    - Layout mais organizado e profissional.
+    - Cards maiores facilitam identificação das fotos.
+    - Responsivo em todos os tamanhos de tela.
+
+## 31. Tasks Completed (8 de outubro de 2025)
+
+- **Visualização de Crédito Aplicado no Checkout:**
+  - **Contexto**: Necessidade de informar visualmente ao usuário quanto de crédito será aplicado na compra e qual o valor real a ser pago no Mercado Pago.
+  - **Implementação da lógica de cálculo** (`app/(dashboard)/checkout/page.tsx:53-56`):
+    - Adicionada variável `userCredit` que obtém o saldo de crédito do usuário logado (`user?.creditValue ?? 0`).
+    - Implementado cálculo `creditApplied` usando `Math.min(userCredit, subtotal)` para aplicar o crédito disponível até o limite do subtotal.
+    - Calculado `amountToPay` (valor final a pagar) subtraindo o crédito aplicado do subtotal.
+  - **Interface visual no resumo do pedido** (`app/(dashboard)/checkout/page.tsx:397-418`):
+    - Adicionada linha "Crédito aplicado" em verde com ícone de carteira (`Wallet`) quando `creditApplied > 0`.
+    - Linha mostra o valor negativo formatado (ex: `-R$ 350,00`) para indicar desconto.
+    - Renderização condicional: linha só aparece quando há crédito sendo aplicado.
+    - Alterado texto do total de "Total" para "Valor a pagar" quando há crédito aplicado.
+    - Valor final destacado em verde (`text-green-600 dark:text-green-500`) para ênfase.
+    - Subtotal e frete ajustados para `text-muted-foreground` para dar mais destaque ao valor final.
+  - **Importações**: Adicionado ícone `Wallet` do `lucide-react` (linha 29).
+  - **Resultado**:
+    - Usuário visualiza claramente quanto de crédito possui e quanto será aplicado.
+    - Interface mostra o cálculo completo: Subtotal → Crédito aplicado → Valor a pagar.
+    - Melhor transparência no processo de checkout.
+    - Funciona para crédito parcial (abate o disponível) e crédito total (valor a pagar = R$ 0,00).
+    - Quando não há crédito, a interface permanece igual ao comportamento anterior.
+
+- **Melhorias no Layout da Listagem de Produtos do Cliente:**
+  - **Contexto**: Necessidade de melhorar a apresentação visual dos produtos na página `/client/products`.
+  - **Cards com proporção quadrada** (`components/products/client-product-card.tsx:32`):
+    - Alterada a classe do container da imagem de `h-80 w-full` para `w-full aspect-square`.
+    - Imagens dos produtos agora mantêm proporção 1:1 (quadrada) independente do tamanho da tela.
+    - Utilizando a classe `aspect-square` do Tailwind para garantir proporção consistente.
+  - **Grid com 4 colunas** (`app/(dashboard)/client/products/page.tsx:48, 65`):
+    - Alterado o grid de `lg:grid-cols-3` para `lg:grid-cols-4`.
+    - Layout responsivo: 1 coluna (mobile) → 2 colunas (tablet/md) → 4 colunas (desktop/lg).
+    - Skeleton de loading também ajustado para `w-full aspect-square` e grid de 4 colunas.
+  - **Resultado**:
+    - Cards uniformes e visualmente mais agradáveis.
+    - Melhor aproveitamento do espaço horizontal em telas grandes.
+    - Proporção quadrada mantém consistência visual entre produtos com imagens de diferentes dimensões.
+    - Grid responsivo se adapta perfeitamente a diferentes tamanhos de tela.
+
+- **Refatoração do Campo "Medidas da Beca" no CRUD de Usuários:**
+  - **Contexto**: Necessidade de alterar o campo "Medidas da Beca" de texto simples para objeto estruturado, conforme especificação do backend.
+  - **Estrutura de dados alterada** de `string` para objeto:
+    ```typescript
+    becaMeasures?: {
+      comprimento?: string
+      cintura?: string
+      busto?: string
+      quadril?: string
+    }
+    ```
+  - **Schema Zod atualizado** (`components/users/user-form.tsx:77-82`):
+    - Mudou de `z.string().optional()` para `z.object()` com 4 campos opcionais.
+  - **Interface do formulário** (`components/users/user-form.tsx:913-972`):
+    - Criada seção "Medidas da Beca (Opcional)" na aba **"Informações Adicionais"** (anteriormente estava em "Informações Básicas").
+    - 4 campos separados em grid 2x2: Comprimento, Cintura, Busto, Quadril.
+    - Placeholders com exemplos (Ex: 150cm, 70cm, 85cm, 90cm).
+  - **Lógica de limpeza aprimorada** (`components/users/user-form.tsx:330-347`):
+    - Remove campos vazios do objeto `becaMeasures`.
+    - Remove o objeto inteiro se todos os campos estiverem vazios.
+    - Envia ao backend apenas os campos preenchidos.
+  - **Valores default** (`components/users/user-form.tsx:192-197`):
+    - Inicializa com objeto contendo os 4 campos vazios.
+  - **Modo de edição** (`components/users/user-form.tsx:255-260`):
+    - Carrega o objeto `becaMeasures` do backend.
+    - Fallback para objeto vazio se não houver dados.
+  - **Tipos atualizados**:
+    - `lib/types.ts:11-17`: Adicionado `cpf?` e `becaMeasures?` ao tipo `User`.
+    - `lib/api/users-api.ts:14-20`: Espelhada a mesma estrutura.
+  - **Resultado**:
+    - Estrutura de dados alinhada com backend.
+    - Campos organizados na aba "Informações Adicionais" para melhor fluxo de cadastro.
+    - Interface mais intuitiva com campos separados e etiquetados.
+    - Funciona tanto para criação quanto edição de usuários.

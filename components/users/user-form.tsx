@@ -74,7 +74,12 @@ const userFormSchema = z.object({
   cpf: z.string().min(14, {
     message: "CPF inválido.",
   }),
-  becaMeasures: z.string().optional(),
+  becaMeasures: z.object({
+    comprimento: z.string().optional(),
+    cintura: z.string().optional(),
+    busto: z.string().optional(),
+    quadril: z.string().optional(),
+  }).optional(),
   fatherName: z.string().optional(),
   fatherPhone: z.string().optional(),
   motherName: z.string().optional(),
@@ -184,7 +189,12 @@ export function UserForm({ userId }: UserFormProps) {
       password: "",
       role: "client",
       cpf: "",
-      becaMeasures: "",
+      becaMeasures: {
+        comprimento: "",
+        cintura: "",
+        busto: "",
+        quadril: "",
+      },
       fatherName: "",
       fatherPhone: "",
       motherName: "",
@@ -242,7 +252,12 @@ export function UserForm({ userId }: UserFormProps) {
         observations: user.observations || "",
         password: "********",
         cpf: user.cpf || "",
-        becaMeasures: user.becaMeasures || "",
+        becaMeasures: user.becaMeasures || {
+          comprimento: "",
+          cintura: "",
+          busto: "",
+          quadril: "",
+        },
         fatherName: user.fatherName || "",
         fatherPhone: user.fatherPhone || "",
         motherName: user.motherName || "",
@@ -317,11 +332,30 @@ export function UserForm({ userId }: UserFormProps) {
       cleanedData.address = addressFields
     }
 
+    // Clean becaMeasures object
+    if (cleanedData.becaMeasures) {
+      const becaMeasuresFields = { ...cleanedData.becaMeasures }
+
+      // Remove empty fields from becaMeasures
+      Object.keys(becaMeasuresFields).forEach((key) => {
+        if (becaMeasuresFields[key] === "" || becaMeasuresFields[key] === undefined) {
+          delete becaMeasuresFields[key]
+        }
+      })
+
+      // Only include becaMeasures if it has at least one field
+      if (Object.keys(becaMeasuresFields).length > 0) {
+        cleanedData.becaMeasures = becaMeasuresFields
+      } else {
+        delete cleanedData.becaMeasures
+      }
+    }
+
     // Clean other optional fields
     Object.keys(cleanedData).forEach((key) => {
       if (
         cleanedData[key] === "" &&
-        ["observations", "becaMeasures", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink"].includes(key)
+        ["observations", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink"].includes(key)
       ) {
         delete cleanedData[key]
       }
@@ -735,20 +769,6 @@ export function UserForm({ userId }: UserFormProps) {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="becaMeasures"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medidas da Beca (Opcional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Medidas da beca (opcional)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <FormField
@@ -889,6 +909,67 @@ export function UserForm({ userId }: UserFormProps) {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Medidas da Beca (Opcional)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="becaMeasures.comprimento"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Comprimento</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 150cm" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="becaMeasures.cintura"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cintura</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 70cm" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="becaMeasures.busto"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Busto</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 85cm" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="becaMeasures.quadril"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quadril</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 90cm" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               <div className="flex justify-between mt-4">

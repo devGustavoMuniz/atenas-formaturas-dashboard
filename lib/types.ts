@@ -8,6 +8,13 @@ export type User = {
   role: "admin" | "client"
   institutionId: string
   userContract: string
+  cpf?: string
+  becaMeasures?: {
+    comprimento?: string
+    cintura?: string
+    busto?: string
+    quadril?: string
+  }
   fatherName?: string
   fatherPhone?: string
   motherName?: string
