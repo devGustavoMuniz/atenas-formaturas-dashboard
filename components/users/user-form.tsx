@@ -71,9 +71,10 @@ const userFormSchema = z.object({
   role: z.enum(["admin", "client"], {
     required_error: "Selecione um cargo.",
   }),
-  cpf: z.string().min(14, {
-    message: "CPF inválido.",
-  }),
+  cpf: z.string().optional().or(z.literal("")).refine(
+    (val) => !val || val.length === 0 || val.length === 14,
+    { message: "CPF inválido." }
+  ),
   becaMeasures: z.object({
     comprimento: z.string().optional(),
     cintura: z.string().optional(),
@@ -87,13 +88,19 @@ const userFormSchema = z.object({
   driveLink: z.string().optional(),
   creditValue: z.any().transform(v => parseCurrency(v)).optional(),
   // Address fields
-  zipCode: z.string().min(8, "CEP inválido").max(9, "CEP inválido").optional(),
+  zipCode: z.string().optional().or(z.literal("")).refine(
+    (val) => !val || val.length === 0 || (val.length >= 8 && val.length <= 9),
+    { message: "CEP inválido" }
+  ),
   street: z.string().optional(),
   number: z.string().optional(),
   complement: z.string().optional(),
   neighborhood: z.string().optional(),
   city: z.string().optional(),
-  state: z.string().min(2, "Estado é obrigatório").max(2, "UF inválida").optional(),
+  state: z.string().optional().or(z.literal("")).refine(
+    (val) => !val || val.length === 0 || val.length === 2,
+    { message: "UF inválida" }
+  ),
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
@@ -127,9 +134,6 @@ const getErrorMessage = (error: any): string => {
 function PasswordCriteria({ password }: { password: string }) {
   const criteria = [
     { label: "Pelo menos 6 caracteres", test: (pwd: string) => pwd.length >= 6 },
-    { label: "Uma letra minúscula", test: (pwd: string) => /[a-z]/.test(pwd) },
-    { label: "Uma letra maiúscula", test: (pwd: string) => /[A-Z]/.test(pwd) },
-    { label: "Um número", test: (pwd: string) => /[0-9]/.test(pwd) },
   ]
 
   return (
@@ -289,15 +293,6 @@ export function UserForm({ userId }: UserFormProps) {
     if (password.length < 6) {
       return "Senha deve ter pelo menos 6 caracteres"
     }
-    if (!/[a-z]/.test(password)) {
-      return "Senha deve conter pelo menos uma letra minúscula"
-    }
-    if (!/[A-Z]/.test(password)) {
-      return "Senha deve conter pelo menos uma letra maiúscula"
-    }
-    if (!/[0-9]/.test(password)) {
-      return "Senha deve conter pelo menos um número"
-    }
     return null
   }
 
@@ -355,7 +350,7 @@ export function UserForm({ userId }: UserFormProps) {
     Object.keys(cleanedData).forEach((key) => {
       if (
         cleanedData[key] === "" &&
-        ["observations", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink"].includes(key)
+        ["observations", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink", "cpf"].includes(key)
       ) {
         delete cleanedData[key]
       }
@@ -754,7 +749,7 @@ export function UserForm({ userId }: UserFormProps) {
                   name="cpf"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CPF</FormLabel>
+                      <FormLabel>CPF (opcional)</FormLabel>
                       <FormControl>
                         <IMaskInput
                           mask="000.000.000-00"
@@ -991,7 +986,7 @@ export function UserForm({ userId }: UserFormProps) {
                   name="zipCode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CEP (Opcional)</FormLabel>
+                      <FormLabel>CEP (opcional)</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input placeholder="00000-000" {...field} />
@@ -1076,7 +1071,7 @@ export function UserForm({ userId }: UserFormProps) {
                   name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Estado - UF (Opcional)</FormLabel>
+                      <FormLabel>Estado - UF (opcional)</FormLabel>
                       <FormControl>
                         <Input maxLength={2} placeholder="SP" {...field} />
                       </FormControl>
