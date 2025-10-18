@@ -13,14 +13,17 @@ interface PresignedUrlResponse {
 }
 
 export const getPresignedUrls = async (files: File[]): Promise<PresignedUrlResponse[]> => {
-  const batchPromises = files.map(file =>
-    api.post("/v1/storage/presigned-url", {
+  const batchPromises = files.map(file => {
+    // Remove a extensão do nome do arquivo, pois o backend adiciona automaticamente
+    const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, '');
+
+    return api.post("/v1/storage/presigned-url", {
       contentType: file.type,
       quantity: 1,
       mediaType: 'image' as const,
-      customIdentifier: file.name,
-    })
-  );
+      customIdentifier: fileNameWithoutExtension,
+    });
+  });
 
   const responses = await Promise.all(batchPromises);
 

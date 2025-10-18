@@ -28,13 +28,20 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
+    // Se o erro vem da própria chamada de login, não faz nada, apenas rejeita
+    if (originalRequest.url?.includes("/v1/auth/login")) {
+      return Promise.reject(error)
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
       try {
         const refreshToken = localStorage.getItem("refreshToken")
         if (!refreshToken) {
-          window.location.href = "/login"
+          if (typeof window !== "undefined") {
+            window.location.href = "/login"
+          }
           return Promise.reject(error)
         }
 
@@ -52,7 +59,9 @@ api.interceptors.response.use(
         localStorage.removeItem("token")
         localStorage.removeItem("refreshToken")
         localStorage.removeItem("user")
-        window.location.href = "/login"
+        if (typeof window !== "undefined") {
+          window.location.href = "/login"
+        }
         return Promise.reject(refreshError)
       }
     }

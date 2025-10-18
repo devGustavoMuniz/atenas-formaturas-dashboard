@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Eye, EyeOff } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -21,14 +20,13 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 // Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
-  console.log("Erro capturado no login:", error) // Debug
+  console.log("Erro completo capturado no login:", error)
+  console.log("error.response:", error?.response)
+  console.log("error.response.data:", error?.response?.data)
 
   // Verificar diferentes estruturas de erro
   if (error?.response?.data?.message) {
     return error.response.data.message
-  }
-  if (error?.response?.data?.error) {
-    return error.response.data.error
   }
   if (error?.message) {
     return error.message
@@ -42,9 +40,9 @@ const getErrorMessage = (error: any): string => {
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [errorAlert, setErrorAlert] = useState<string | null>(null)
   const { login } = useAuth()
   const router = useRouter()
-  const { toast } = useToast()
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -56,6 +54,7 @@ export function LoginForm() {
 
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true)
+    setErrorAlert(null) // Limpa erro anterior
 
     try {
       const user = await login(data.email, data.password)
@@ -71,10 +70,19 @@ export function LoginForm() {
       const errorMessage = getErrorMessage(error)
       console.log("Mensagem de erro processada:", errorMessage) // Debug
 
-      toast({
-        variant: "destructive",
-        title: "Erro ao fazer login",
-        description: errorMessage,
+      // Define alerta de erro no box
+      setErrorAlert(errorMessage)
+
+      // Define o erro nos dois campos APENAS para deixar labels e bordas vermelhas
+      // Sem mensagem, pois já está no box de alerta
+      form.setError("email", {
+        type: "manual",
+        message: "", // Vazio para não mostrar texto
+      })
+
+      form.setError("password", {
+        type: "manual",
+        message: "", // Vazio para não mostrar texto
       })
     } finally {
       setIsLoading(false)
@@ -83,16 +91,31 @@ export function LoginForm() {
 
   return (
     <div className="grid gap-6">
+      {errorAlert && (
+        <div className="rounded-md bg-destructive/15 p-3 border border-destructive">
+          <p className="text-sm text-destructive font-medium">{errorAlert}</p>
+        </div>
+      )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            form.handleSubmit(onSubmit)(e)
+          }}
+          className="space-y-4"
+        >
           <FormField
             control={form.control}
             name="email"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="exemplo@email.com" {...field} />
+                  <Input
+                    placeholder="exemplo@email.com"
+                    error={!!fieldState.error}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -101,7 +124,7 @@ export function LoginForm() {
           <FormField
             control={form.control}
             name="password"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>Senha</FormLabel>
                 <FormControl>
@@ -109,6 +132,7 @@ export function LoginForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="******"
+                      error={!!fieldState.error}
                       {...field}
                     />
                     <Button

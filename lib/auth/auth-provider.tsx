@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
       const fullUser = await fetchUserById(userData.id)
-      
+
       // 1. Atualiza o estado local (lógica original)
       setUser(fullUser)
       // 2. SINCRONIZA: Atualiza o Zustand Store
@@ -106,8 +106,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setZustandToken(token)
 
       return fullUser
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no login (auth-provider):", error)
+      // Garante que o erro seja sempre lançado e nunca cause redirect/reload
+      if (error?.response?.status === 401) {
+        throw new Error("Email ou senha incorretos")
+      }
       throw error
     }
   }
