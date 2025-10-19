@@ -18,6 +18,7 @@ import { useCartStore } from "@/lib/store/cart-store"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import type { CartItem, CartItemSelection } from "@/lib/cart-types"
+import { formatCurrency } from "@/lib/utils"
 
 export default function SelectPhotosPage() {
   const { toast } = useToast()
@@ -49,6 +50,10 @@ export default function SelectPhotosPage() {
   useEffect(() => {
     if (product && institutionProduct) {
       console.log("Detalhes do produto recebidos:", { institutionProduct })
+      if (isDigitalFilesPackage) {
+        const digitalDetails = institutionProduct?.details as DigitalFilesDetails
+        console.log("valorPackTotal:", digitalDetails?.valorPackTotal)
+      }
     }
 
     if (!user?.id) {
@@ -281,7 +286,13 @@ export default function SelectPhotosPage() {
                 onCheckedChange={(checked) => setPackageComplete(Boolean(checked))}
               />
               <Label htmlFor="complete-package-desktop" className="font-bold">
-                Adquirir todos os eventos em um único pacote.
+                Adquirir todos os eventos em um único pacote
+                {(() => {
+                  const digitalDetails = institutionProduct?.details as DigitalFilesDetails
+                  return digitalDetails?.valorPackTotal !== undefined && digitalDetails?.valorPackTotal !== null
+                    ? ` - ${formatCurrency(digitalDetails.valorPackTotal)}`
+                    : ''
+                })()}
               </Label>
             </div>
           </CardContent>
@@ -322,7 +333,16 @@ export default function SelectPhotosPage() {
                         }
                         disabled={isPackageComplete}
                       />
-                      <Label htmlFor={`event-${group.eventId}`}>Comprar este pacote</Label>
+                      <Label htmlFor={`event-${group.eventId}`}>
+                        Comprar este pacote
+                        {(() => {
+                          const digitalDetails = institutionProduct?.details as DigitalFilesDetails
+                          const eventConfig = digitalDetails?.events?.find(e => e.id === group.eventId)
+                          return eventConfig?.valorPack !== undefined && eventConfig?.valorPack !== null
+                            ? ` - ${formatCurrency(eventConfig.valorPack)}`
+                            : ''
+                        })()}
+                      </Label>
                     </div>
                   )}
                 </div>
@@ -382,7 +402,13 @@ export default function SelectPhotosPage() {
                     onCheckedChange={(checked) => setPackageComplete(Boolean(checked))}
                   />
                   <Label htmlFor="complete-package-mobile" className="font-bold">
-                    Adquirir todos os eventos em um único pacote.
+                    Adquirir todos os eventos em um único pacote
+                    {(() => {
+                      const digitalDetails = institutionProduct?.details as DigitalFilesDetails
+                      return digitalDetails?.valorPackTotal !== undefined && digitalDetails?.valorPackTotal !== null
+                        ? ` - ${formatCurrency(digitalDetails.valorPackTotal)}`
+                        : ''
+                    })()}
                   </Label>
                 </div>
               </CardContent>
