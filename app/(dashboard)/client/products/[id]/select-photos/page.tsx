@@ -50,10 +50,6 @@ export default function SelectPhotosPage() {
   useEffect(() => {
     if (product && institutionProduct) {
       console.log("Detalhes do produto recebidos:", { institutionProduct })
-      if (isDigitalFilesPackage) {
-        const digitalDetails = institutionProduct?.details as DigitalFilesDetails
-        console.log("valorPackTotal:", digitalDetails?.valorPackTotal)
-      }
     }
 
     if (!user?.id) {
@@ -102,18 +98,36 @@ export default function SelectPhotosPage() {
     }
   }, [isDigitalFilesPackage, eventGroups, setSelectedEvent])
 
-  const handlePhotoSelection = (photoId: string, isSelected: boolean) => {
+  const handlePhotoSelection = (photoId: string, isSelected: boolean, eventId?: string) => {
     if (product?.flag === "ALBUM" && isSelected) {
       const details = institutionProduct?.details as AlbumDetails
       const maxPhotos = details?.maxPhoto ?? Infinity
       const selectedCount = Object.values(selectedPhotos).filter(Boolean).length
 
       if (selectedCount >= maxPhotos) {
-        // Opcional: Adicionar um toast/alerta para o usuário
         console.warn(`Você não pode selecionar mais de ${maxPhotos} fotos.`)
         return
       }
     }
+
+    if (product?.flag === "GENERIC" && isSelected && eventId) {
+      const details = institutionProduct?.details as GenericDetails
+      const eventDetail = details?.events?.find(e => e.id === eventId)
+
+      if (eventDetail?.maxPhotos) {
+        const photosForEvent = eventGroups
+          .find((group) => group.eventId === eventId)
+          ?.photos.filter((photo) => selectedPhotos[photo.id])
+
+        const currentCount = photosForEvent?.length ?? 0
+
+        if (currentCount >= eventDetail.maxPhotos) {
+          console.warn(`Você não pode selecionar mais de ${eventDetail.maxPhotos} fotos para este evento.`)
+          return
+        }
+      }
+    }
+
     setSelectedPhoto(photoId, isSelected)
   }
 
@@ -154,7 +168,10 @@ export default function SelectPhotosPage() {
         if (!photosForEvent || photosForEvent.length === 0) {
           return true
         }
-        return photosForEvent.length >= (eventDetail.minPhotos ?? 0)
+        const count = photosForEvent.length
+        const meetsMin = count >= (eventDetail.minPhotos ?? 0)
+        const meetsMax = eventDetail.maxPhotos ? count <= eventDetail.maxPhotos : true
+        return meetsMin && meetsMax
       })
     }
     return true
@@ -351,9 +368,23 @@ export default function SelectPhotosPage() {
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                       {group.photos.map((photo) => {
                         const isPhotoSelected = !!selectedPhotos[photo.id]
-                        const isLimitReached = product?.flag === "ALBUM" && 
-                          selectedPhotosCount >= ((institutionProduct?.details as AlbumDetails)?.maxPhoto ?? Infinity)
-                        const isPhotoDisabled = isLimitReached && !isPhotoSelected
+
+                        let isPhotoDisabled = false
+
+                        if (product?.flag === "ALBUM") {
+                          const isLimitReached = selectedPhotosCount >= ((institutionProduct?.details as AlbumDetails)?.maxPhoto ?? Infinity)
+                          isPhotoDisabled = isLimitReached && !isPhotoSelected
+                        } else if (product?.flag === "GENERIC") {
+                          const details = institutionProduct?.details as GenericDetails
+                          const eventDetail = details?.events?.find(e => e.id === group.eventId)
+
+                          if (eventDetail?.maxPhotos) {
+                            const photosForEvent = group.photos.filter((p) => selectedPhotos[p.id])
+                            const currentCount = photosForEvent.length
+                            const isLimitReached = currentCount >= eventDetail.maxPhotos
+                            isPhotoDisabled = isLimitReached && !isPhotoSelected
+                          }
+                        }
 
                         return (
                           <SelectableImageCard
@@ -362,7 +393,7 @@ export default function SelectPhotosPage() {
                             src={photo.signedUrl}
                             alt={`Foto do evento ${group.eventName}`}
                             isSelected={isPhotoSelected}
-                            onSelectionChange={handlePhotoSelection}
+                            onSelectionChange={(photoId, isSelected) => handlePhotoSelection(photoId, isSelected, group.eventId)}
                             selectionEnabled={!isDigitalFilesPackage}
                             disabled={isPhotoDisabled}
                           />

@@ -69,16 +69,27 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
           return null
         }
 
-        const isEventValid = selectedCount >= eventDetail.minPhotos
+        const isEventValid = selectedCount >= (eventDetail.minPhotos ?? 0) &&
+                             (eventDetail.maxPhotos ? selectedCount <= eventDetail.maxPhotos : true)
+        const isBelowMin = selectedCount < (eventDetail.minPhotos ?? 0)
+        const isAboveMax = eventDetail.maxPhotos && selectedCount > eventDetail.maxPhotos
 
         return (
           <div key={eventDetail.id} className="rounded-md border p-3">
             <p className="font-medium">{eventDetail.name}</p>
             <p className="text-sm text-muted-foreground">
-              Mínimo de fotos: {eventDetail.minPhotos} (Selecionadas: {selectedCount})
-              {!isEventValid && (
+              Mínimo: {eventDetail.minPhotos ?? 0} / Máximo: {eventDetail.maxPhotos ?? '∞'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Selecionadas: {selectedCount}
+              {isBelowMin && (
                 <span className="ml-2 text-red-500">
-                  ({eventDetail.minPhotos - selectedCount} restantes)
+                  ({(eventDetail.minPhotos ?? 0) - selectedCount} restantes)
+                </span>
+              )}
+              {isAboveMax && (
+                <span className="ml-2 text-red-500">
+                  ({selectedCount - (eventDetail.maxPhotos ?? 0)} a mais)
                 </span>
               )}
             </p>

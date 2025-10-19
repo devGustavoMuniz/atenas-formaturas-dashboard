@@ -9,6 +9,7 @@ export interface EventConfiguration {
   id: string; // Este será o ID do evento do contrato
   name?: string;
   minPhotos?: number;
+  maxPhotos?: number;
   valorPhoto?: number;
   date?: string; // Incluído conforme a interface
   valorPack?: number;
