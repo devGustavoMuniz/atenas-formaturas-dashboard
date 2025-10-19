@@ -49,10 +49,6 @@ export default function SelectPhotosPage() {
   const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
 
   useEffect(() => {
-    if (product && institutionProduct) {
-      console.log("Detalhes do produto recebidos:", { institutionProduct })
-    }
-
     if (!user?.id) {
       setError("Usuário não encontrado.")
       setIsLoading(false)
@@ -106,7 +102,6 @@ export default function SelectPhotosPage() {
       const selectedCount = Object.values(selectedPhotos).filter(Boolean).length
 
       if (selectedCount >= maxPhotos) {
-        console.warn(`Você não pode selecionar mais de ${maxPhotos} fotos.`)
         return
       }
     }
@@ -123,7 +118,6 @@ export default function SelectPhotosPage() {
         const currentCount = photosForEvent?.length ?? 0
 
         if (currentCount >= eventDetail.maxPhotos) {
-          console.warn(`Você não pode selecionar mais de ${eventDetail.maxPhotos} fotos para este evento.`)
           return
         }
       }

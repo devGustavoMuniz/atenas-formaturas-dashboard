@@ -20,9 +20,6 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 // Função para extrair mensagem de erro da resposta da API
 const getErrorMessage = (error: any): string => {
-  console.log("Erro completo capturado no login:", error)
-  console.log("error.response:", error?.response)
-  console.log("error.response.data:", error?.response?.data)
 
   // Verificar diferentes estruturas de erro
   if (error?.response?.data?.message) {
@@ -58,17 +55,13 @@ export function LoginForm() {
 
     try {
       const user = await login(data.email, data.password)
-      console.log("User object after login:", user);
-      console.log("User role:", user?.role);
       if (user?.role === "client") {
         router.push("/client/products")
       } else {
         router.push("/dashboard")
       }
     } catch (error) {
-      console.log("Erro no onSubmit do login:", error) // Debug
       const errorMessage = getErrorMessage(error)
-      console.log("Mensagem de erro processada:", errorMessage) // Debug
 
       // Define alerta de erro no box
       setErrorAlert(errorMessage)
