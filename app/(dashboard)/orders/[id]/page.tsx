@@ -162,10 +162,12 @@ export default function OrderDetailsPage() {
               {order.items.map((item) => {
                 const photos = item.details.filter(detail => detail.photoUrl)
                 const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
+                const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
                 const isExpanded = expandedItems.has(item.id)
                 const hasPhotos = photos.length > 0
                 const hasPackages = packages.length > 0
-                const hasDetails = hasPhotos || hasPackages
+                const hasFullPackage = !!fullPackage
+                const hasDetails = hasPhotos || hasPackages || hasFullPackage
 
                 return (
                   <>
@@ -190,6 +192,11 @@ export default function OrderDetailsPage() {
                               {packages.length} evento{packages.length > 1 ? 's' : ''}
                             </span>
                           )}
+                          {hasFullPackage && (
+                            <span className="text-xs text-muted-foreground ml-auto">
+                              Pacote completo
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{translateProductType(item.productType)}</TableCell>
@@ -208,17 +215,29 @@ export default function OrderDetailsPage() {
                       <TableRow key={`${item.id}-details`}>
                         <TableCell colSpan={4} className="p-0 border-0">
                           {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
-                          {hasPackages && isExpanded && (
+                          {(hasPackages || hasFullPackage) && isExpanded && (
                             <div className="px-4 py-6 bg-muted/20">
-                              <h4 className="text-sm font-medium mb-3">Eventos/Pacotes Selecionados:</h4>
-                              <ul className="space-y-2">
-                                {packages.map((pkg, index) => (
-                                  <li key={index} className="flex items-center gap-2 text-sm">
+                              {hasFullPackage ? (
+                                <div>
+                                  <h4 className="text-sm font-medium mb-3">Seleção:</h4>
+                                  <div className="flex items-center gap-2 text-sm">
                                     <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                    <span>{pkg.eventName}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                                    <span className="font-medium">Pacote Completo - Todos os Eventos</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
+                                  <ul className="space-y-2">
+                                    {packages.map((pkg, index) => (
+                                      <li key={index} className="flex items-center gap-2 text-sm">
+                                        <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                        <span>{pkg.eventName}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           )}
                         </TableCell>
