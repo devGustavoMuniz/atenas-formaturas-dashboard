@@ -48,11 +48,7 @@ export function ClientProductCard({ product }: ClientProductCardProps) {
       >
         {isLoading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : product.flag === "DIGITAL_FILES" ? (
-          "Selecionar Fotos"
-        ) : (
-          "Ver Detalhes"
-        )}
+        ) : "Ver Detalhes"}
       </Button>
     </div>
   )

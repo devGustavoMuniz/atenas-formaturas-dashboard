@@ -161,19 +161,22 @@ export default function OrderDetailsPage() {
             <TableBody>
               {order.items.map((item) => {
                 const photos = item.details.filter(detail => detail.photoUrl)
+                const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
                 const isExpanded = expandedItems.has(item.id)
                 const hasPhotos = photos.length > 0
+                const hasPackages = packages.length > 0
+                const hasDetails = hasPhotos || hasPackages
 
                 return (
                   <>
-                    <TableRow 
+                    <TableRow
                       key={item.id}
-                      className={hasPhotos ? "cursor-pointer hover:bg-muted/50" : ""}
-                      onClick={hasPhotos ? () => toggleItemExpansion(item.id) : undefined}
+                      className={hasDetails ? "cursor-pointer hover:bg-muted/50" : ""}
+                      onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
                     >
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {hasPhotos && (
+                          {hasDetails && (
                             <Image className="h-4 w-4 text-muted-foreground" />
                           )}
                           {item.productName}
@@ -182,12 +185,17 @@ export default function OrderDetailsPage() {
                               {photos.length} foto{photos.length > 1 ? 's' : ''}
                             </span>
                           )}
+                          {hasPackages && (
+                            <span className="text-xs text-muted-foreground ml-auto">
+                              {packages.length} evento{packages.length > 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{translateProductType(item.productType)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(item.itemPrice)}</TableCell>
                       <TableCell>
-                        {hasPhotos && (
+                        {hasDetails && (
                           isExpanded ? (
                             <ChevronUp className="h-4 w-4 text-muted-foreground" />
                           ) : (
@@ -196,10 +204,23 @@ export default function OrderDetailsPage() {
                         )}
                       </TableCell>
                     </TableRow>
-                    {hasPhotos && (
-                      <TableRow key={`${item.id}-photos`}>
+                    {hasDetails && (
+                      <TableRow key={`${item.id}-details`}>
                         <TableCell colSpan={4} className="p-0 border-0">
-                          <OrderItemPhotos item={item} isExpanded={isExpanded} />
+                          {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
+                          {hasPackages && isExpanded && (
+                            <div className="px-4 py-6 bg-muted/20">
+                              <h4 className="text-sm font-medium mb-3">Eventos/Pacotes Selecionados:</h4>
+                              <ul className="space-y-2">
+                                {packages.map((pkg, index) => (
+                                  <li key={index} className="flex items-center gap-2 text-sm">
+                                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                    <span>{pkg.eventName}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     )}
