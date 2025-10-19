@@ -57,6 +57,8 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
   const renderGenericSummary = () => {
     if (!institutionProduct?.details?.events) return null
 
+    let totalGeneral = 0
+
     const eventSummaries = institutionProduct.details.events
       .map((eventDetail) => {
         const photosForEvent = eventGroups
@@ -73,6 +75,9 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
                              (eventDetail.maxPhotos ? selectedCount <= eventDetail.maxPhotos : true)
         const isBelowMin = selectedCount < (eventDetail.minPhotos ?? 0)
         const isAboveMax = eventDetail.maxPhotos && selectedCount > eventDetail.maxPhotos
+
+        const eventTotal = selectedCount * (eventDetail.valorPhoto ?? 0)
+        totalGeneral += eventTotal
 
         return (
           <div key={eventDetail.id} className="rounded-md border p-3">
@@ -94,7 +99,10 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
               )}
             </p>
             <p className="text-sm text-muted-foreground">
-              Valor por foto extra: {formatCurrency(eventDetail.valorPhoto)}
+              Valor por foto: {formatCurrency(eventDetail.valorPhoto)}
+            </p>
+            <p className="text-sm font-medium mt-2">
+              Subtotal: {formatCurrency(eventTotal)}
             </p>
           </div>
         )
@@ -107,8 +115,10 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
 
     return (
       <div className="mt-4 space-y-2">
-        <h3 className="text-lg font-semibold">Regras por Evento:</h3>
         {eventSummaries}
+        <div className="mt-4 pt-4 border-t">
+          <p className="text-xl font-bold">Total: {formatCurrency(totalGeneral)}</p>
+        </div>
       </div>
     )
   }
@@ -189,11 +199,8 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
         ) : isDigitalFilesPackage ? (
           renderDigitalFilesSummary()
         ) : (
-          <>
-            <p>Fotos selecionadas: {selectedPhotosCount}</p>
-            {(product?.flag === "GENERIC" || product?.flag === "DIGITAL_FILES") &&
-              renderGenericSummary()}
-          </>
+          (product?.flag === "GENERIC" || product?.flag === "DIGITAL_FILES") &&
+            renderGenericSummary()
         )}
       </CardContent>
     </Card>
