@@ -2,6 +2,8 @@
 
 import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Minus, Plus } from "lucide-react"
 import { useProductSelectionStore } from "@/lib/store/product-selection-store"
 import { type EventGroup } from "@/lib/api/photos-api"
 import { formatCurrency } from "@/lib/utils"
@@ -19,6 +21,8 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
     selectedEvents,
     isPackageComplete,
     selectedPhotos,
+    quantity,
+    setQuantity,
   } = useProductSelectionStore((state) => state)
 
   const isDigitalFilesPackage =
@@ -116,8 +120,31 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
     return (
       <div className="mt-4 space-y-2">
         {eventSummaries}
-        <div className="mt-4 pt-4 border-t">
-          <p className="text-xl font-bold">Total: {formatCurrency(totalGeneral)}</p>
+        <div className="mt-4 pt-4 border-t space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Quantidade:</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setQuantity(quantity - 1)}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="w-8 text-center font-medium">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setQuantity(quantity + 1)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <p className="text-xl font-bold">Total: {formatCurrency(totalGeneral * quantity)}</p>
         </div>
       </div>
     )

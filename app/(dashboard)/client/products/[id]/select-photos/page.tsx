@@ -34,6 +34,7 @@ export default function SelectPhotosPage() {
     setSelectedEvent,
     setPackageComplete,
     clearSelections,
+    quantity,
   } = useProductSelectionStore((state) => state)
   const user = useAuthStore((state) => state.user)
   const [eventGroups, setEventGroups] = useState<EventGroup[]>([])
@@ -223,7 +224,7 @@ export default function SelectPhotosPage() {
       const genericDetails = details as GenericDetails // Reutiliza a estrutura de GENERIC
       const photosByEvent: Record<string, string[]> = {}
 
-      totalPrice = genericDetails.events.reduce((total, eventDetail) => {
+      const basePrice = genericDetails.events.reduce((total, eventDetail) => {
         const eventPhotos = eventGroups
           .find((group) => group.eventId === eventDetail.id)
           ?.photos.filter((photo) => selectedPhotos[photo.id])
@@ -236,6 +237,10 @@ export default function SelectPhotosPage() {
         return total
       }, 0)
 
+      // Para GENERIC, não multiplicar ainda (será adicionado múltiplas vezes)
+      // Para DIGITAL_FILES (unit), usar o preço base
+      totalPrice = basePrice
+
       selection = {
         type: flag === "GENERIC" ? "GENERIC" : "DIGITAL_FILES_UNIT",
         selectedPhotos: photosByEvent,
@@ -247,16 +252,34 @@ export default function SelectPhotosPage() {
       return
     }
 
-    const cartItem: CartItem = {
-      id: `${product.id}-${new Date().getTime()}`,
-      product,
-      institutionProduct,
-      selection,
-      totalPrice,
+    // Para GENERIC, adicionar múltiplos itens ao carrinho baseado na quantidade
+    if (flag === "GENERIC") {
+      for (let i = 0; i < quantity; i++) {
+        const cartItem: CartItem = {
+          id: `${product.id}-${new Date().getTime()}-${i}`,
+          product,
+          institutionProduct,
+          selection,
+          totalPrice,
+        }
+        addToCart(cartItem)
+      }
+      toast({
+        title: "Produto adicionado!",
+        description: `${quantity} x ${product.name} ${quantity > 1 ? 'foram adicionados' : 'foi adicionado'} ao seu carrinho.`
+      })
+    } else {
+      const cartItem: CartItem = {
+        id: `${product.id}-${new Date().getTime()}`,
+        product,
+        institutionProduct,
+        selection,
+        totalPrice,
+      }
+      addToCart(cartItem)
+      toast({ title: "Produto adicionado!", description: `${product.name} foi adicionado ao seu carrinho.` })
     }
 
-    addToCart(cartItem)
-    toast({ title: "Produto adicionado!", description: `${product.name} foi adicionado ao seu carrinho.` })
     clearSelections()
     setCartOpen(true)
     router.push("/client/products")
