@@ -98,14 +98,8 @@ const digitalFilesDetailsSchema = z.object({
         });
       }
     } else {
-      // Modo pacote: exigir valorPack
-      if (event.valorPack === undefined || event.valorPack < 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Valor do pacote obrigatório.",
-          path: ["events", index, "valorPack"],
-        });
-      }
+      // Modo pacote: valorPack é opcional (permite configurar apenas pacote completo)
+      // Não valida valorPack aqui
     }
   });
 
@@ -260,8 +254,8 @@ export function EditProductDetailsModal({ isOpen, onClose, institutionProduct, i
                             {isEnabled && (
                                 <div className="grid grid-cols-3 gap-4 pl-8">
                                     {isDigitalFiles && !isAvailableUnit ? (
-                                        // Modo pacote: mostrar apenas valorPack
-                                        <FormField name={`events.${fieldIndex}.valorPack`} control={control} render={({ field }) => <FormItem className="col-span-3"><FormLabel>Valor do Pacote</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
+                                        // Modo pacote: mostrar apenas valorPack (opcional)
+                                        <FormField name={`events.${fieldIndex}.valorPack`} control={control} render={({ field }) => <FormItem className="col-span-3"><FormLabel>Valor do Pacote (opcional)</FormLabel><FormControl><IMaskInput mask="R$ num" blocks={{ num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', lazy: false }}} value={String(field.value || '')} onAccept={(value) => field.onChange(value)} placeholder="R$ 0,00" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></FormControl><FormMessage /></FormItem>} />
                                     ) : (
                                         // Modo individual: mostrar minPhotos, maxPhotos e valorPhoto
                                         <>

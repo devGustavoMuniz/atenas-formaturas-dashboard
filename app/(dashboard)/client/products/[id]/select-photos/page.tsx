@@ -48,6 +48,15 @@ export default function SelectPhotosPage() {
 
   const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
 
+  // Verificar se algum evento tem valorPack configurado
+  const hasAnyValorPack = useMemo(() => {
+    if (!isDigitalFilesPackage || !institutionProduct?.details) return false
+    const digitalDetails = institutionProduct.details as DigitalFilesDetails
+    return digitalDetails.events?.some(event =>
+      event.valorPack !== undefined && event.valorPack !== null && event.valorPack > 0
+    ) ?? false
+  }, [isDigitalFilesPackage, institutionProduct])
+
   useEffect(() => {
     if (!user?.id) {
       setError("Usuário não encontrado.")
@@ -94,6 +103,13 @@ export default function SelectPhotosPage() {
       setSelectedEvent(eventGroups[0].eventId, true)
     }
   }, [isDigitalFilesPackage, eventGroups, setSelectedEvent])
+
+  // Auto-selecionar pacote completo se nenhum evento tiver valorPack
+  useEffect(() => {
+    if (isDigitalFilesPackage && !hasAnyValorPack) {
+      setPackageComplete(true)
+    }
+  }, [isDigitalFilesPackage, hasAnyValorPack, setPackageComplete])
 
   const handlePhotoSelection = (photoId: string, isSelected: boolean, eventId?: string) => {
     if (product?.flag === "ALBUM" && isSelected) {
@@ -318,6 +334,7 @@ export default function SelectPhotosPage() {
                 id="complete-package-desktop"
                 checked={isPackageComplete}
                 onCheckedChange={(checked) => setPackageComplete(Boolean(checked))}
+                disabled={!hasAnyValorPack}
               />
               <Label htmlFor="complete-package-desktop" className="font-bold">
                 Adquirir todos os eventos em um único pacote
@@ -361,11 +378,11 @@ export default function SelectPhotosPage() {
                     <div className="flex items-center space-x-2 pr-4">
                       <Checkbox
                         id={`event-${group.eventId}`}
-                        checked={!!selectedEvents[group.eventId]}
+                        checked={!hasAnyValorPack || !!selectedEvents[group.eventId]}
                         onCheckedChange={(checked) =>
                           setSelectedEvent(group.eventId, Boolean(checked))
                         }
-                        disabled={isPackageComplete}
+                        disabled={isPackageComplete || !hasAnyValorPack}
                       />
                       <Label htmlFor={`event-${group.eventId}`}>
                         Comprar este pacote
@@ -448,6 +465,7 @@ export default function SelectPhotosPage() {
                     id="complete-package-mobile"
                     checked={isPackageComplete}
                     onCheckedChange={(checked) => setPackageComplete(Boolean(checked))}
+                    disabled={!hasAnyValorPack}
                   />
                   <Label htmlFor="complete-package-mobile" className="font-bold">
                     Adquirir todos os eventos em um único pacote

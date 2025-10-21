@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from 'next/link'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -146,6 +147,11 @@ export function LoginForm() {
           <Button type="submit" className="w-full bg-yellow-500 text-black hover:bg-yellow-400" disabled={isLoading}>
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
+          <div className="mt-4 text-center text-sm">
+            <Link href="/forgot-password" className="underline">
+              Esqueceu sua senha?
+            </Link>
+          </div>
         </form>
       </Form>
     </div>

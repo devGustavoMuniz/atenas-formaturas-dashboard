@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading) {
-      const isAuthRoute = pathname?.startsWith("/login")
+      const isAuthRoute = pathname?.startsWith("/login") || pathname?.startsWith("/forgot-password")
       const isPublicRoute = pathname?.startsWith("/terms") || pathname?.startsWith("/privacy")
 
       if (!user && !isAuthRoute && !isPublicRoute && pathname !== "/") {
