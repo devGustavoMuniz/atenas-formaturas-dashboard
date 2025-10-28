@@ -28,8 +28,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Se o erro vem da própria chamada de login, não faz nada, apenas rejeita
-    if (originalRequest.url?.includes("/v1/auth/login")) {
+    // Se o erro vem da própria chamada de login ou refresh, não faz nada, apenas rejeita
+    if (
+      originalRequest.url?.includes("/v1/auth/login") ||
+      originalRequest.url?.includes("/v1/auth/refresh")
+    ) {
       return Promise.reject(error)
     }
 
