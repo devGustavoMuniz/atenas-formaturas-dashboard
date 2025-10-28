@@ -484,7 +484,7 @@ export function UserForm({ userId }: UserFormProps) {
       presignedUrlMutation.mutate({
         contentType: profileImageFile.type,
         customIdentifier: profileImageFile.name,
-        formData: data,
+        formData: cleanedData as UserFormValues,
       })
     } else {
       if (isEditing) {
