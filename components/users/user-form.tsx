@@ -296,7 +296,20 @@ export function UserForm({ userId }: UserFormProps) {
     return null
   }
 
-  const cleanFormData = (data: Record<string, any>) => {
+  // Helper function to check if a field is effectively empty (considering masks)
+  const isFieldEmpty = (value: any): boolean => {
+    if (value === undefined || value === null || value === "") {
+      return true
+    }
+    // For strings, remove common mask characters and check if empty
+    if (typeof value === "string") {
+      const cleanValue = value.replace(/[\s.\-()_/]/g, "")
+      return cleanValue === ""
+    }
+    return false
+  }
+
+  const cleanFormData = (data: Record<string, any>, isEditMode: boolean) => {
     const cleanedData = { ...data }
 
     // Extract address fields
@@ -316,43 +329,54 @@ export function UserForm({ userId }: UserFormProps) {
     })
 
     // Clean empty address fields
-    Object.keys(addressFields).forEach((key) => {
-      if (addressFields[key] === "") {
-        delete addressFields[key]
-      }
-    })
+    const hasAnyAddressValue = Object.keys(addressFields).some((key) => !isFieldEmpty(addressFields[key]))
 
-    // Add address object if it has any fields
-    if (Object.keys(addressFields).length > 0) {
+    if (hasAnyAddressValue) {
+      // Se há pelo menos um campo preenchido, manter o endereço
+      Object.keys(addressFields).forEach((key) => {
+        if (isFieldEmpty(addressFields[key])) {
+          addressFields[key] = null
+        }
+      })
       cleanedData.address = addressFields
+    } else if (isEditMode) {
+      // Se está editando e todos os campos estão vazios, enviar null para remover endereço
+      cleanedData.address = null
     }
+    // Se está criando e não tem endereço, não enviar o campo
 
     // Clean becaMeasures object
     if (cleanedData.becaMeasures) {
       const becaMeasuresFields = { ...cleanedData.becaMeasures }
 
       // Remove empty fields from becaMeasures
-      Object.keys(becaMeasuresFields).forEach((key) => {
-        if (becaMeasuresFields[key] === "" || becaMeasuresFields[key] === undefined) {
-          delete becaMeasuresFields[key]
-        }
-      })
+      const hasAnyMeasure = Object.keys(becaMeasuresFields).some((key) => !isFieldEmpty(becaMeasuresFields[key]))
 
-      // Only include becaMeasures if it has at least one field
-      if (Object.keys(becaMeasuresFields).length > 0) {
+      if (hasAnyMeasure) {
+        // Se há pelo menos uma medida, manter becaMeasures
+        Object.keys(becaMeasuresFields).forEach((key) => {
+          if (isFieldEmpty(becaMeasuresFields[key])) {
+            becaMeasuresFields[key] = null
+          }
+        })
         cleanedData.becaMeasures = becaMeasuresFields
+      } else if (isEditMode) {
+        // Se está editando e todas as medidas estão vazias, enviar null
+        cleanedData.becaMeasures = null
       } else {
+        // Se está criando e não tem medidas, não enviar
         delete cleanedData.becaMeasures
       }
     }
 
     // Clean other optional fields
-    Object.keys(cleanedData).forEach((key) => {
-      if (
-        cleanedData[key] === "" &&
-        ["observations", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink", "cpf"].includes(key)
-      ) {
-        delete cleanedData[key]
+    const optionalFields = ["observations", "fatherName", "fatherPhone", "motherName", "motherPhone", "driveLink", "cpf"]
+
+    optionalFields.forEach((key) => {
+      if (key in cleanedData) {
+        if (isFieldEmpty(cleanedData[key])) {
+          cleanedData[key] = null
+        }
       }
     })
 
@@ -434,7 +458,7 @@ export function UserForm({ userId }: UserFormProps) {
 
           setProfileImageFilename(presignedData.urls[0].filename)
 
-          const cleanedData = cleanFormData(formData)
+          const cleanedData = cleanFormData(formData, isEditing)
 
           if (isEditing) {
             updateMutation.mutate({
@@ -478,7 +502,7 @@ export function UserForm({ userId }: UserFormProps) {
       return
     }
 
-    const cleanedData = cleanFormData(data as Record<string, any>)
+    const cleanedData = cleanFormData(data as Record<string, any>, isEditing)
 
     if (profileImageFile) {
       presignedUrlMutation.mutate({
