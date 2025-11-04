@@ -138,9 +138,9 @@ export default function CheckoutPage() {
 
     setIsCreatingPreference(true);
 
-    const nameParts = user.name.split(' ');
+    const nameParts = user.name.trim().split(/\s+/);
     const firstName = nameParts.shift() || '';
-    const lastName = nameParts.join(' ');
+    const lastName = nameParts.join(' ') || '-';
 
     const cleanedPhone = data.phone.replace(/\D/g, '');
     const areaCode = cleanedPhone.substring(0, 2);
