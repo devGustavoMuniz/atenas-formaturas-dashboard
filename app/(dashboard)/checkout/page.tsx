@@ -138,6 +138,8 @@ export default function CheckoutPage() {
 
     setIsCreatingPreference(true);
 
+    console.log("teste deploy");
+
     const nameParts = user.name.trim().split(/\s+/);
     const firstName = nameParts.shift() || '';
     const lastName = nameParts.join(' ') || '-';
