@@ -17,6 +17,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/components/ui/use-toast'
 import { OrderDto } from '@/lib/order-types'
 import { OrderItemPhotos } from '@/components/orders/order-item-photos'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function OrderDetailsPage() {
   const params = useParams()
@@ -24,6 +27,8 @@ export default function OrderDetailsPage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [showDriveLinkModal, setShowDriveLinkModal] = useState(false)
+  const [driveLink, setDriveLink] = useState('')
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
@@ -32,20 +37,44 @@ export default function OrderDetailsPage() {
   })
 
   const { mutate: markAsCompleted, isPending } = useMutation({
-    mutationFn: () => updateOrderStatus(id, 'COMPLETED'),
+    mutationFn: (link?: string) => updateOrderStatus(id, 'COMPLETED', link),
     onSuccess: () => {
       toast({ title: "Pedido marcado como concluído com sucesso!" })
       queryClient.invalidateQueries({ queryKey: ['order', id] })
       queryClient.invalidateQueries({ queryKey: ['orders'] })
+      setShowDriveLinkModal(false)
+      setDriveLink('')
     },
     onError: (error: any) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erro ao marcar pedido como concluído", 
-        description: error.message 
+      toast({
+        variant: "destructive",
+        title: "Erro ao marcar pedido como concluído",
+        description: error.message
       })
     },
   })
+
+  const handleMarkAsCompleted = () => {
+    const hasDigitalFiles = order?.items.some(item => item.productType === 'DIGITAL_FILES')
+
+    if (hasDigitalFiles) {
+      setShowDriveLinkModal(true)
+    } else {
+      markAsCompleted()
+    }
+  }
+
+  const handleConfirmWithDriveLink = () => {
+    if (!driveLink.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Link do Google Drive é obrigatório",
+        description: "Por favor, insira o link do Google Drive para pedidos com arquivos digitais."
+      })
+      return
+    }
+    markAsCompleted(driveLink)
+  }
 
   const toggleItemExpansion = (itemId: string) => {
     setExpandedItems(prev => {
@@ -110,7 +139,7 @@ export default function OrderDetailsPage() {
         
         {order.paymentStatus === 'APPROVED' && (
           <Button
-            onClick={() => markAsCompleted()}
+            onClick={handleMarkAsCompleted}
             disabled={isPending}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
@@ -250,6 +279,52 @@ export default function OrderDetailsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={showDriveLinkModal} onOpenChange={setShowDriveLinkModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Link do Google Drive</DialogTitle>
+            <DialogDescription>
+              Este pedido contém arquivos digitais. Por favor, insira o link do Google Drive com os arquivos para o cliente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="driveLink">Link do Google Drive</Label>
+              <Input
+                id="driveLink"
+                placeholder="https://drive.google.com/..."
+                value={driveLink}
+                onChange={(e) => setDriveLink(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleConfirmWithDriveLink()
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDriveLinkModal(false)
+                setDriveLink('')
+              }}
+              disabled={isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmWithDriveLink}
+              disabled={isPending}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {isPending ? 'Processando...' : 'Confirmar e Marcar como Concluído'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -77,10 +77,12 @@ export const createOrder = async (
 
 export const updateOrderStatus = async (
   orderId: string,
-  status: string
+  status: string,
+  driveLink?: string
 ): Promise<OrderDto> => {
   const { data } = await api.put<OrderDto>(`/v1/orders/${orderId}/status`, {
-    status
+    status,
+    ...(driveLink && { driveLink })
   })
   return data
 }
