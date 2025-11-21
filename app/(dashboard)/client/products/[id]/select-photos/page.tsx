@@ -262,33 +262,25 @@ export default function SelectPhotosPage() {
       return
     }
 
-    // Para GENERIC, adicionar múltiplos itens ao carrinho baseado na quantidade
-    if (flag === "GENERIC") {
-      for (let i = 0; i < quantity; i++) {
-        const cartItem: CartItem = {
-          id: `${product.id}-${new Date().getTime()}-${i}`,
-          product,
-          institutionProduct,
-          selection,
-          totalPrice,
-        }
-        addToCart(cartItem)
-      }
-      toast({
-        title: "Produto adicionado!",
-        description: `${quantity} x ${product.name} ${quantity > 1 ? 'foram adicionados' : 'foi adicionado'} ao seu carrinho.`
-      })
-    } else {
-      const cartItem: CartItem = {
-        id: `${product.id}-${new Date().getTime()}`,
-        product,
-        institutionProduct,
-        selection,
-        totalPrice,
-      }
-      addToCart(cartItem)
-      toast({ title: "Produto adicionado!", description: `${product.name} foi adicionado ao seu carrinho.` })
+    // Criar o item do carrinho com a quantidade selecionada
+    const cartItem: CartItem = {
+      id: `${product.id}-${new Date().getTime()}`,
+      product,
+      institutionProduct,
+      selection,
+      totalPrice,
+      quantity: quantity
     }
+
+    addToCart(cartItem)
+
+    const quantityMsg = quantity > 1 ? `${quantity} x ` : ''
+    const pluralMsg = quantity > 1 ? 'foram adicionados' : 'foi adicionado'
+
+    toast({
+      title: "Produto adicionado!",
+      description: `${quantityMsg}${product.name} ${pluralMsg} ao seu carrinho.`
+    })
 
     clearSelections()
     setCartOpen(true)

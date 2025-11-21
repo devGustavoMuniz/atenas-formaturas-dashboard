@@ -48,7 +48,7 @@ export default function CheckoutPage() {
   const { items, clearCart } = useCartStore()
   const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
-  const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
+  const subtotal = items.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
 
   // Cálculo do crédito aplicado
   const userCredit = user?.creditValue ?? 0
@@ -77,12 +77,12 @@ export default function CheckoutPage() {
       if (user?.id) {
         try {
           const fullUserData = await fetchUserById(user.id)
-          
+
           // Set phone if available
           if (fullUserData.phone) {
             form.setValue("phone", fullUserData.phone)
           }
-          
+
           // Set address fields if available
           if (fullUserData.address) {
             if (fullUserData.address.zipCode) form.setValue("zipCode", fullUserData.address.zipCode)
@@ -185,6 +185,7 @@ export default function CheckoutPage() {
           productName: item.product.name,
           productType: productType,
           totalPrice: item.totalPrice,
+          quantity: item.quantity, // Adicionado campo quantity
           selectionDetails: selectionDetails,
         };
       }),
@@ -345,24 +346,24 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-1">
-                                <FormLabel>Telefone com DDD</FormLabel>
-                                <FormControl>
-                                    <IMaskInput
-                                        mask={["(00) 0000-0000", "(00) 00000-0000"]}
-                                        unmask={false}
-                                        value={field.value}
-                                        onAccept={(value) => field.onChange(value)}
-                                        placeholder="(00) 00000-0000"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-1">
+                          <FormLabel>Telefone com DDD</FormLabel>
+                          <FormControl>
+                            <IMaskInput
+                              mask={["(00) 0000-0000", "(00) 00000-0000"]}
+                              unmask={false}
+                              value={field.value}
+                              onAccept={(value) => field.onChange(value)}
+                              placeholder="(00) 00000-0000"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
                 </form>
@@ -381,7 +382,10 @@ export default function CheckoutPage() {
                 items.map(item => (
                   <div key={item.id} className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold">{item.product.name}</p>
+                      <p className="font-semibold">
+                        {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                        {item.product.name}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {item.selection.type === 'ALBUM' && `${item.selection.selectedPhotos.length} fotos`}
                         {item.selection.type === 'GENERIC' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
@@ -389,7 +393,7 @@ export default function CheckoutPage() {
                         {item.selection.type === 'DIGITAL_FILES_PACKAGE' && (item.selection.isPackageComplete ? 'Pacote Completo' : `${item.selection.selectedEvents.length} evento(s)`)}
                       </p>
                     </div>
-                    <p className="font-medium">{formatCurrency(item.totalPrice)}</p>
+                    <p className="font-medium">{formatCurrency(item.totalPrice * item.quantity)}</p>
                   </div>
                 ))
               ) : (
@@ -418,8 +422,8 @@ export default function CheckoutPage() {
                 <p>{creditApplied > 0 ? 'Valor a pagar' : 'Total'}</p>
                 <p className="text-green-600 dark:text-green-500">{formatCurrency(amountToPay)}</p>
               </div>
-              <Button 
-                onClick={form.handleSubmit(onSubmit)} 
+              <Button
+                onClick={form.handleSubmit(onSubmit)}
                 className="w-full mt-4"
                 disabled={items.length === 0 || isCreatingPreference}
               >

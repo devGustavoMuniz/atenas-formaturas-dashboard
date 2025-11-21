@@ -36,6 +36,7 @@ export interface CartItemDto {
   productName: string
   productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM'
   totalPrice: number
+  quantity: number
   selectionDetails: {
     photos?: Array<{ id: string; eventId: string }>
     events?: Array<{ id: string; isPackage: boolean }>

@@ -18,10 +18,10 @@ const CartItemCardPlaceholder = ({ name }: { name: string }) => (
 
 export function CartSheet() {
   const { items, clearCart, isOpen, setCartOpen } = useCartStore((state) => state)
-  const itemCount = items.length
+  const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
   const router = useRouter()
 
-  const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
+  const subtotal = items.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
 
   const handleCheckout = () => {
     router.push("/checkout")
