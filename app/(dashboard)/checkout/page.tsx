@@ -218,7 +218,7 @@ export default function CheckoutPage() {
       // Não precisamos mais construir o payload do Mercado Pago aqui, apenas usar o que o backend retornou.
 
       // 3. Limpar o carrinho e redirecionar para o Mercado Pago
-      clearCart();
+      // clearCart(); // Removido para manter o carrinho caso o usuário volte. Será limpo na página de sucesso.
       window.location.href = mercadoPagoCheckoutUrl;
 
     } catch (error) {

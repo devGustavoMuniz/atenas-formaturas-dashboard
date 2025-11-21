@@ -51,41 +51,52 @@ function areSelectionsEqual(a: CartItemSelection, b: CartItemSelection): boolean
   return false
 }
 
-export const useCartStore = create<CartState>((set) => ({
-  items: [],
-  isOpen: false,
-  addToCart: (newItem) => set((state) => {
-    const existingItemIndex = state.items.findIndex(
-      (item) => item.product.id === newItem.product.id && areSelectionsEqual(item.selection, newItem.selection)
-    )
+import { persist, createJSONStorage } from "zustand/middleware"
 
-    if (existingItemIndex > -1) {
-      const newItems = [...state.items]
-      newItems[existingItemIndex] = {
-        ...newItems[existingItemIndex],
-        quantity: newItems[existingItemIndex].quantity + newItem.quantity
-      }
-      return { items: newItems }
+export const useCartStore = create<CartState>()(
+  persist(
+    (set) => ({
+      items: [],
+      isOpen: false,
+      addToCart: (newItem) => set((state) => {
+        const existingItemIndex = state.items.findIndex(
+          (item) => item.product.id === newItem.product.id && areSelectionsEqual(item.selection, newItem.selection)
+        )
+
+        if (existingItemIndex > -1) {
+          const newItems = [...state.items]
+          newItems[existingItemIndex] = {
+            ...newItems[existingItemIndex],
+            quantity: newItems[existingItemIndex].quantity + newItem.quantity
+          }
+          return { items: newItems }
+        }
+
+        return { items: [...state.items, newItem] }
+      }),
+      removeFromCart: (itemId) =>
+        set((state) => ({ items: state.items.filter((item) => item.id !== itemId) })),
+      incrementItem: (itemId) =>
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+          ),
+        })),
+      decrementItem: (itemId) =>
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === itemId && item.quantity > 1
+              ? { ...item, quantity: item.quantity - 1 }
+              : item
+          ),
+        })),
+      clearCart: () => set({ items: [] }),
+      setCartOpen: (open) => set({ isOpen: open }),
+    }),
+    {
+      name: "cart-storage",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ items: state.items }), // Persist only items, not isOpen
     }
-
-    return { items: [...state.items, newItem] }
-  }),
-  removeFromCart: (itemId) =>
-    set((state) => ({ items: state.items.filter((item) => item.id !== itemId) })),
-  incrementItem: (itemId) =>
-    set((state) => ({
-      items: state.items.map((item) =>
-        item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
-      ),
-    })),
-  decrementItem: (itemId) =>
-    set((state) => ({
-      items: state.items.map((item) =>
-        item.id === itemId && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      ),
-    })),
-  clearCart: () => set({ items: [] }),
-  setCartOpen: (open) => set({ isOpen: open }),
-}))
+  )
+)
