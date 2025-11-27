@@ -81,6 +81,7 @@ export function UsersTable() {
   const [pageSize] = useState(10)
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
+  const [institutionId, setInstitutionId] = useState<string | undefined>(undefined)
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -95,12 +96,13 @@ export function UsersTable() {
   }, [searchTerm])
 
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users", currentPage, pageSize, debouncedSearchTerm],
+    queryKey: ["users", currentPage, pageSize, debouncedSearchTerm, institutionId],
     queryFn: () =>
       fetchUsers({
         page: currentPage,
         limit: pageSize,
         search: debouncedSearchTerm || undefined,
+        institutionId: institutionId || undefined,
       }),
   })
 
@@ -255,7 +257,13 @@ export function UsersTable() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <UserTableToolbar onSearchChange={handleSearchChange} />
+        <UserTableToolbar
+          onSearchChange={handleSearchChange}
+          onInstitutionChange={(id) => {
+            setInstitutionId(id)
+            setCurrentPage(1)
+          }}
+        />
         <div className="rounded-md border">
           <div className="h-24 flex items-center justify-center">
             <Skeleton className="h-8 w-[200px]" />
@@ -267,7 +275,13 @@ export function UsersTable() {
 
   return (
     <div className="space-y-4">
-      <UserTableToolbar onSearchChange={handleSearchChange} />
+      <UserTableToolbar
+        onSearchChange={handleSearchChange}
+        onInstitutionChange={(id) => {
+          setInstitutionId(id)
+          setCurrentPage(1)
+        }}
+      />
       <div className="hidden md:block rounded-md border">
         <Table>
           <TableHeader>

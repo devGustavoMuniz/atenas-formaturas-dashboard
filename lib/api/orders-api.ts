@@ -5,18 +5,21 @@ interface GetOrdersParams {
   pageIndex?: number
   pageSize?: number
   paymentStatus?: string
+  userId?: string
 }
 
 export const getOrders = async ({
   pageIndex = 0,
   pageSize = 10,
   paymentStatus,
+  userId,
 }: GetOrdersParams): Promise<OrderListResponseDto> => {
   const response = await api.get<OrderListResponseDto>('/v1/orders', {
     params: {
       page: pageIndex + 1, // API is 1-based, table is 0-based
       limit: pageSize,
       paymentStatus: paymentStatus || undefined,
+      userId: userId || undefined,
     },
   })
   return response.data

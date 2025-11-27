@@ -60,7 +60,7 @@ export default function OrderDetailsPage() {
     if (hasDigitalFiles) {
       setShowDriveLinkModal(true)
     } else {
-      markAsCompleted()
+      markAsCompleted(undefined)
     }
   }
 
@@ -136,7 +136,7 @@ export default function OrderDetailsPage() {
           </Link>
           <h1 className="text-2xl font-bold">Detalhes do Pedido: {order.displayId}</h1>
         </div>
-        
+
         {order.paymentStatus === 'APPROVED' && (
           <Button
             onClick={handleMarkAsCompleted}
@@ -210,7 +210,10 @@ export default function OrderDetailsPage() {
                           {hasDetails && (
                             <Image className="h-4 w-4 text-muted-foreground" />
                           )}
-                          {item.productName}
+                          <span className="font-medium">
+                            {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                            {item.productName}
+                          </span>
                           {hasPhotos && (
                             <span className="text-xs text-muted-foreground ml-auto">
                               {photos.length} foto{photos.length > 1 ? 's' : ''}
@@ -229,7 +232,7 @@ export default function OrderDetailsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{translateProductType(item.productType)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.itemPrice)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.itemPrice * item.quantity)}</TableCell>
                       <TableCell>
                         {hasDetails && (
                           isExpanded ? (

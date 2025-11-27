@@ -62,6 +62,11 @@ const clientNavItems: NavItem[] = [
     href: "/client/dashboard",
     icon: LayoutDashboard,
   },
+  {
+    title: "Meus Pedidos",
+    href: "/client/orders",
+    icon: ShoppingCart,
+  },
 ]
 
 export function DashboardNav() {

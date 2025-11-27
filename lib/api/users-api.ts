@@ -54,11 +54,12 @@ export type PaginationParams = {
   page?: number
   limit?: number
   search?: string
+  institutionId?: string
 }
 
 // API functions
 export async function fetchUsers(params: PaginationParams = {}): Promise<User[]> {
-  const { page = 1, limit = 10, search } = params
+  const { page = 1, limit = 10, search, institutionId } = params
 
   // Construir os parâmetros de consulta
   const queryParams = new URLSearchParams()
@@ -67,6 +68,10 @@ export async function fetchUsers(params: PaginationParams = {}): Promise<User[]>
 
   if (search && search.trim() !== "") {
     queryParams.append("search", search.trim())
+  }
+
+  if (institutionId) {
+    queryParams.append("institutionId", institutionId)
   }
 
   const response = await api.get(`/v1/users?${queryParams.toString()}`)

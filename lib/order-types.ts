@@ -17,6 +17,7 @@ export interface OrderItemDto {
   productName: string;
   productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM';
   itemPrice: number;
+  quantity: number;
   createdAt: string;
   details: OrderItemDetailsDto[];
 }
