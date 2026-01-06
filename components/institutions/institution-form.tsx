@@ -26,6 +26,7 @@ const institutionFormSchema = z.object({
   observations: z.string().optional(),
   events: z.array(
     z.object({
+      id: z.string().optional(),
       name: z.string().min(1, { message: "Nome do evento é obrigatório." }),
     }),
   ),
@@ -74,18 +75,28 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     name: "events",
   })
 
+
   useEffect(() => {
     if (institution && isEditing) {
+      const mappedEvents = institution.events && institution.events.length > 0
+        ? institution.events.map((event) => ({
+          id: event.id, // ✅ IMPORTANTE: Preservar ID para eventos existentes
+          name: event.name
+        }))
+        : [{ name: "" }]
+
+      console.log('🔍 [DEBUG] Resetando form com eventos:', mappedEvents)
+      console.log('🔍 [DEBUG] Eventos originais do backend:', institution.events)
+
       form.reset({
         contractNumber: institution.contractNumber,
         name: institution.name,
         observations: institution.observations,
-        events: institution.events && institution.events.length > 0
-          ? institution.events.map((event) => ({ name: event.name }))
-          : [{ name: "" }],
+        events: mappedEvents,
       })
     }
-  }, [institution, form, isEditing])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [institution, isEditing])
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<InstitutionFormValues, "id" | "createdAt" | "userCount">) => {
@@ -95,7 +106,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
       toast({
         title: "Contrato criado",
-description: "O contrato foi criado com sucesso.",
+        description: "O contrato foi criado com sucesso.",
       })
       router.push("/institutions")
     },
@@ -119,7 +130,7 @@ description: "O contrato foi criado com sucesso.",
       queryClient.invalidateQueries({ queryKey: ["institution", institutionId] })
       toast({
         title: "Contrato atualizado",
-description: "O contrato foi atualizado com sucesso.",
+        description: "O contrato foi atualizado com sucesso.",
       })
       router.push("/institutions")
     },
@@ -134,6 +145,9 @@ description: "O contrato foi atualizado com sucesso.",
   })
 
   function onSubmit(data: InstitutionFormValues) {
+    console.log('📤 [DEBUG] Enviando dados ao backend:', data)
+    console.log('📤 [DEBUG] Eventos a serem enviados:', data.events)
+
     if (isEditing) {
       updateMutation.mutate({
         id: institutionId!,
@@ -167,22 +181,22 @@ description: "O contrato foi atualizado com sucesso.",
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-            <CardDescription>
+          <CardDescription>
             {isEditing
-                ? "Atualize as informações do contrato existente."
-                : "Preencha as informações para criar um novo contrato."}
-            </CardDescription>
+              ? "Atualize as informações do contrato existente."
+              : "Preencha as informações para criar um novo contrato."}
+          </CardDescription>
         </div>
         {isEditing && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(`/institutions/${institutionId}/products`)}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Configurar Produtos
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push(`/institutions/${institutionId}/products`)}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Configurar Produtos
+          </Button>
+        )}
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
