@@ -80,13 +80,10 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     if (institution && isEditing) {
       const mappedEvents = institution.events && institution.events.length > 0
         ? institution.events.map((event) => ({
-          id: event.id, // ✅ IMPORTANTE: Preservar ID para eventos existentes
+          id: event.id, // Preservar ID para eventos existentes
           name: event.name
         }))
         : [{ name: "" }]
-
-      console.log('🔍 [DEBUG] Resetando form com eventos:', mappedEvents)
-      console.log('🔍 [DEBUG] Eventos originais do backend:', institution.events)
 
       form.reset({
         contractNumber: institution.contractNumber,
@@ -145,9 +142,6 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
   })
 
   function onSubmit(data: InstitutionFormValues) {
-    console.log('📤 [DEBUG] Enviando dados ao backend:', data)
-    console.log('📤 [DEBUG] Eventos a serem enviados:', data.events)
-
     if (isEditing) {
       updateMutation.mutate({
         id: institutionId!,
