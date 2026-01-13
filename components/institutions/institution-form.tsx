@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createInstitution, updateInstitution, fetchInstitutionById } from "@/lib/api/institutions-api"
+import { createInstitution, updateInstitution, fetchInstitutionById, sendCredentials } from "@/lib/api/institutions-api"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, X, Settings } from "lucide-react"
+import { Plus, X, Settings, Mail, Loader2 } from "lucide-react"
 
 const institutionFormSchema = z.object({
   contractNumber: z.string().min(1, {
@@ -141,6 +141,37 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     },
   })
 
+  const sendCredentialsMutation = useMutation({
+    mutationFn: () => sendCredentials(institutionId!),
+    onSuccess: (data) => {
+      if (data.credentialsSent === 0 && data.totalStudents === 0) {
+        toast({
+          title: "Nenhum usuário pendente",
+          description: "Todos os usuários deste contrato já acessaram a plataforma.",
+        })
+      } else if (data.failedEmails > 0) {
+        toast({
+          variant: "destructive",
+          title: "Envio parcial",
+          description: `${data.credentialsSent} de ${data.totalStudents} emails enviados. ${data.failedEmails} falharam.`,
+        })
+      } else {
+        toast({
+          title: "Credenciais enviadas!",
+          description: `${data.credentialsSent} email(s) de boas-vindas enviado(s) com sucesso.`,
+        })
+      }
+    },
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
+      toast({
+        variant: "destructive",
+        title: "Erro ao enviar credenciais",
+        description: errorMessage,
+      })
+    },
+  })
+
   function onSubmit(data: InstitutionFormValues) {
     if (isEditing) {
       updateMutation.mutate({
@@ -182,14 +213,29 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
           </CardDescription>
         </div>
         {isEditing && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push(`/institutions/${institutionId}/products`)}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Configurar Produtos
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => sendCredentialsMutation.mutate()}
+              disabled={sendCredentialsMutation.isPending}
+            >
+              {sendCredentialsMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="mr-2 h-4 w-4" />
+              )}
+              Enviar Credenciais
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/institutions/${institutionId}/products`)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Configurar Produtos
+            </Button>
+          </div>
         )}
       </CardHeader>
       <Form {...form}>

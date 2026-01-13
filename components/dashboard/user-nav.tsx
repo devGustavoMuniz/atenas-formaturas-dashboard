@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/lib/auth/use-auth"
 import { useRouter } from "next/navigation"
+import { User, LogOut } from "lucide-react"
 
 export function UserNav() {
   const { user, logout } = useAuth()
@@ -21,6 +22,10 @@ export function UserNav() {
   const handleLogout = () => {
     logout()
     router.push("/login")
+  }
+
+  const handleProfileClick = () => {
+    router.push("/client/profile")
   }
 
   return (
@@ -41,11 +46,19 @@ export function UserNav() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>Perfil</DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
+        {user?.role === "client" && (
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              Meu Perfil
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        )}
+        {user?.role === "client" && <DropdownMenuSeparator />}
+        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

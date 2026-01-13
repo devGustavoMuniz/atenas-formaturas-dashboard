@@ -29,9 +29,18 @@ export type InstitutionInput = {
   events: InstitutionEventInput[]
 }
 
+// Extended params for institutions
+export type InstitutionPaginationParams = {
+  page?: number
+  limit?: number
+  search?: string
+  sortBy?: string
+  order?: "asc" | "desc"
+}
+
 // API functions
-export async function fetchInstitutions(params: PaginationParams = {}): Promise<Institution[]> {
-  const { page = 1, limit = 10, search } = params
+export async function fetchInstitutions(params: InstitutionPaginationParams = {}): Promise<Institution[]> {
+  const { page = 1, limit = 10, search, sortBy, order } = params
 
   // Construir os parâmetros de consulta
   const queryParams = new URLSearchParams()
@@ -40,6 +49,14 @@ export async function fetchInstitutions(params: PaginationParams = {}): Promise<
 
   if (search && search.trim() !== "") {
     queryParams.append("search", search.trim())
+  }
+
+  if (sortBy) {
+    queryParams.append("sortBy", sortBy)
+  }
+
+  if (order) {
+    queryParams.append("order", order)
   }
 
   const response = await api.get(`/v1/institutions?${queryParams.toString()}`)
@@ -71,4 +88,22 @@ export async function updateInstitution(
 
 export async function deleteInstitution(id: string): Promise<void> {
   await api.delete(`/v1/institutions/${id}`)
+}
+
+// Type for send credentials response
+export type SendCredentialsResponse = {
+  totalStudents: number
+  credentialsSent: number
+  failedEmails: number
+  errors: {
+    studentId: string
+    email: string
+    error: string
+  }[]
+}
+
+// Send welcome credentials to users who haven't accessed the platform
+export async function sendCredentials(institutionId: string): Promise<SendCredentialsResponse> {
+  const response = await api.post(`/v1/institutions/${institutionId}/send-credentials`)
+  return response.data
 }

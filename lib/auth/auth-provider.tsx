@@ -5,8 +5,9 @@ import { createContext, useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { api } from "@/lib/api/axios-config"
 import { fetchUserById } from "@/lib/api/users-api"
-import { useAuthStore } from "@/lib/store/auth-store" // Importar o store
+import { useAuthStore } from "@/lib/store/auth-store"
 import type { User } from "@/lib/types"
+import { FirstAccessModal } from "@/components/auth/first-access-modal"
 
 type AuthContextType = {
   user: User | null
@@ -20,13 +21,14 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {
     throw new Error("Login function not implemented")
   },
-  logout: () => {},
+  logout: () => { },
   isLoading: true,
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null) // Manter o estado local original
+  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showFirstAccessModal, setShowFirstAccessModal] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -48,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           const user = JSON.parse(storedUser)
           const fullUser = await fetchUserById(user.id)
-          
+
           // 1. Atualiza o estado local (lógica original)
           setUser(fullUser)
           // 2. SINCRONIZA: Atualiza o Zustand Store
@@ -105,6 +107,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setZustandUser(fullUser)
       setZustandToken(token)
 
+      // 3. Verifica se é primeiro acesso (sem lastLoginAt)
+      if (!userData.lastLoginAt) {
+        setShowFirstAccessModal(true)
+      }
+
       return fullUser
     } catch (error: any) {
       console.error("Erro no login (auth-provider):", error)
@@ -136,6 +143,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+      {children}
+      <FirstAccessModal
+        open={showFirstAccessModal}
+        onClose={() => setShowFirstAccessModal(false)}
+        userName={user?.name}
+      />
+    </AuthContext.Provider>
+  )
 }
-

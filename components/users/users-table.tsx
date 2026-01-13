@@ -8,8 +8,6 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
-  type SortingState,
-  getSortedRowModel,
   type ColumnFiltersState,
   getFilteredRowModel,
 } from "@tanstack/react-table"
@@ -22,7 +20,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, ArrowUpDown, Pencil, Trash2, Upload } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Upload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -38,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { UserTableToolbar } from "./user-table-toolbar"
 import { UserCard } from "./user-card"
 
@@ -61,6 +59,47 @@ type User = {
   profileImage?: string
   status: "active" | "inactive"
   createdAt: string
+  lastLoginAt?: string
+}
+
+type SortConfig = {
+  sortBy: string | null
+  order: "asc" | "desc" | null
+}
+
+// Helper function to format relative time
+function formatLastLogin(dateString?: string): string {
+  if (!dateString) return "Nunca"
+
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (diffInSeconds < 60) return "Agora mesmo"
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60)
+    return `${minutes} ${minutes === 1 ? "minuto" : "minutos"} atrás`
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600)
+    return `${hours} ${hours === 1 ? "hora" : "horas"} atrás`
+  }
+  if (diffInSeconds < 172800) {
+    return "Ontem"
+  }
+  if (diffInSeconds < 604800) {
+    const days = Math.floor(diffInSeconds / 86400)
+    return `${days} dias atrás`
+  }
+
+  // For dates older than a week, show formatted date
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).replace(",", "")
 }
 
 const getErrorMessage = (error: any): string => {
@@ -74,7 +113,6 @@ const getErrorMessage = (error: any): string => {
 }
 
 export function UsersTable() {
-  const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -82,6 +120,7 @@ export function UsersTable() {
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
   const [institutionId, setInstitutionId] = useState<string | undefined>(undefined)
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ sortBy: null, order: null })
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -96,13 +135,15 @@ export function UsersTable() {
   }, [searchTerm])
 
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users", currentPage, pageSize, debouncedSearchTerm, institutionId],
+    queryKey: ["users", currentPage, pageSize, debouncedSearchTerm, institutionId, sortConfig.sortBy, sortConfig.order],
     queryFn: () =>
       fetchUsers({
         page: currentPage,
         limit: pageSize,
         search: debouncedSearchTerm || undefined,
         institutionId: institutionId || undefined,
+        sortBy: sortConfig.sortBy || undefined,
+        order: sortConfig.order || undefined,
       }),
   })
 
@@ -142,14 +183,41 @@ export function UsersTable() {
     setSearchTerm(search)
   }, [])
 
+  const handleSort = (columnId: string) => {
+    setSortConfig((prev) => {
+      // If clicking the same column
+      if (prev.sortBy === columnId) {
+        // Cycle through: asc -> desc -> null
+        if (prev.order === "asc") {
+          return { sortBy: columnId, order: "desc" }
+        } else if (prev.order === "desc") {
+          return { sortBy: null, order: null }
+        }
+      }
+      // New column or resetting
+      return { sortBy: columnId, order: "asc" }
+    })
+    setCurrentPage(1) // Reset to first page when sorting changes
+  }
+
+  const getSortIcon = (columnId: string) => {
+    if (sortConfig.sortBy !== columnId) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />
+    }
+    if (sortConfig.order === "asc") {
+      return <ArrowUp className="ml-2 h-4 w-4" />
+    }
+    return <ArrowDown className="ml-2 h-4 w-4" />
+  }
+
   const columns: ColumnDef<User>[] = [
     {
       accessorKey: "userContract",
-      header: ({ column }) => {
+      header: () => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <Button variant="ghost" onClick={() => handleSort("userContract")}>
             Nº do Contrato
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {getSortIcon("userContract")}
           </Button>
         )
       },
@@ -159,11 +227,11 @@ export function UsersTable() {
     },
     {
       accessorKey: "name",
-      header: ({ column }) => {
+      header: () => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <Button variant="ghost" onClick={() => handleSort("name")}>
             Nome
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {getSortIcon("name")}
           </Button>
         )
       },
@@ -181,11 +249,11 @@ export function UsersTable() {
     },
     {
       accessorKey: "email",
-      header: ({ column }) => {
+      header: () => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <Button variant="ghost" onClick={() => handleSort("email")}>
             Email
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {getSortIcon("email")}
           </Button>
         )
       },
@@ -199,6 +267,24 @@ export function UsersTable() {
           <Badge variant={role === "admin" ? "default" : "secondary"}>
             {role === "admin" ? "Administrador" : "Cliente"}
           </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "lastLoginAt",
+      header: () => {
+        return (
+          <Button variant="ghost" onClick={() => handleSort("lastLoginAt")}>
+            Último Login
+            {getSortIcon("lastLoginAt")}
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        return (
+          <span className="text-muted-foreground text-sm">
+            {formatLastLogin(row.original.lastLoginAt)}
+          </span>
         )
       },
     },
@@ -244,12 +330,9 @@ export function UsersTable() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     state: {
-      sorting,
       columnFilters,
     },
   })

@@ -24,6 +24,7 @@ export type User = {
   profileImage?: string
   status: "active" | "inactive"
   createdAt: string
+  lastLoginAt?: string
   address?: {
     zipCode: string
     street: string
