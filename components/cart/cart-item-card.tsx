@@ -40,26 +40,33 @@ export function CartItemCard({ item }: CartItemCardProps) {
         <p className="font-semibold">{item.product.name}</p>
         <p className="text-sm text-muted-foreground mb-2">{getSelectionSummary(item)}</p>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => decrementItem(item.id)}
-            disabled={item.quantity <= 1}
-          >
-            <Minus className="h-3 w-3" />
-          </Button>
-          <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => incrementItem(item.id)}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
+        {!(item.selection.type === "DIGITAL_FILES_PACKAGE" || item.selection.type === "DIGITAL_FILES_UNIT") && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => decrementItem(item.id)}
+              disabled={item.quantity <= 1}
+            >
+              <Minus className="h-3 w-3" />
+            </Button>
+            <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => incrementItem(item.id)}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+        {(item.selection.type === "DIGITAL_FILES_PACKAGE" || item.selection.type === "DIGITAL_FILES_UNIT") && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Item único</span>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col items-end gap-2">
