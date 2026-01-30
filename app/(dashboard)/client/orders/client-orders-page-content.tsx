@@ -82,40 +82,78 @@ export function ClientOrdersPageContent() {
     return (
         <>
             <div className="mt-4">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Nº Pedido</TableHead>
-                            <TableHead>Data</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Valor Total</TableHead>
-                            <TableHead>Ações</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {result.data.map((order) => (
-                            <TableRow key={order.id}>
-                                <TableCell>
-                                    <span className="font-mono text-sm">{order.displayId}</span>
-                                </TableCell>
-                                <TableCell>{formatDate(order.createdAt)}</TableCell>
-                                <TableCell>
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nº Pedido</TableHead>
+                                <TableHead>Data</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Valor Total</TableHead>
+                                <TableHead>Ações</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {result.data.map((order) => (
+                                <TableRow key={order.id}>
+                                    <TableCell>
+                                        <span className="font-mono text-sm">{order.displayId}</span>
+                                    </TableCell>
+                                    <TableCell>{formatDate(order.createdAt)}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusVariant(order.paymentStatus)}>
+                                            {translatePaymentStatus(order.paymentStatus)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {formatCurrency(order.totalAmount)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Link href={`/client/orders/${order.id}`}>
+                                            <Button size="sm" variant="outline">Detalhes</Button>
+                                        </Link>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="grid grid-cols-1 gap-4 md:hidden">
+                    {result.data.map((order) => (
+                        <div key={order.id} className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                            <div className="p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-mono text-sm font-medium">#{order.displayId}</span>
                                     <Badge variant={getStatusVariant(order.paymentStatus)}>
                                         {translatePaymentStatus(order.paymentStatus)}
                                     </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {formatCurrency(order.totalAmount)}
-                                </TableCell>
-                                <TableCell>
-                                    <Link href={`/client/orders/${order.id}`}>
-                                        <Button size="sm" variant="outline">Detalhes</Button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div className="flex flex-col">
+                                        <span className="text-muted-foreground text-xs">Data</span>
+                                        <span>{formatDate(order.createdAt)}</span>
+                                    </div>
+                                    <div className="flex flex-col text-right">
+                                        <span className="text-muted-foreground text-xs">Valor Total</span>
+                                        <span className="font-medium">{formatCurrency(order.totalAmount)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2">
+                                    <Link href={`/client/orders/${order.id}`} className="w-full">
+                                        <Button variant="outline" className="w-full">
+                                            Ver Detalhes
+                                        </Button>
                                     </Link>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
             {(result.meta.totalPages > 1) && (
                 <div className="flex items-center justify-end space-x-2 py-4">

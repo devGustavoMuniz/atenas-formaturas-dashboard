@@ -14,7 +14,9 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<User>
   logout: () => void
   isLoading: boolean
+  updateUser: (user: User) => void
 }
+
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -22,6 +24,7 @@ export const AuthContext = createContext<AuthContextType>({
     throw new Error("Login function not implemented")
   },
   logout: () => { },
+  updateUser: () => { },
   isLoading: true,
 })
 
@@ -143,9 +146,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser)
+    setZustandUser(updatedUser)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, isLoading }}>
       {children}
+
       <FirstAccessModal
         open={showFirstAccessModal}
         onClose={() => setShowFirstAccessModal(false)}

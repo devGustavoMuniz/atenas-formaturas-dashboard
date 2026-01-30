@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import ReactCrop, { type Crop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
 import { updateProfile, type ProfileUpdateInput } from "@/lib/api/profile-api"
-import { getPresignedUrl } from "@/lib/api/users-api"
+import { getPresignedUrl, fetchUserById } from "@/lib/api/users-api"
 
 const profileFormSchema = z.object({
     name: z.string().min(2, {
@@ -114,7 +114,7 @@ function PasswordCriteria({ password }: { password: string }) {
 export function ProfileForm() {
     const { toast } = useToast()
     const queryClient = useQueryClient()
-    const { user, isLoading: isLoadingUser } = useAuth()
+    const { user, isLoading: isLoadingUser, updateUser } = useAuth()
 
     const [profileImage, setProfileImage] = useState<string | null>(null)
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
@@ -351,11 +351,22 @@ export function ProfileForm() {
 
             return updateProfile(finalData)
         },
-        onSuccess: () => {
+        onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ["user"] })
             setProfileImageFile(null)
-            // Update original data ref with current form values
-            originalUserDataRef.current = profileForm.getValues()
+
+            // Buscar dados atualizados do usuário para garantir que temos a URL completa da imagem
+            if (user?.id) {
+                try {
+                    const freshUser = await fetchUserById(user.id)
+                    // Update original data ref with current form values
+                    originalUserDataRef.current = profileForm.getValues()
+                    updateUser(freshUser)
+                } catch (error) {
+                    console.error("Erro ao buscar dados atualizados do usuário", error)
+                }
+            }
+
             toast({
                 title: "Perfil atualizado",
                 description: "Suas informações foram atualizadas com sucesso.",

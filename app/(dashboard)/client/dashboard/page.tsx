@@ -79,9 +79,9 @@ export default function ClientDashboardPage() {
           <CardHeader>
             <CardTitle>{group.eventName}</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 place-items-center">
             {group.photos.map((photo) => (
-              <ImagePreviewCard 
+              <ImagePreviewCard
                 key={photo.id}
                 src={photo.signedUrl}
                 alt={photo.fileName}

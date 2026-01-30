@@ -139,62 +139,138 @@ export default function ClientOrderDetailsPage() {
                     <CardTitle>Itens do Pedido</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Produto</TableHead>
-                                <TableHead>Tipo</TableHead>
-                                <TableHead className="text-right">Preço</TableHead>
-                                <TableHead className="w-12"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {order.items.map((item) => {
-                                const photos = item.details.filter(detail => detail.photoUrl)
-                                const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
-                                const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
-                                const isExpanded = expandedItems.has(item.id)
-                                const hasPhotos = photos.length > 0
-                                const hasPackages = packages.length > 0
-                                const hasFullPackage = !!fullPackage
-                                const hasDetails = hasPhotos || hasPackages || hasFullPackage
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Produto</TableHead>
+                                    <TableHead className="text-right">Preço</TableHead>
+                                    <TableHead className="w-12"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {order.items.map((item) => {
+                                    const photos = item.details.filter(detail => detail.photoUrl)
+                                    const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
+                                    const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
+                                    const isExpanded = expandedItems.has(item.id)
+                                    const hasPhotos = photos.length > 0
+                                    const hasPackages = packages.length > 0
+                                    const hasFullPackage = !!fullPackage
+                                    const hasDetails = hasPhotos || hasPackages || hasFullPackage
 
-                                return (
-                                    <>
-                                        <TableRow
-                                            key={item.id}
-                                            className={hasDetails ? "cursor-pointer hover:bg-muted/50" : ""}
-                                            onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
-                                        >
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
+                                    return (
+                                        <>
+                                            <TableRow
+                                                key={item.id}
+                                                className={hasDetails ? "cursor-pointer hover:bg-muted/50" : ""}
+                                                onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
+                                            >
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        {hasDetails && (
+                                                            <Image className="h-4 w-4 text-muted-foreground" />
+                                                        )}
+                                                        <span className="font-medium">
+                                                            {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                                                            {item.productName}
+                                                        </span>
+                                                        {hasPhotos && (
+                                                            <span className="text-xs text-muted-foreground ml-auto">
+                                                                {photos.length} foto{photos.length > 1 ? 's' : ''}
+                                                            </span>
+                                                        )}
+                                                        {hasPackages && (
+                                                            <span className="text-xs text-muted-foreground ml-auto">
+                                                                {packages.length} evento{packages.length > 1 ? 's' : ''}
+                                                            </span>
+                                                        )}
+                                                        {hasFullPackage && (
+                                                            <span className="text-xs text-muted-foreground ml-auto">
+                                                                Pacote completo
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right">{formatCurrency(item.itemPrice * item.quantity)}</TableCell>
+                                                <TableCell>
                                                     {hasDetails && (
-                                                        <Image className="h-4 w-4 text-muted-foreground" />
+                                                        isExpanded ? (
+                                                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                                        ) : (
+                                                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                                        )
                                                     )}
-                                                    <span className="font-medium">
-                                                        {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
-                                                        {item.productName}
-                                                    </span>
-                                                    {hasPhotos && (
-                                                        <span className="text-xs text-muted-foreground ml-auto">
-                                                            {photos.length} foto{photos.length > 1 ? 's' : ''}
-                                                        </span>
-                                                    )}
-                                                    {hasPackages && (
-                                                        <span className="text-xs text-muted-foreground ml-auto">
-                                                            {packages.length} evento{packages.length > 1 ? 's' : ''}
-                                                        </span>
-                                                    )}
-                                                    {hasFullPackage && (
-                                                        <span className="text-xs text-muted-foreground ml-auto">
-                                                            Pacote completo
-                                                        </span>
-                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                            {hasDetails && (
+                                                <TableRow key={`${item.id}-details`}>
+                                                    <TableCell colSpan={3} className="p-0 border-0">
+                                                        {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
+                                                        {(hasPackages || hasFullPackage) && isExpanded && (
+                                                            <div className="px-4 py-6 bg-muted/20">
+                                                                {hasFullPackage ? (
+                                                                    <div>
+                                                                        <h4 className="text-sm font-medium mb-3">Seleção:</h4>
+                                                                        <div className="flex items-center gap-2 text-sm">
+                                                                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                                                            <span className="font-medium">Pacote Completo - Todos os Eventos</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div>
+                                                                        <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
+                                                                        <ul className="space-y-2">
+                                                                            {packages.map((pkg, index) => (
+                                                                                <li key={index} className="flex items-center gap-2 text-sm">
+                                                                                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                                                                    <span>{pkg.eventName}</span>
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="grid gap-4 md:hidden">
+                        {order.items.map((item) => {
+                            const photos = item.details.filter(detail => detail.photoUrl)
+                            const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
+                            const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
+                            const isExpanded = expandedItems.has(item.id)
+                            const hasPhotos = photos.length > 0
+                            const hasPackages = packages.length > 0
+                            const hasFullPackage = !!fullPackage
+                            const hasDetails = hasPhotos || hasPackages || hasFullPackage
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`rounded-lg border bg-card text-card-foreground shadow-sm ${hasDetails ? 'cursor-pointer' : ''}`}
+                                    onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
+                                >
+                                    <div className="p-4 space-y-3">
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1">
+                                                <div className="font-medium">
+                                                    {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                                                    {item.productName}
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>{translateProductType(item.productType)}</TableCell>
-                                            <TableCell className="text-right">{formatCurrency(item.itemPrice * item.quantity)}</TableCell>
-                                            <TableCell>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2">
+                                                <span className="font-medium">{formatCurrency(item.itemPrice * item.quantity)}</span>
                                                 {hasDetails && (
                                                     isExpanded ? (
                                                         <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -202,45 +278,64 @@ export default function ClientOrderDetailsPage() {
                                                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                                     )
                                                 )}
-                                            </TableCell>
-                                        </TableRow>
-                                        {hasDetails && (
-                                            <TableRow key={`${item.id}-details`}>
-                                                <TableCell colSpan={4} className="p-0 border-0">
-                                                    {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
-                                                    {(hasPackages || hasFullPackage) && isExpanded && (
-                                                        <div className="px-4 py-6 bg-muted/20">
-                                                            {hasFullPackage ? (
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium mb-3">Seleção:</h4>
-                                                                    <div className="flex items-center gap-2 text-sm">
+                                            </div>
+                                        </div>
+
+                                        {/* Badges/Indicators */}
+                                        <div className="flex flex-wrap gap-2">
+                                            {hasPhotos && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {photos.length} foto{photos.length > 1 ? 's' : ''}
+                                                </Badge>
+                                            )}
+                                            {hasPackages && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {packages.length} evento{packages.length > 1 ? 's' : ''}
+                                                </Badge>
+                                            )}
+                                            {hasFullPackage && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    Pacote Completo
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Expanded Content for Mobile */}
+                                    {hasDetails && isExpanded && (
+                                        <div className="border-t bg-muted/20" onClick={(e) => e.stopPropagation()}>
+                                            {hasPhotos && <OrderItemPhotos item={item} isExpanded={true} />}
+                                            {(hasPackages || hasFullPackage) && (
+                                                <div className="p-4">
+                                                    {hasFullPackage ? (
+                                                        <div>
+                                                            <h4 className="text-sm font-medium mb-3">Seleção:</h4>
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                                                <span className="font-medium">Pacote Completo - Todos os Eventos</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
+                                                            <ul className="space-y-2">
+                                                                {packages.map((pkg, index) => (
+                                                                    <li key={index} className="flex items-center gap-2 text-sm">
                                                                         <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                                                        <span className="font-medium">Pacote Completo - Todos os Eventos</span>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
-                                                                    <ul className="space-y-2">
-                                                                        {packages.map((pkg, index) => (
-                                                                            <li key={index} className="flex items-center gap-2 text-sm">
-                                                                                <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                                                                <span>{pkg.eventName}</span>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                </div>
-                                                            )}
+                                                                        <span>{pkg.eventName}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
                                                         </div>
                                                     )}
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
                 </CardContent>
             </Card>
         </div>
