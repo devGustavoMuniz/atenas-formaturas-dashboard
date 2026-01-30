@@ -15,6 +15,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 
+import { ClientTutorial } from "@/components/client/client-tutorial"
+
 export default function DashboardLayout({
   children,
 }: {
@@ -24,6 +26,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
+      <ClientTutorial />
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-center gap-2 px-2 py-2">

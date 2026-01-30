@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/lib/auth/use-auth"
 import { useRouter } from "next/navigation"
-import { User, LogOut } from "lucide-react"
+import { User, LogOut, CircleHelp } from "lucide-react"
 
 export function UserNav() {
   const { user, logout } = useAuth()
@@ -31,7 +31,7 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button id="user-menu-trigger" variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.profileImage || "/placeholder.svg"} alt={user?.name || "User"} />
             <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
@@ -55,6 +55,11 @@ export function UserNav() {
           </DropdownMenuGroup>
         )}
         {user?.role === "client" && <DropdownMenuSeparator />}
+        <DropdownMenuItem onClick={() => (window as any).startClientTour?.()} className="cursor-pointer">
+          <CircleHelp className="mr-2 h-4 w-4" />
+          Tutorial
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           Sair

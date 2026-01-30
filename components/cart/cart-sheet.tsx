@@ -31,7 +31,7 @@ export function CartSheet() {
   return (
     <Sheet open={isOpen} onOpenChange={setCartOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button id="cart-trigger" variant="ghost" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
           {itemCount > 0 && (
             <Badge

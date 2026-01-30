@@ -81,6 +81,7 @@ export function FirstAccessModal({ open, onClose, userName }: FirstAccessModalPr
             })
             form.reset()
             setNewPasswordValue("")
+            localStorage.setItem("tutorialPending", "true")
             onClose()
         },
         onError: () => {
@@ -101,6 +102,7 @@ export function FirstAccessModal({ open, onClose, userName }: FirstAccessModalPr
             title: "Senha mantida",
             description: "Você pode alterar sua senha a qualquer momento no seu perfil.",
         })
+        localStorage.setItem("tutorialPending", "true")
         onClose()
     }
 
