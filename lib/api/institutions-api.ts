@@ -107,3 +107,15 @@ export async function sendCredentials(institutionId: string): Promise<SendCreden
   const response = await api.post(`/v1/institutions/${institutionId}/send-credentials`)
   return response.data
 }
+
+// Type for delete event response
+export type DeleteEventResponse = {
+  success: boolean
+  message: string
+}
+
+// Delete a specific event from an institution
+export async function deleteInstitutionEvent(eventId: string): Promise<DeleteEventResponse> {
+  const response = await api.delete(`/v1/institutions/events/${eventId}`)
+  return response.data
+}
