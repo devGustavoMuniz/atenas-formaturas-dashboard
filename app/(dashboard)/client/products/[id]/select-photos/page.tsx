@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { useEffect, useState, useMemo, useRef } from "react"
+import { ChevronDown, ChevronUp, ShoppingCart } from "lucide-react"
 import { useProductSelectionStore } from "@/lib/store/product-selection-store"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { fetchUserEventPhotos, type EventGroup } from "@/lib/api/photos-api"
@@ -47,6 +47,17 @@ export default function SelectPhotosPage() {
     (institutionProduct?.details as DigitalFilesDetails)?.isAvailableUnit === false
 
   const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
+
+  // Ref para o resumo de compra
+  const summaryRef = useRef<HTMLDivElement>(null)
+
+  // Função para rolar até o resumo
+  const scrollToSummary = () => {
+    summaryRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    })
+  }
 
   // Verificar se algum evento tem valorPack configurado
   const hasAnyValorPack = useMemo(() => {
@@ -433,7 +444,7 @@ export default function SelectPhotosPage() {
           ))}
         </div>
         <div className="order-1 lg:order-2 flex flex-col">
-          <div className="order-1">
+          <div ref={summaryRef} className="order-1">
             <SelectionSummary selectedPhotosCount={selectedPhotosCount} eventGroups={eventGroups} />
           </div>
           <div className="order-2 mt-8">
@@ -474,6 +485,22 @@ export default function SelectPhotosPage() {
           )}
         </div>
       </div>
+
+      {/* Botão Flutuante - Aparece quando há seleção */}
+      {(selectedPhotosCount > 0 || Object.values(selectedEvents).some(Boolean) || isPackageComplete) && (
+        <button
+          onClick={scrollToSummary}
+          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-110 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 lg:hidden animate-in fade-in slide-in-from-bottom-5 duration-300"
+          aria-label="Ver resumo de compra"
+        >
+          <ShoppingCart className="h-6 w-6" />
+          {selectedPhotosCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+              {selectedPhotosCount}
+            </span>
+          )}
+        </button>
+      )}
     </div>
   )
 }
