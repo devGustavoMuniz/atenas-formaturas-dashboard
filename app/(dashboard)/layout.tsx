@@ -51,7 +51,7 @@ export default function DashboardLayout({
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger id="mobile-menu-trigger" className="-ml-1" />
           <div className="flex flex-1 items-center justify-end gap-2">
             <div className="flex items-center gap-2 md:hidden">
               <h1 className="text-lg font-semibold">

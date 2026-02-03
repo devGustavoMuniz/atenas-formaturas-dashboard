@@ -11,59 +11,93 @@ export function ClientTutorial() {
     const pathname = usePathname()
 
     const startTour = () => {
+        const isMobile = window.innerWidth < 768
+
+        const desktopSteps = [
+            {
+                element: "#sidebar-home",
+                popover: {
+                    title: "Galeria de Fotos",
+                    description: "Aqui você encontra todas as fotos dos seus eventos organizadas e prontas para visualização.",
+                    side: "right",
+                    align: "start",
+                },
+            },
+            {
+                element: "#sidebar-products",
+                popover: {
+                    title: "Nossa Loja",
+                    description: "Acesse a loja para comprar álbuns, arquivos digitais e outros produtos exclusivos.",
+                    side: "right",
+                    align: "start",
+                },
+            },
+            {
+                element: "#sidebar-orders",
+                popover: {
+                    title: "Seus Pedidos",
+                    description: "Acompanhe o status das suas compras e visualize o histórico de pedidos.",
+                    side: "right",
+                    align: "start",
+                },
+            },
+            {
+                element: "#cart-trigger",
+                popover: {
+                    title: "Carrinho de Compras",
+                    description: "Finalize suas compras e revise os itens selecionados aqui.",
+                    side: "bottom",
+                    align: "end",
+                },
+            },
+            {
+                element: "#user-menu-trigger",
+                popover: {
+                    title: "Seu Perfil",
+                    description: "Gerencie seus dados pessoais, endereço de entrega e altere sua senha.",
+                    side: "bottom",
+                    align: "end",
+                },
+            },
+        ]
+
+        const mobileSteps = [
+            {
+                element: "#mobile-menu-trigger",
+                popover: {
+                    title: "Menu Principal",
+                    description: "Toque aqui para acessar sua Galeria de Fotos, a Loja de Produtos e seus Pedidos.",
+                    side: "bottom",
+                    align: "start",
+                },
+            },
+            {
+                element: "#cart-trigger",
+                popover: {
+                    title: "Carrinho",
+                    description: "Seus itens selecionados ficam aqui. Toque para finalizar a compra.",
+                    side: "bottom",
+                    align: "end",
+                },
+            },
+            {
+                element: "#user-menu-trigger",
+                popover: {
+                    title: "Seu Perfil",
+                    description: "Acesse aqui para ver seus dados, alterar senha ou sair da conta.",
+                    side: "bottom",
+                    align: "end",
+                },
+            },
+        ]
+
         const driverObj = driver({
             showProgress: true,
             animate: true,
             nextBtnText: "Próximo",
             prevBtnText: "Anterior",
             doneBtnText: "Concluir",
-            steps: [
-                {
-                    element: "#sidebar-home",
-                    popover: {
-                        title: "Galeria de Fotos",
-                        description: "Aqui você encontra todas as fotos dos seus eventos organizadas e prontas para visualização.",
-                        side: "right",
-                        align: "start",
-                    },
-                },
-                {
-                    element: "#sidebar-products",
-                    popover: {
-                        title: "Nossa Loja",
-                        description: "Acesse a loja para comprar álbuns, arquivos digitais e outros produtos exclusivos.",
-                        side: "right",
-                        align: "start",
-                    },
-                },
-                {
-                    element: "#sidebar-orders",
-                    popover: {
-                        title: "Seus Pedidos",
-                        description: "Acompanhe o status das suas compras e visualize o histórico de pedidos.",
-                        side: "right",
-                        align: "start",
-                    },
-                },
-                {
-                    element: "#cart-trigger",
-                    popover: {
-                        title: "Carrinho de Compras",
-                        description: "Finalize suas compras e revise os itens selecionados aqui.",
-                        side: "bottom",
-                        align: "end",
-                    },
-                },
-                {
-                    element: "#user-menu-trigger",
-                    popover: {
-                        title: "Seu Perfil",
-                        description: "Gerencie seus dados pessoais, endereço de entrega e altere sua senha.",
-                        side: "bottom",
-                        align: "end",
-                    },
-                },
-            ],
+            steps: (isMobile ? mobileSteps : desktopSteps) as any,
             onDestroyed: () => {
                 localStorage.setItem("hasSeenTutorial", "true")
                 localStorage.removeItem("tutorialPending")
