@@ -23,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Package, Image as ImageIcon, DollarSign } from "lucide-react"
 
 export default function ProductDetailsPage() {
   const { id: productId } = useParams<{ id: string }>()
@@ -156,16 +157,24 @@ export default function ProductDetailsPage() {
       }).format(value)
     } else if (
       typeof value === "number" &&
-      (key === "minPhoto" || key === "maxPhoto" || key === "minPhotos")
+      (key === "minPhoto" || key === "minPhotos")
     ) {
-      // Adicionar sufixo "foto" ou "fotos"
-      displayValue = `${value} ${value === 1 ? "foto" : "fotos"}`
+      // Adicionar sufixo "foto" ou "fotos" para mínimo
+      displayValue = value > 0 ? `${value} ${value === 1 ? "foto" : "fotos"}` : "Sem mínimo"
+    } else if (
+      typeof value === "number" &&
+      (key === "maxPhoto" || key === "maxPhotos")
+    ) {
+      // Se for 0, significa ilimitado
+      displayValue = value > 0 ? `${value} ${value === 1 ? "foto" : "fotos"}` : "Ilimitado"
     }
 
     return (
       <div key={key} className="flex justify-between text-sm">
         <span className="font-medium text-muted-foreground">{formattedKey}:</span>
-        <span>{displayValue}</span>
+        <span className={value === 0 && (key === "maxPhoto" || key === "maxPhotos") ? "italic font-medium" : ""}>
+          {displayValue}
+        </span>
       </div>
     )
   }
@@ -228,29 +237,104 @@ export default function ProductDetailsPage() {
                 <h3 className="text-lg font-semibold">Detalhes da Compra</h3>
                 {product.flag === "ALBUM" && (
                   <>
-                    {institutionProduct.details.minPhoto &&
-                      renderDetail(
-                        "minPhoto",
-                        institutionProduct.details.minPhoto,
-                        "Mínimo de Fotos"
+                    {/* Card de Quantidade de Fotos */}
+                    {((institutionProduct.details.minPhoto !== undefined && institutionProduct.details.minPhoto !== null) ||
+                      (institutionProduct.details.maxPhoto !== undefined && institutionProduct.details.maxPhoto !== null)) && (
+                        <div className="rounded-lg border bg-card p-3">
+                          <div className="flex items-center gap-2 mb-3">
+                            <ImageIcon className="h-4 w-4 text-primary" />
+                            <p className="font-semibold text-sm text-primary">
+                              Quantidade de Fotos
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            {/* Mínimo e Máximo em uma linha */}
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="text-muted-foreground">
+                                {institutionProduct.details.minPhoto !== undefined &&
+                                  institutionProduct.details.minPhoto !== null &&
+                                  institutionProduct.details.minPhoto > 0 && (
+                                    <>
+                                      Mín: <span className="font-medium text-foreground">
+                                        {institutionProduct.details.minPhoto} {institutionProduct.details.minPhoto === 1 ? "foto" : "fotos"}
+                                      </span>
+                                    </>
+                                  )}
+                                {institutionProduct.details.minPhoto !== undefined &&
+                                  institutionProduct.details.minPhoto !== null &&
+                                  institutionProduct.details.minPhoto > 0 &&
+                                  institutionProduct.details.maxPhoto !== undefined &&
+                                  institutionProduct.details.maxPhoto !== null && (
+                                    <span className="mx-1">•</span>
+                                  )}
+                                {/* Máximo - mostra "Ilimitado" se for 0, null ou undefined */}
+                                {institutionProduct.details.maxPhoto !== undefined &&
+                                  institutionProduct.details.maxPhoto !== null &&
+                                  institutionProduct.details.maxPhoto > 0 ? (
+                                  <>
+                                    Máx: <span className="font-medium text-foreground">
+                                      {institutionProduct.details.maxPhoto} {institutionProduct.details.maxPhoto === 1 ? "foto" : "fotos"}
+                                    </span>
+                                  </>
+                                ) : (institutionProduct.details.maxPhoto !== undefined &&
+                                  institutionProduct.details.maxPhoto !== null &&
+                                  institutionProduct.details.maxPhoto === 0) ||
+                                  (!institutionProduct.details.maxPhoto &&
+                                    institutionProduct.details.minPhoto !== undefined &&
+                                    institutionProduct.details.minPhoto !== null &&
+                                    institutionProduct.details.minPhoto > 0) ? (
+                                  <>
+                                    Máx: <span className="font-medium text-foreground italic">Ilimitado</span>
+                                  </>
+                                ) : null}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       )}
-                    {institutionProduct.details.maxPhoto &&
-                      renderDetail(
-                        "maxPhoto",
-                        institutionProduct.details.maxPhoto,
-                        "Máximo de Fotos"
-                      )}
-                    {institutionProduct.details.valorEncadernacao &&
-                      renderDetail(
-                        "valorEncadernacao",
-                        institutionProduct.details.valorEncadernacao,
-                        "Valor da Encadernação"
-                      )}
-                    {institutionProduct.details.valorFoto &&
-                      renderDetail(
-                        "valorFoto",
-                        institutionProduct.details.valorFoto,
-                        "Valor por Foto"
+
+                    {/* Card de Custos */}
+                    {((institutionProduct.details.valorEncadernacao !== undefined && institutionProduct.details.valorEncadernacao !== null) ||
+                      (institutionProduct.details.valorFoto !== undefined && institutionProduct.details.valorFoto !== null)) && (
+                        <div className="rounded-lg border bg-card p-3 mt-3">
+                          <div className="flex items-center gap-2 mb-3">
+                            <DollarSign className="h-4 w-4 text-primary" />
+                            <p className="font-semibold text-sm text-primary">
+                              Custos
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            {/* Valor da Encadernação */}
+                            {institutionProduct.details.valorEncadernacao !== undefined &&
+                              institutionProduct.details.valorEncadernacao !== null && (
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">Encadernação:</span>
+                                  <span className="font-semibold text-foreground">
+                                    {new Intl.NumberFormat("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    }).format(institutionProduct.details.valorEncadernacao)}
+                                  </span>
+                                </div>
+                              )}
+
+                            {/* Valor por Foto */}
+                            {institutionProduct.details.valorFoto !== undefined &&
+                              institutionProduct.details.valorFoto !== null && (
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">Por foto:</span>
+                                  <span className="font-semibold text-foreground">
+                                    {new Intl.NumberFormat("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    }).format(institutionProduct.details.valorFoto)}
+                                  </span>
+                                </div>
+                              )}
+                          </div>
+                        </div>
                       )}
                   </>
                 )}
@@ -259,18 +343,125 @@ export default function ProductDetailsPage() {
                   institutionProduct.details.events &&
                   institutionProduct.details.events.length > 0 && (
                     <>
-                      {institutionProduct.details.events![0].minPhotos &&
-                        renderDetail(
-                          "minPhotos",
-                          institutionProduct.details.events![0].minPhotos,
-                          "Mínimo de Fotos"
+                      {/* Texto explicativo quando há múltiplos eventos */}
+                      {institutionProduct.details.events.length > 1 && (
+                        <p className="text-sm text-muted-foreground mb-3 italic">
+                          Este produto está disponível para {institutionProduct.details.events.length} eventos.
+                          Veja abaixo os preços e condições de cada um:
+                        </p>
+                      )}
+
+                      {/* Mostrar informações sobre pacote completo (apenas para DIGITAL_FILES) */}
+                      {product.flag === "DIGITAL_FILES" &&
+                        institutionProduct.details.isAvailableUnit === false &&
+                        institutionProduct.details.valorPackTotal !== undefined &&
+                        institutionProduct.details.valorPackTotal !== null && (
+                          <div className="mb-4 rounded-lg bg-primary/10 p-4 border-2 border-primary/30 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Package className="h-5 w-5 text-primary" />
+                              <p className="text-base font-bold text-primary">
+                                Pacote Completo
+                              </p>
+                            </div>
+                            <p className="text-2xl font-bold text-primary mb-1">
+                              {new Intl.NumberFormat("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              }).format(institutionProduct.details.valorPackTotal)}
+                            </p>
+                            <p className="text-xs text-primary/80 flex items-center gap-1">
+                              <ImageIcon className="h-3 w-3" />
+                              Todos os eventos inclusos
+                            </p>
+                          </div>
                         )}
-                      {institutionProduct.details.events![0].valorPhoto &&
-                        renderDetail(
-                          "valorPhoto",
-                          institutionProduct.details.events![0].valorPhoto,
-                          "Valor por Foto"
-                        )}
+
+                      {/* Iterar sobre TODOS os eventos e mostrar seus detalhes */}
+                      {institutionProduct.details.events.map((event, index) => (
+                        <div
+                          key={event.id || index}
+                          className={`${index > 0 ? "mt-3" : ""} rounded-lg border bg-card p-3`}
+                        >
+                          {/* Nome do evento com badge */}
+                          {event.name && (
+                            <div className="flex items-center gap-2 mb-3">
+                              <Package className="h-4 w-4 text-primary" />
+                              <p className="font-semibold text-sm text-primary">
+                                {event.name}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            {/* Mínimo e Máximo de fotos em uma linha */}
+                            {(event.minPhotos !== undefined && event.minPhotos !== null) ||
+                              (event.maxPhotos !== undefined && event.maxPhotos !== null) ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-muted-foreground">
+                                  {event.minPhotos !== undefined && event.minPhotos !== null && event.minPhotos > 0 && (
+                                    <>
+                                      Mín: <span className="font-medium text-foreground">{event.minPhotos} {event.minPhotos === 1 ? "foto" : "fotos"}</span>
+                                    </>
+                                  )}
+                                  {event.minPhotos !== undefined && event.minPhotos !== null && event.minPhotos > 0 &&
+                                    (event.maxPhotos !== undefined && event.maxPhotos !== null) && (
+                                      <span className="mx-1">•</span>
+                                    )}
+                                  {/* Máximo de fotos - mostra "Ilimitado" se for 0, null ou undefined */}
+                                  {event.maxPhotos !== undefined && event.maxPhotos !== null && event.maxPhotos > 0 ? (
+                                    <>
+                                      Máx: <span className="font-medium text-foreground">{event.maxPhotos} {event.maxPhotos === 1 ? "foto" : "fotos"}</span>
+                                    </>
+                                  ) : (event.maxPhotos !== undefined && event.maxPhotos !== null && event.maxPhotos === 0) ||
+                                    (!event.maxPhotos && event.minPhotos !== undefined && event.minPhotos !== null && event.minPhotos > 0) ? (
+                                    <>
+                                      Máx: <span className="font-medium text-foreground italic">Ilimitado</span>
+                                    </>
+                                  ) : null}
+                                </span>
+                              </div>
+                            ) : null}
+
+                            {/* Valor por foto */}
+                            {event.valorPhoto !== undefined && event.valorPhoto !== null && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-muted-foreground">
+                                  Valor por foto:
+                                  <span className="ml-1 font-semibold text-foreground">
+                                    {new Intl.NumberFormat("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    }).format(event.valorPhoto)}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Valor do pacote do evento (apenas para DIGITAL_FILES) */}
+                            {product.flag === "DIGITAL_FILES" &&
+                              event.valorPack !== undefined &&
+                              event.valorPack !== null &&
+                              event.valorPack > 0 && (
+                                <div className="flex items-center justify-between bg-primary/10 text-primary px-3 py-2 rounded-md mt-2 border border-primary/20">
+                                  <div className="flex items-center gap-2">
+                                    <Package className="h-4 w-4" />
+                                    <span className="text-sm font-medium">
+                                      Pacote do Evento
+                                    </span>
+                                  </div>
+                                  <span className="text-sm font-bold">
+                                    {new Intl.NumberFormat("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    }).format(event.valorPack)}
+                                  </span>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      ))}
                     </>
                   )}
               </div>

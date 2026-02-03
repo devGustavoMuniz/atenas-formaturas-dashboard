@@ -87,7 +87,7 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
           <div key={eventDetail.id} className="rounded-md border p-3">
             <p className="font-medium">{eventDetail.name}</p>
             <p className="text-sm text-muted-foreground">
-              Mínimo: {eventDetail.minPhotos ?? 0} / Máximo: {eventDetail.maxPhotos ?? '∞'}
+              Mínimo: {eventDetail.minPhotos ?? 0} / Máximo: {eventDetail.maxPhotos && eventDetail.maxPhotos > 0 ? eventDetail.maxPhotos : '∞'}
             </p>
             <p className="text-sm text-muted-foreground">
               Selecionadas: {selectedCount}
@@ -160,7 +160,7 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
   const renderAlbumSummary = () => {
     const details = institutionProduct?.details as AlbumDetails
     const min = details?.minPhoto ?? 0
-    const max = details?.maxPhoto ?? "∞"
+    const max = details?.maxPhoto && details.maxPhoto > 0 ? details.maxPhoto : "∞"
     const isValid = selectedPhotosCount >= min
 
     return (
