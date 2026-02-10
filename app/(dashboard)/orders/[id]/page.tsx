@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
 
 import { UserName } from '@/components/users/user-name'
-import { getOrderById, updateOrderStatus } from '@/lib/api/orders-api'
+import { getOrderById, updateOrderStatus, cancelOrder } from '@/lib/api/orders-api'
 import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,7 @@ export default function OrderDetailsPage() {
   const queryClient = useQueryClient()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [showDriveLinkModal, setShowDriveLinkModal] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const [driveLink, setDriveLink] = useState('')
 
   const { data: order, isLoading } = useQuery({
@@ -49,6 +50,30 @@ export default function OrderDetailsPage() {
       toast({
         variant: "destructive",
         title: "Erro ao marcar pedido como concluído",
+        description: error.message
+      })
+    },
+  })
+
+  const { mutate: cancelOrderMutation, isPending: isCancelling } = useMutation({
+    mutationFn: () => cancelOrder(id),
+    onSuccess: (data) => {
+      const creditMessage = data.creditReleased > 0
+        ? `Crédito de ${formatCurrency(data.creditReleased)} foi devolvido ao cliente.`
+        : ''
+
+      toast({
+        title: "Pedido cancelado com sucesso!",
+        description: creditMessage
+      })
+      queryClient.invalidateQueries({ queryKey: ['order', id] })
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      setShowCancelModal(false)
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao cancelar pedido",
         description: error.message
       })
     },
@@ -137,15 +162,27 @@ export default function OrderDetailsPage() {
           <h1 className="text-2xl font-bold">Detalhes do Pedido: {order.displayId}</h1>
         </div>
 
-        {order.paymentStatus === 'APPROVED' && (
-          <Button
-            onClick={handleMarkAsCompleted}
-            disabled={isPending}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            {isPending ? 'Processando...' : 'Marcar como Concluído'}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {(order.paymentStatus === 'APPROVED' || order.paymentStatus === 'PENDING') && (
+            <Button
+              onClick={() => setShowCancelModal(true)}
+              disabled={isCancelling}
+              variant="destructive"
+            >
+              {isCancelling ? 'Cancelando...' : 'Cancelar Pedido'}
+            </Button>
+          )}
+
+          {order.paymentStatus === 'APPROVED' && (
+            <Button
+              onClick={handleMarkAsCompleted}
+              disabled={isPending}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {isPending ? 'Processando...' : 'Marcar como Concluído'}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -324,6 +361,38 @@ export default function OrderDetailsPage() {
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               {isPending ? 'Processando...' : 'Confirmar e Marcar como Concluído'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar Pedido</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.
+              {order && order.totalAmount > 0 && (
+                <span className="block mt-2 font-medium text-foreground">
+                  O crédito utilizado (se houver) será devolvido ao cliente automaticamente.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelModal(false)}
+              disabled={isCancelling}
+            >
+              Voltar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancelOrderMutation()}
+              disabled={isCancelling}
+            >
+              {isCancelling ? 'Cancelando...' : 'Confirmar Cancelamento'}
             </Button>
           </DialogFooter>
         </DialogContent>

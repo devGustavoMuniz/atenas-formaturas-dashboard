@@ -70,12 +70,19 @@ export interface CreateOrderPayload {
   }
 }
 
+export interface CreateOrderResponse {
+  orderId: string
+  mercadoPagoCheckoutUrl: string
+  paymentMethod: 'FREE' | 'CREDIT' | 'MERCADO_PAGO'
+  contractNumber: string
+  creditUsed?: number
+  remainingCredit?: number
+}
+
 export const createOrder = async (
   payload: CreateOrderPayload,
-): Promise<{ orderId: string; mercadoPagoCheckoutUrl: string }> => {
-  const { data } = await api.post<
-    { orderId: string; mercadoPagoCheckoutUrl: string }
-  >('/v1/orders', payload)
+): Promise<CreateOrderResponse> => {
+  const { data } = await api.post<CreateOrderResponse>('/v1/orders', payload)
   return data
 }
 
@@ -88,5 +95,18 @@ export const updateOrderStatus = async (
     status,
     ...(driveLink && { driveLink })
   })
+  return data
+}
+
+export interface CancelOrderResponse {
+  orderId: string
+  creditReleased: number
+  message: string
+}
+
+export const cancelOrder = async (
+  orderId: string
+): Promise<CancelOrderResponse> => {
+  const { data } = await api.put<CancelOrderResponse>(`/v1/orders/${orderId}/cancel`)
   return data
 }

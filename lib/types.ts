@@ -21,6 +21,7 @@ export type User = {
   motherPhone?: string
   driveLink?: string
   creditValue?: number
+  creditReserved?: number
   profileImage?: string
   status: "active" | "inactive"
   createdAt: string

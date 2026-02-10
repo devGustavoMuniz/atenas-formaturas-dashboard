@@ -20,6 +20,7 @@ import { formatCurrency } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { getAddressByCEP } from "@/lib/api/cep-api"
 import { createPaymentPreference } from "@/lib/api/mercado-pago-api";
 import { createOrder, CreateOrderPayload } from "@/lib/api/orders-api";
@@ -45,15 +46,19 @@ const addressFormSchema = z.object({
 type AddressFormValues = z.infer<typeof addressFormSchema>
 
 export default function CheckoutPage() {
+  const router = useRouter()
   const { items, clearCart } = useCartStore()
   const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
   const subtotal = items.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
 
   // Cálculo do crédito aplicado
-  const userCredit = user?.creditValue ?? 0
-  const creditApplied = Math.min(userCredit, subtotal)
-  const amountToPay = subtotal - creditApplied
+  const availableCreditTotal = user?.creditValue ?? 0
+  const backendReserved = user?.creditReserved ?? 0
+  const userCreditTotalBalance = availableCreditTotal + backendReserved
+
+  const creditApplied = Math.min(availableCreditTotal, subtotal)
+  const amountToPay = Math.max(0, subtotal - creditApplied)
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
@@ -211,15 +216,25 @@ export default function CheckoutPage() {
 
     try {
       // 1. Criar o pedido no backend
-      const { orderId, mercadoPagoCheckoutUrl } = await createOrder(orderPayload);
+      const response = await createOrder(orderPayload);
 
-      // 2. Criar a preferência de pagamento com o ID do pedido (Mercado Pago)
-      // O backend agora é responsável por criar a preferência de pagamento e retornar a URL
-      // Não precisamos mais construir o payload do Mercado Pago aqui, apenas usar o que o backend retornou.
+      // 2. Verificar o método de pagamento retornado
+      if (response.paymentMethod === 'FREE' || response.paymentMethod === 'CREDIT') {
+        // Pedido foi pago com crédito ou é gratuito
+        // Redirecionar para página de confirmação com os dados do crédito
+        const queryParams = new URLSearchParams({
+          contractNumber: response.contractNumber,
+          paymentMethod: response.paymentMethod,
+          creditUsed: response.creditUsed?.toString() || '0',
+          remainingCredit: response.remainingCredit?.toString() || '0',
+        });
 
-      // 3. Limpar o carrinho e redirecionar para o Mercado Pago
-      // clearCart(); // Removido para manter o carrinho caso o usuário volte. Será limpo na página de sucesso.
-      window.location.href = mercadoPagoCheckoutUrl;
+        router.push(`/checkout/credit-confirmed?${queryParams.toString()}`);
+      } else if (response.paymentMethod === 'MERCADO_PAGO') {
+        // Precisa pagar via Mercado Pago
+        // Redirecionar para o checkout do Mercado Pago
+        window.location.href = response.mercadoPagoCheckoutUrl;
+      }
 
     } catch (error) {
       console.error(error);
@@ -405,13 +420,41 @@ export default function CheckoutPage() {
                 <p className="text-muted-foreground">{formatCurrency(subtotal)}</p>
               </div>
               {creditApplied > 0 && (
-                <div className="flex justify-between items-center text-green-600 dark:text-green-500">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4" />
-                    <p>Crédito aplicado</p>
+                <>
+                  <div className="flex justify-between items-center text-green-600 dark:text-green-500">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-4 w-4" />
+                      <p>Crédito aplicado</p>
+                    </div>
+                    <p className="font-medium">-{formatCurrency(creditApplied)}</p>
                   </div>
-                  <p className="font-medium">-{formatCurrency(creditApplied)}</p>
-                </div>
+
+                  {/* Card informativo sobre o crédito */}
+                  <div className="rounded-md border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-3">
+                    <div className="flex items-start gap-2">
+                      <Wallet className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <p className="text-sm font-semibold text-green-900 dark:text-green-100">
+                          💰 Informações do Seu Crédito
+                        </p>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="text-green-700 dark:text-green-300">Crédito disponível:</span>
+                            <span className="font-semibold text-green-900 dark:text-green-100">{formatCurrency(availableCreditTotal)}</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-green-100 dark:bg-green-900/30 -mx-1 px-1 py-1 rounded">
+                            <span className="text-green-700 dark:text-green-300">Usado nesta compra:</span>
+                            <span className="font-bold text-green-900 dark:text-green-100">{formatCurrency(creditApplied)}</span>
+                          </div>
+                          <div className="flex justify-between items-center pt-1 border-t border-green-200 dark:border-green-800">
+                            <span className="text-green-700 dark:text-green-300">Saldo após compra:</span>
+                            <span className="font-semibold text-green-900 dark:text-green-100">{formatCurrency(availableCreditTotal - creditApplied)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
               <div className="flex justify-between">
                 <p className="text-muted-foreground">Frete</p>
@@ -420,8 +463,16 @@ export default function CheckoutPage() {
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <p>{creditApplied > 0 ? 'Valor a pagar' : 'Total'}</p>
-                <p className="text-green-600 dark:text-green-500">{formatCurrency(amountToPay)}</p>
+                <p className={creditApplied > 0 ? "text-green-600 dark:text-green-500" : ""}>{formatCurrency(amountToPay)}</p>
               </div>
+
+              {amountToPay === 0 && creditApplied > 0 && (
+                <div className="rounded-md border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-3 text-center">
+                  <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                    🎉 Nada a pagar! Seu crédito cobre todo o valor.
+                  </p>
+                </div>
+              )}
               <Button
                 onClick={form.handleSubmit(onSubmit)}
                 className="w-full mt-4"
