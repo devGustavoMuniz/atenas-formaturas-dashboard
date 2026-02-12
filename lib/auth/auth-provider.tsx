@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { api } from "@/lib/api/axios-config"
 import { fetchUserById } from "@/lib/api/users-api"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { useCartStore } from "@/lib/store/cart-store"
 import type { User } from "@/lib/types"
 import { FirstAccessModal } from "@/components/auth/first-access-modal"
 
@@ -35,8 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Obter as ações do Zustand para sincronização
   const { setUser: setZustandUser, setToken: setZustandToken, logout: logoutFromZustand } = useAuthStore()
+  const { fetchCart } = useCartStore()
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -54,18 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const user = JSON.parse(storedUser)
           const fullUser = await fetchUserById(user.id)
 
-          // 1. Atualiza o estado local (lógica original)
           setUser(fullUser)
-          // 2. SINCRONIZA: Atualiza o Zustand Store
           setZustandUser(fullUser)
           setZustandToken(token)
+
+          if (fullUser.role === 'client') {
+            fetchCart()
+          }
 
         } catch (error) {
           localStorage.removeItem("token")
           localStorage.removeItem("refreshToken")
-          // 1. Limpa o estado local (lógica original)
           setUser(null)
-          // 2. SINCRONIZA: Limpa o Zustand Store
           logoutFromZustand()
         }
       }
@@ -104,13 +105,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const fullUser = await fetchUserById(userData.id)
 
-      // 1. Atualiza o estado local (lógica original)
       setUser(fullUser)
-      // 2. SINCRONIZA: Atualiza o Zustand Store
       setZustandUser(fullUser)
       setZustandToken(token)
 
-      // 3. Verifica se é primeiro acesso (sem lastLoginAt)
+      if (fullUser.role === 'client') {
+        fetchCart()
+      }
+
+      // Verifica se é primeiro acesso (sem lastLoginAt)
       if (!userData.lastLoginAt) {
         setShowFirstAccessModal(true)
       }
@@ -137,9 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("user")
       delete api.defaults.headers.common["Authorization"]
 
-      // 1. Limpa o estado local (lógica original)
       setUser(null)
-      // 2. SINCRONIZA: Limpa o Zustand Store
       logoutFromZustand()
 
       router.push("/login")

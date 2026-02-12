@@ -22,7 +22,6 @@ import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getAddressByCEP } from "@/lib/api/cep-api"
-import { createPaymentPreference } from "@/lib/api/mercado-pago-api";
 import { createOrder, CreateOrderPayload } from "@/lib/api/orders-api";
 import { fetchUserById } from "@/lib/api/users-api";
 import { Loader2 } from "lucide-react"
@@ -47,7 +46,7 @@ type AddressFormValues = z.infer<typeof addressFormSchema>
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, clearCart } = useCartStore()
+  const { items } = useCartStore()
   const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
   const subtotal = items.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
@@ -394,8 +393,8 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {items.length > 0 ? (
-                items.map(item => (
-                  <div key={item.id} className="flex justify-between items-start">
+                items.map((item, index) => (
+                  <div key={`${item.id}-${index}`} className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold">
                         {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}

@@ -275,7 +275,7 @@ export default function SelectPhotosPage() {
 
     // Criar o item do carrinho com a quantidade selecionada
     const cartItem: CartItem = {
-      id: `${product.id}-${new Date().getTime()}`,
+      id: `${product.id}-${crypto.randomUUID()}`,
       product,
       institutionProduct,
       selection,

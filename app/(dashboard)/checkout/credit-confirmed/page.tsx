@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 function CreditConfirmedContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { clearCart } = useCartStore()
+    const { fetchCart } = useCartStore()
 
     // Obter parâmetros da URL
     const contractNumber = searchParams.get('contractNumber') || ''
@@ -21,10 +21,10 @@ function CreditConfirmedContent() {
     const remainingCredit = parseFloat(searchParams.get('remainingCredit') || '0')
     const paymentMethod = searchParams.get('paymentMethod') || 'CREDIT'
 
-    // Limpa o carrinho uma vez que o pedido foi confirmado
+    // Sincroniza o carrinho local com o backend (que ja limpou apos confirmacao do pedido)
     useEffect(() => {
-        clearCart()
-    }, [clearCart])
+        fetchCart()
+    }, [fetchCart])
 
     return (
         <div className="container mx-auto flex min-h-[calc(100vh-10rem)] items-center justify-center p-4">

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect } from 'react'
@@ -10,12 +9,12 @@ import { Button } from '@/components/ui/button'
 
 export default function CheckoutSuccessPage() {
   const router = useRouter()
-  const { clearCart } = useCartStore()
+  const { fetchCart } = useCartStore()
 
-  // Limpa o carrinho uma vez que o pagamento foi bem-sucedido
+  // Sincroniza o carrinho local com o backend (que ja limpou apos pagamento aprovado)
   useEffect(() => {
-    clearCart()
-  }, [clearCart])
+    fetchCart()
+  }, [fetchCart])
 
   return (
     <div className="container mx-auto flex min-h-[calc(100vh-10rem)] items-center justify-center p-4">

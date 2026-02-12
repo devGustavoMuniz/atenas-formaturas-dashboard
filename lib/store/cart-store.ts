@@ -2,20 +2,23 @@
 
 import { create } from "zustand"
 import type { CartItem, CartItemSelection } from "@/lib/cart-types"
+import { getCart, syncCart, deleteCart } from "@/lib/api/cart-api"
 
-interface CartState {
+type CartState = {
   items: CartItem[]
   isOpen: boolean
+  isSyncing: boolean
   addToCart: (item: CartItem) => void
   removeFromCart: (itemId: string) => void
   incrementItem: (itemId: string) => void
   decrementItem: (itemId: string) => void
   clearCart: () => void
   setCartOpen: (open: boolean) => void
+  fetchCart: () => Promise<void>
 }
 
-// Helper to compare selections
 function areSelectionsEqual(a: CartItemSelection, b: CartItemSelection): boolean {
+  if (!a || !b) return false
   if (a.type !== b.type) return false
 
   if (a.type === 'ALBUM' && b.type === 'ALBUM') {
@@ -51,52 +54,84 @@ function areSelectionsEqual(a: CartItemSelection, b: CartItemSelection): boolean
   return false
 }
 
-import { persist, createJSONStorage } from "zustand/middleware"
+function syncToBackend(items: CartItem[]): void {
+  syncCart(items).catch((error) => {
+    console.error("Falha ao sincronizar carrinho com o backend:", error)
+  })
+}
 
 export const useCartStore = create<CartState>()(
-  persist(
-    (set) => ({
-      items: [],
-      isOpen: false,
-      addToCart: (newItem) => set((state) => {
+  (set, get) => ({
+    items: [],
+    isOpen: false,
+    isSyncing: false,
+
+    fetchCart: async () => {
+      set({ isSyncing: true })
+      try {
+        const response = await getCart()
+        const validItems = (response.items || []).filter(item => item && item.product && item.selection)
+        set({ items: validItems })
+      } catch (error) {
+        console.error("Falha ao buscar carrinho do backend:", error)
+      } finally {
+        set({ isSyncing: false })
+      }
+    },
+
+    addToCart: (newItem) => {
+      set((state) => {
         const existingItemIndex = state.items.findIndex(
-          (item) => item.product.id === newItem.product.id && areSelectionsEqual(item.selection, newItem.selection)
+          (item) => item?.product?.id === newItem?.product?.id && areSelectionsEqual(item?.selection, newItem?.selection)
         )
 
+        let newItems: CartItem[]
         if (existingItemIndex > -1) {
-          const newItems = [...state.items]
+          newItems = [...state.items]
           newItems[existingItemIndex] = {
             ...newItems[existingItemIndex],
             quantity: newItems[existingItemIndex].quantity + newItem.quantity
           }
-          return { items: newItems }
+        } else {
+          newItems = [...state.items, newItem]
         }
 
-        return { items: [...state.items, newItem] }
-      }),
-      removeFromCart: (itemId) =>
-        set((state) => ({ items: state.items.filter((item) => item.id !== itemId) })),
-      incrementItem: (itemId) =>
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
-          ),
-        })),
-      decrementItem: (itemId) =>
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === itemId && item.quantity > 1
-              ? { ...item, quantity: item.quantity - 1 }
-              : item
-          ),
-        })),
-      clearCart: () => set({ items: [] }),
-      setCartOpen: (open) => set({ isOpen: open }),
-    }),
-    {
-      name: "cart-storage",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ items: state.items }), // Persist only items, not isOpen
-    }
-  )
+        syncToBackend(newItems)
+        return { items: newItems }
+      })
+    },
+
+    removeFromCart: (itemId) => {
+      const newItems = get().items.filter((item) => item.id !== itemId)
+      set({ items: newItems })
+      syncToBackend(newItems)
+    },
+
+    incrementItem: (itemId) => {
+      const newItems = get().items.map((item) =>
+        item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+      )
+      set({ items: newItems })
+      syncToBackend(newItems)
+    },
+
+    decrementItem: (itemId) => {
+      const newItems = get().items.map((item) =>
+        item.id === itemId && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+      set({ items: newItems })
+      syncToBackend(newItems)
+    },
+
+    clearCart: () => {
+      set({ items: [] })
+      deleteCart().catch((error) => {
+        console.error("Falha ao limpar carrinho no backend:", error)
+      })
+    },
+
+    setCartOpen: (open) => set({ isOpen: open }),
+  })
 )
