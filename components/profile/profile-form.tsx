@@ -221,6 +221,9 @@ export function ProfileForm() {
             reader.addEventListener("load", () => {
                 setImageSrc(reader.result?.toString() || "")
                 setCropDialogOpen(true)
+                // Reset crop to trigger initial grid on new image
+                setCrop(undefined)
+                setCompletedCrop(undefined)
             })
             reader.readAsDataURL(file)
         }
@@ -479,6 +482,23 @@ export function ProfileForm() {
                                         alt="Recortar"
                                         src={imageSrc}
                                         style={{ maxHeight: '350px' }}
+                                        onLoad={(e) => {
+                                            // Initialize crop area centered when image loads
+                                            const { width, height } = e.currentTarget
+                                            const cropSize = Math.min(width, height) * 0.8
+                                            const x = (width - cropSize) / 2
+                                            const y = (height - cropSize) / 2
+
+                                            const initialCrop: Crop = {
+                                                unit: 'px',
+                                                x,
+                                                y,
+                                                width: cropSize,
+                                                height: cropSize,
+                                            }
+                                            setCrop(initialCrop)
+                                            setCompletedCrop(initialCrop)
+                                        }}
                                     />
                                 </ReactCrop>
                             </div>
