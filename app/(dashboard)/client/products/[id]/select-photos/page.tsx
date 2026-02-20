@@ -83,7 +83,7 @@ export default function SelectPhotosPage() {
 
         const details = institutionProduct?.details
 
-        if (details?.events) {
+        if (details?.events && details.events.length > 0) {
           const allowedEventIds = new Set(details.events.map((e) => e.id))
           filteredEventGroups = data.eventGroups.filter((group) => allowedEventIds.has(group.eventId))
         }
