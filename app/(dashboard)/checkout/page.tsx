@@ -255,6 +255,7 @@ export default function CheckoutPage() {
         // Pedido foi pago com crédito ou é gratuito
         // Redirecionar para página de confirmação com os dados do crédito
         const queryParams = new URLSearchParams({
+          orderId: response.orderId,
           contractNumber: response.contractNumber,
           paymentMethod: response.paymentMethod,
           creditUsed: response.creditUsed?.toString() || '0',

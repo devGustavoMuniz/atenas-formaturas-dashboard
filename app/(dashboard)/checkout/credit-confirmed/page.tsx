@@ -16,6 +16,7 @@ function CreditConfirmedContent() {
     const { fetchCart } = useCartStore()
 
     // Obter parâmetros da URL
+    const orderId = searchParams.get('orderId') || ''
     const contractNumber = searchParams.get('contractNumber') || ''
     const creditUsed = parseFloat(searchParams.get('creditUsed') || '0')
     const remainingCredit = parseFloat(searchParams.get('remainingCredit') || '0')
@@ -40,9 +41,16 @@ function CreditConfirmedContent() {
                         Seu pedido foi processado com sucesso{paymentMethod === 'FREE' ? '.' : ' utilizando seu crédito disponível.'}
                     </p>
 
-                    {contractNumber && (
+                    {orderId && (
                         <div className="rounded-md border bg-muted/50 p-3">
                             <p className="text-sm text-muted-foreground">Número do Pedido</p>
+                            <p className="font-mono font-semibold">{orderId}</p>
+                        </div>
+                    )}
+
+                    {contractNumber && (
+                        <div className="rounded-md border bg-muted/50 p-3">
+                            <p className="text-sm text-muted-foreground">Contrato</p>
                             <p className="font-mono font-semibold">{contractNumber}</p>
                         </div>
                     )}
