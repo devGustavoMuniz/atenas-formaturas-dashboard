@@ -110,3 +110,10 @@ export const cancelOrder = async (
   const { data } = await api.put<CancelOrderResponse>(`/v1/orders/${orderId}/cancel`)
   return data
 }
+
+export const cancelOrderByClient = async (
+  orderId: string
+): Promise<CancelOrderResponse> => {
+  const { data } = await api.put<CancelOrderResponse>(`/v1/orders/${orderId}/cancel-by-client`)
+  return data
+}

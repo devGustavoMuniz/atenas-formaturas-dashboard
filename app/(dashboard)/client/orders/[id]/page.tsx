@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
 
-import { getOrderById } from '@/lib/api/orders-api'
+import { getOrderById, cancelOrderByClient } from '@/lib/api/orders-api'
 import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,13 +16,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { OrderDto } from '@/lib/order-types'
 import { OrderItemPhotos } from '@/components/orders/order-item-photos'
 import { useAuthStore } from '@/lib/store/auth-store'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function ClientOrderDetailsPage() {
     const params = useParams()
     const id = params.id as string
     const router = useRouter()
+    const { toast } = useToast()
+    const queryClient = useQueryClient()
     const user = useAuthStore((state) => state.user)
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+    const [showCancelModal, setShowCancelModal] = useState(false)
 
     const { data: order, isLoading, error } = useQuery({
         queryKey: ['client-order', id],
@@ -36,6 +41,30 @@ export default function ClientOrderDetailsPage() {
             router.push('/client/orders')
         }
     }, [order, user, router])
+
+    const { mutate: cancelOrderMutation, isPending: isCancelling } = useMutation({
+        mutationFn: () => cancelOrderByClient(id),
+        onSuccess: (data) => {
+            const creditMessage = data.creditReleased > 0
+                ? `Crédito de ${formatCurrency(data.creditReleased)} foi devolvido à sua conta.`
+                : ''
+
+            toast({
+                title: "Pedido cancelado com sucesso!",
+                description: creditMessage
+            })
+            queryClient.invalidateQueries({ queryKey: ['client-order', id] })
+            queryClient.invalidateQueries({ queryKey: ['client-orders'] })
+            setShowCancelModal(false)
+        },
+        onError: (error: any) => {
+            toast({
+                variant: "destructive",
+                title: "Erro ao cancelar pedido",
+                description: error.response?.data?.message || error.message
+            })
+        },
+    })
 
     const toggleItemExpansion = (itemId: string) => {
         setExpandedItems(prev => {
@@ -96,13 +125,25 @@ export default function ClientOrderDetailsPage() {
 
     return (
         <div className="container mx-auto p-4 space-y-4">
-            <div className="flex items-center gap-4">
-                <Link href="/client/orders">
-                    <Button variant="outline" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Link href="/client/orders">
+                        <Button variant="outline" size="icon">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <h1 className="text-2xl font-bold">Pedido #{order.displayId}</h1>
+                </div>
+
+                {(order.paymentStatus === 'APPROVED' || order.paymentStatus === 'PENDING') && (
+                    <Button
+                        onClick={() => setShowCancelModal(true)}
+                        disabled={isCancelling}
+                        variant="destructive"
+                    >
+                        {isCancelling ? 'Cancelando...' : 'Cancelar Pedido'}
                     </Button>
-                </Link>
-                <h1 className="text-2xl font-bold">Pedido #{order.displayId}</h1>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -338,6 +379,38 @@ export default function ClientOrderDetailsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cancelar Pedido</DialogTitle>
+                        <DialogDescription>
+                            Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.
+                            {order.totalAmount > 0 && (
+                                <span className="block mt-2 font-medium text-foreground">
+                                    O crédito utilizado (se houver) será devolvido automaticamente à sua conta.
+                                </span>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowCancelModal(false)}
+                            disabled={isCancelling}
+                        >
+                            Voltar
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => cancelOrderMutation()}
+                            disabled={isCancelling}
+                        >
+                            {isCancelling ? 'Cancelando...' : 'Confirmar Cancelamento'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
