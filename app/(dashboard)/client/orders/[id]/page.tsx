@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, Image } from 'lucide-react'
 
 import { getOrderById, cancelOrderByClient } from '@/lib/api/orders-api'
 import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
@@ -136,13 +136,24 @@ export default function ClientOrderDetailsPage() {
                 </div>
 
                 {(order.paymentStatus === 'APPROVED' || order.paymentStatus === 'PENDING') && (
-                    <Button
-                        onClick={() => setShowCancelModal(true)}
-                        disabled={isCancelling}
-                        variant="destructive"
-                    >
-                        {isCancelling ? 'Cancelando...' : 'Cancelar Pedido'}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {order.paymentStatus === 'PENDING' && order.checkoutUrl && (
+                            <Button
+                                onClick={() => { window.location.href = order.checkoutUrl! }}
+                                variant="default"
+                            >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Pagar agora
+                            </Button>
+                        )}
+                        <Button
+                            onClick={() => setShowCancelModal(true)}
+                            disabled={isCancelling}
+                            variant="destructive"
+                        >
+                            {isCancelling ? 'Cancelando...' : 'Cancelar Pedido'}
+                        </Button>
+                    </div>
                 )}
             </div>
 

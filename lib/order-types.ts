@@ -42,6 +42,7 @@ export interface OrderDto {
   createdAt: string;
   updatedAt: string;
   items: OrderItemDto[];
+  checkoutUrl?: string;
 }
 
 export interface OrderListResponseDto {
