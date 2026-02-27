@@ -1,31 +1,64 @@
 "use client"
 
-import { useEffect, Suspense } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle2, Wallet } from 'lucide-react'
+import { CheckCircle2, Wallet, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/lib/store/cart-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getOrderById } from '@/lib/api/orders-api'
+import type { OrderDto } from '@/lib/order-types'
 
 function CreditConfirmedContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const { fetchCart } = useCartStore()
 
-    // Obter parâmetros da URL
     const orderId = searchParams.get('orderId') || ''
-    const contractNumber = searchParams.get('contractNumber') || ''
+    const paymentMethod = searchParams.get('paymentMethod') || 'CREDIT'
     const creditUsed = parseFloat(searchParams.get('creditUsed') || '0')
     const remainingCredit = parseFloat(searchParams.get('remainingCredit') || '0')
-    const paymentMethod = searchParams.get('paymentMethod') || 'CREDIT'
 
-    // Sincroniza o carrinho local com o backend (que ja limpou apos confirmacao do pedido)
+    const [order, setOrder] = useState<OrderDto | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+
     useEffect(() => {
         fetchCart()
     }, [fetchCart])
+
+    useEffect(() => {
+        if (!orderId) {
+            setIsLoading(false)
+            return
+        }
+
+        const loadOrder = async () => {
+            try {
+                const data = await getOrderById(orderId)
+                setOrder(data)
+            } catch (error) {
+                console.error("Erro ao buscar pedido:", error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        loadOrder()
+    }, [orderId])
+
+    if (isLoading) {
+        return (
+            <div className="container mx-auto flex min-h-[calc(100vh-10rem)] items-center justify-center p-4">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
+
+    const displayOrderId = order?.displayId || orderId
+    const contractNumber = order?.contractNumber || searchParams.get('contractNumber') || ''
 
     return (
         <div className="container mx-auto flex min-h-[calc(100vh-10rem)] items-center justify-center p-4">
@@ -41,10 +74,10 @@ function CreditConfirmedContent() {
                         Seu pedido foi processado com sucesso{paymentMethod === 'FREE' ? '.' : ' utilizando seu crédito disponível.'}
                     </p>
 
-                    {orderId && (
+                    {displayOrderId && (
                         <div className="rounded-md border bg-muted/50 p-3">
-                            <p className="text-sm text-muted-foreground">Número do Pedido</p>
-                            <p className="font-mono font-semibold">{orderId}</p>
+                            <p className="text-sm text-muted-foreground">N° Pedido</p>
+                            <p className="font-mono font-semibold">{displayOrderId}</p>
                         </div>
                     )}
 

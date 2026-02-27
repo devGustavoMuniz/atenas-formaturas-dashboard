@@ -224,6 +224,7 @@ export default function CheckoutPage() {
     try {
       // 1. Criar o pedido no backend
       const response = await createOrder(orderPayload);
+      console.log("createOrder response:", response);
 
       // 2. Verificar o método de pagamento retornado
       if (response.paymentMethod === 'FREE' || response.paymentMethod === 'CREDIT') {
