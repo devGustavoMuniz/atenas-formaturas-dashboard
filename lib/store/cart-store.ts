@@ -6,12 +6,14 @@ import { getCart, syncCart, deleteCart } from "@/lib/api/cart-api"
 
 type CartState = {
   items: CartItem[]
+  selectedItemIds: Set<string>
   isOpen: boolean
   isSyncing: boolean
   addToCart: (item: CartItem) => void
   removeFromCart: (itemId: string) => void
   incrementItem: (itemId: string) => void
   decrementItem: (itemId: string) => void
+  toggleItemSelection: (itemId: string) => void
   clearCart: () => void
   setCartOpen: (open: boolean) => void
   fetchCart: () => Promise<void>
@@ -63,6 +65,7 @@ function syncToBackend(items: CartItem[]): void {
 export const useCartStore = create<CartState>()(
   (set, get) => ({
     items: [],
+    selectedItemIds: new Set<string>(),
     isOpen: false,
     isSyncing: false,
 
@@ -71,7 +74,14 @@ export const useCartStore = create<CartState>()(
       try {
         const response = await getCart()
         const validItems = (response.items || []).filter(item => item && item.product && item.selection)
-        set({ items: validItems })
+        const validIds = new Set(validItems.map(item => item.id))
+        const currentSelected = get().selectedItemIds
+        // Keep existing selection if present, only filtering out removed items.
+        // Select all only on first load (empty selection).
+        const newSelected = currentSelected.size > 0
+          ? new Set([...currentSelected].filter(id => validIds.has(id)))
+          : validIds
+        set({ items: validItems, selectedItemIds: newSelected })
       } catch (error) {
         console.error("Falha ao buscar carrinho do backend:", error)
       } finally {
@@ -97,13 +107,19 @@ export const useCartStore = create<CartState>()(
         }
 
         syncToBackend(newItems)
-        return { items: newItems }
+        const newItemId = newItem.id
+        const currentSelected = state.selectedItemIds
+        const newSelected = new Set(currentSelected)
+        newSelected.add(newItemId)
+        return { items: newItems, selectedItemIds: newSelected }
       })
     },
 
     removeFromCart: (itemId) => {
       const newItems = get().items.filter((item) => item.id !== itemId)
-      set({ items: newItems })
+      const newSelected = new Set(get().selectedItemIds)
+      newSelected.delete(itemId)
+      set({ items: newItems, selectedItemIds: newSelected })
       syncToBackend(newItems)
     },
 
@@ -125,8 +141,18 @@ export const useCartStore = create<CartState>()(
       syncToBackend(newItems)
     },
 
+    toggleItemSelection: (itemId) => {
+      const newSelected = new Set(get().selectedItemIds)
+      if (newSelected.has(itemId)) {
+        newSelected.delete(itemId)
+      } else {
+        newSelected.add(itemId)
+      }
+      set({ selectedItemIds: newSelected })
+    },
+
     clearCart: () => {
-      set({ items: [] })
+      set({ items: [], selectedItemIds: new Set<string>() })
       deleteCart().catch((error) => {
         console.error("Falha ao limpar carrinho no backend:", error)
       })

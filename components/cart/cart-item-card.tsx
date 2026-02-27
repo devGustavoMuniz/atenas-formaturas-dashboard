@@ -4,10 +4,13 @@ import type { CartItem } from "@/lib/cart-types"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/lib/store/cart-store"
 import { formatCurrency } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Trash2, Minus, Plus } from "lucide-react"
 
 interface CartItemCardProps {
   item: CartItem
+  isSelected: boolean
+  onToggleSelection: () => void
 }
 
 function getSelectionSummary(item: CartItem): string {
@@ -31,12 +34,18 @@ function getSelectionSummary(item: CartItem): string {
   }
 }
 
-export function CartItemCard({ item }: CartItemCardProps) {
+export function CartItemCard({ item, isSelected, onToggleSelection }: CartItemCardProps) {
   const { removeFromCart, incrementItem, decrementItem } = useCartStore()
 
   return (
-    <div className="flex items-start justify-between p-4 border-b">
-      <div className="flex-1">
+    <div className={`flex items-start justify-between p-4 border-b transition-opacity ${isSelected ? "" : "opacity-50"}`}>
+      <div className="flex items-start gap-3 flex-1">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={onToggleSelection}
+          className="mt-1 shrink-0"
+        />
+        <div className="flex-1">
         <p className="font-semibold">{item.product.name}</p>
         <p className="text-sm text-muted-foreground mb-2">{getSelectionSummary(item)}</p>
 
@@ -67,6 +76,7 @@ export function CartItemCard({ item }: CartItemCardProps) {
             <span className="text-sm text-muted-foreground">Item único</span>
           </div>
         )}
+        </div>
       </div>
 
       <div className="flex flex-col items-end gap-2">

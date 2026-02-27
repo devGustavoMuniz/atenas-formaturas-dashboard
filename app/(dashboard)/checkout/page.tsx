@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useCartStore } from "@/lib/store/cart-store"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { formatCurrency } from "@/lib/utils"
@@ -47,34 +46,10 @@ type AddressFormValues = z.infer<typeof addressFormSchema>
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items } = useCartStore()
+  const { items, selectedItemIds } = useCartStore()
   const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
 
-  // Estado de seleção: IDs dos itens marcados para pagamento
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
-    () => new Set(items.map((i) => i.id))
-  )
-
-  // Sincroniza a seleção quando os itens do carrinho mudam
-  // (ex: ao montar a página pela primeira vez)
-  useEffect(() => {
-    setSelectedItemIds(new Set(items.map((i) => i.id)))
-  }, [items.length])
-
-  const toggleItemSelection = (id: string) => {
-    setSelectedItemIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
-
-  // Apenas os itens selecionados são incluídos no pedido
   const selectedItems = items.filter((i) => selectedItemIds.has(i.id))
 
   const subtotal = selectedItems.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
@@ -426,46 +401,31 @@ export default function CheckoutPage() {
               <CardTitle>Resumo do Pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.length > 0 ? (
+              {selectedItems.length > 0 ? (
                 <div className="space-y-3">
-                  {items.map((item, index) => {
-                    const isSelected = selectedItemIds.has(item.id)
-                    return (
-                      <div
-                        key={`${item.id}-${index}`}
-                        className={`flex items-start gap-3 rounded-md p-2 transition-colors ${isSelected ? "" : "opacity-50"
-                          }`}
-                      >
-                        <Checkbox
-                          id={`checkout-item-${item.id}`}
-                          checked={isSelected}
-                          onCheckedChange={() => toggleItemSelection(item.id)}
-                          className="mt-1 shrink-0"
-                        />
-                        <label
-                          htmlFor={`checkout-item-${item.id}`}
-                          className="flex flex-1 cursor-pointer items-start justify-between gap-2"
-                        >
-                          <div>
-                            <p className="font-semibold leading-tight">
-                              {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
-                              {item.product.name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {item.selection.type === 'ALBUM' && `${item.selection.selectedPhotos.length} fotos`}
-                              {item.selection.type === 'GENERIC' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
-                              {item.selection.type === 'DIGITAL_FILES_UNIT' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
-                              {item.selection.type === 'DIGITAL_FILES_PACKAGE' && (item.selection.isPackageComplete ? 'Pacote Completo' : `${item.selection.selectedEvents.length} evento(s)`)}
-                            </p>
-                          </div>
-                          <p className="shrink-0 font-medium">{formatCurrency(item.totalPrice * item.quantity)}</p>
-                        </label>
+                  {selectedItems.map((item, index) => (
+                    <div
+                      key={`${item.id}-${index}`}
+                      className="flex items-start justify-between gap-2 rounded-md p-2"
+                    >
+                      <div>
+                        <p className="font-semibold leading-tight">
+                          {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                          {item.product.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.selection.type === 'ALBUM' && `${item.selection.selectedPhotos.length} fotos`}
+                          {item.selection.type === 'GENERIC' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
+                          {item.selection.type === 'DIGITAL_FILES_UNIT' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
+                          {item.selection.type === 'DIGITAL_FILES_PACKAGE' && (item.selection.isPackageComplete ? 'Pacote Completo' : `${item.selection.selectedEvents.length} evento(s)`)}
+                        </p>
                       </div>
-                    )
-                  })}
+                      <p className="shrink-0 font-medium">{formatCurrency(item.totalPrice * item.quantity)}</p>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground">Seu carrinho está vazio.</p>
+                <p className="text-center text-muted-foreground">Nenhum item selecionado.</p>
               )}
               <Separator />
               <div className="flex justify-between">
@@ -526,22 +486,15 @@ export default function CheckoutPage() {
                   </p>
                 </div>
               )}
-              {selectedItems.length === 0 && items.length > 0 && (
-                <p className="text-center text-sm text-muted-foreground">
-                  Selecione ao menos um item para continuar.
-                </p>
-              )}
               <Button
                 onClick={form.handleSubmit(onSubmit)}
                 className="w-full mt-4"
-                disabled={items.length === 0 || selectedItems.length === 0 || isCreatingPreference}
+                disabled={selectedItems.length === 0 || isCreatingPreference}
               >
                 {isCreatingPreference ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {selectedItems.length > 0 && selectedItems.length < items.length
-                  ? `Pagar ${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'itens'}`
-                  : 'Confirmar e Pagar'}
+                Confirmar e Pagar
               </Button>
             </CardContent>
           </Card>

@@ -11,8 +11,9 @@ import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 
 export function CartSheet() {
-  const { items, clearCart, isOpen, setCartOpen, fetchCart, isSyncing } = useCartStore((state) => state)
+  const { items, selectedItemIds, toggleItemSelection, clearCart, isOpen, setCartOpen, fetchCart, isSyncing } = useCartStore((state) => state)
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
+  const selectedCount = items.filter(item => selectedItemIds.has(item.id)).length
   const router = useRouter()
   const previousIsOpen = useRef(false)
 
@@ -23,7 +24,9 @@ export function CartSheet() {
     previousIsOpen.current = isOpen
   }, [isOpen, fetchCart])
 
-  const subtotal = items.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
+  const subtotal = items
+    .filter(item => selectedItemIds.has(item.id))
+    .reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
 
   const handleCheckout = () => {
     router.push("/checkout")
@@ -57,7 +60,12 @@ export function CartSheet() {
           ) : items.length > 0 ? (
             <div className="space-y-2">
               {items.map((item, index) => (
-                <CartItemCard key={`${item.id}-${index}`} item={item} />
+                <CartItemCard
+                  key={`${item.id}-${index}`}
+                  item={item}
+                  isSelected={selectedItemIds.has(item.id)}
+                  onToggleSelection={() => toggleItemSelection(item.id)}
+                />
               ))}
             </div>
           ) : (
@@ -71,8 +79,10 @@ export function CartSheet() {
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <Button className="w-full" size="lg" onClick={handleCheckout}>
-                Finalizar Compra
+              <Button className="w-full" size="lg" onClick={handleCheckout} disabled={selectedCount === 0}>
+                {selectedCount > 0 && selectedCount < items.length
+                  ? `Finalizar ${selectedCount} ${selectedCount === 1 ? 'item' : 'itens'}`
+                  : 'Finalizar Compra'}
               </Button>
               <Button variant="ghost" onClick={clearCart} className="text-sm">
                 Limpar Carrinho
