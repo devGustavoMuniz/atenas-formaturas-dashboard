@@ -208,7 +208,7 @@ export default function SelectPhotosPage() {
     selectedPhotosCount,
   ])
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product || !institutionProduct) return
 
     let selection: CartItemSelection | null = null
@@ -283,7 +283,7 @@ export default function SelectPhotosPage() {
       quantity: quantity
     }
 
-    addToCart(cartItem)
+    await addToCart(cartItem)
 
     const quantityMsg = quantity > 1 ? `${quantity} x ` : ''
     const pluralMsg = quantity > 1 ? 'foram adicionados' : 'foi adicionado'

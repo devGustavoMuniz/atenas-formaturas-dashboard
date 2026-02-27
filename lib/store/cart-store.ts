@@ -9,7 +9,7 @@ type CartState = {
   selectedItemIds: Set<string>
   isOpen: boolean
   isSyncing: boolean
-  addToCart: (item: CartItem) => void
+  addToCart: (item: CartItem) => Promise<void>
   removeFromCart: (itemId: string) => void
   incrementItem: (itemId: string) => void
   decrementItem: (itemId: string) => void
@@ -89,29 +89,29 @@ export const useCartStore = create<CartState>()(
       }
     },
 
-    addToCart: (newItem) => {
-      set((state) => {
-        const existingItemIndex = state.items.findIndex(
-          (item) => item?.product?.id === newItem?.product?.id && areSelectionsEqual(item?.selection, newItem?.selection)
-        )
+    addToCart: async (newItem) => {
+      const state = get()
+      const existingItemIndex = state.items.findIndex(
+        (item) => item?.product?.id === newItem?.product?.id && areSelectionsEqual(item?.selection, newItem?.selection)
+      )
 
-        let newItems: CartItem[]
-        if (existingItemIndex > -1) {
-          newItems = [...state.items]
-          newItems[existingItemIndex] = {
-            ...newItems[existingItemIndex],
-            quantity: newItems[existingItemIndex].quantity + newItem.quantity
-          }
-        } else {
-          newItems = [...state.items, newItem]
+      let newItems: CartItem[]
+      if (existingItemIndex > -1) {
+        newItems = [...state.items]
+        newItems[existingItemIndex] = {
+          ...newItems[existingItemIndex],
+          quantity: newItems[existingItemIndex].quantity + newItem.quantity
         }
+      } else {
+        newItems = [...state.items, newItem]
+      }
 
-        syncToBackend(newItems)
-        const newItemId = newItem.id
-        const currentSelected = state.selectedItemIds
-        const newSelected = new Set(currentSelected)
-        newSelected.add(newItemId)
-        return { items: newItems, selectedItemIds: newSelected }
+      const newSelected = new Set(state.selectedItemIds)
+      newSelected.add(newItem.id)
+      set({ items: newItems, selectedItemIds: newSelected })
+
+      await syncCart(newItems).catch((error) => {
+        console.error("Falha ao sincronizar carrinho com o backend:", error)
       })
     },
 
