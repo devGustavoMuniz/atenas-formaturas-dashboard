@@ -41,11 +41,25 @@ export default function OrderDetailsPage() {
   const { mutate: updateFulfillment } = useMutation({
     mutationFn: ({ itemId, status }: { itemId: string; status: FulfillmentStatus }) =>
       updateItemFulfillmentStatus(id, itemId, status),
-    onMutate: ({ itemId }) => setUpdatingItemId(itemId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order', id] })
+    onMutate: async ({ itemId, status }) => {
+      setUpdatingItemId(itemId)
+      await queryClient.cancelQueries({ queryKey: ['order', id] })
+      const previous = queryClient.getQueryData<OrderDto>(['order', id])
+      queryClient.setQueryData(['order', id], (old: OrderDto | undefined) => {
+        if (!old) return old
+        return {
+          ...old,
+          items: old.items.map(item =>
+            item.id === itemId ? { ...item, fulfillmentStatus: status } : item
+          ),
+        }
+      })
+      return { previous }
     },
-    onError: (error: any) => {
+    onError: (error: any, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['order', id], context.previous)
+      }
       toast({ variant: 'destructive', title: 'Erro ao atualizar etapa', description: error.message })
     },
     onSettled: () => setUpdatingItemId(null),

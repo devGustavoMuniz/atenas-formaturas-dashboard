@@ -74,15 +74,17 @@ export function OrderItemTimeline({ item, onStatusChange, isLoading }: OrderItem
               className="absolute top-1/2 -translate-y-1/2 rounded-full bg-primary h-[2px] transition-all duration-500"
               style={{
                 left: '1.125rem',
-                width: `calc(${(currentIndex / (steps.length - 1)) * 100}% - 2.25rem)`,
+                width: isCompleted
+                  ? 'calc(100% - 2.25rem)'
+                  : `calc(${(currentIndex / (steps.length - 1)) * 100}% - 2.25rem)`,
               }}
             />
           )}
 
           {steps.map((step, index) => {
             const StepIcon = step.icon
-            const done = index < currentIndex
-            const active = index === currentIndex
+            const done = index < currentIndex || (isCompleted && index === currentIndex)
+            const active = !isCompleted && index === currentIndex
             const future = index > currentIndex
 
             return (
@@ -107,8 +109,8 @@ export function OrderItemTimeline({ item, onStatusChange, isLoading }: OrderItem
         {/* Labels row — absolutely positioned at same % as circles, hidden on mobile */}
         <div className="relative mt-2 h-7 md:block hidden">
           {steps.map((step, index) => {
-            const done = index < currentIndex
-            const active = index === currentIndex
+            const done = index < currentIndex || (isCompleted && index === currentIndex)
+            const active = !isCompleted && index === currentIndex
             const isFirst = index === 0
             const isLast = index === steps.length - 1
             const percent = (index / (steps.length - 1)) * 100

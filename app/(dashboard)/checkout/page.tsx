@@ -228,6 +228,15 @@ export default function CheckoutPage() {
 
       // 2. Verificar o método de pagamento retornado
       if (response.paymentMethod === 'FREE' || response.paymentMethod === 'CREDIT') {
+        // Atualiza o crédito no store para refletir imediatamente na topbar
+        const currentUser = useAuthStore.getState().user
+        if (currentUser) {
+          useAuthStore.getState().setUser({
+            ...currentUser,
+            creditValue: response.remainingCredit ?? 0,
+          })
+        }
+
         // Pedido foi pago com crédito ou é gratuito
         // Redirecionar para página de confirmação com os dados do crédito
         const queryParams = new URLSearchParams({

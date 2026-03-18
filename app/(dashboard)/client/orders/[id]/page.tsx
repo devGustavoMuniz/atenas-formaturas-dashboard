@@ -191,7 +191,7 @@ export default function ClientOrderDetailsPage() {
                     <CardTitle>Itens do Pedido</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 p-3 pt-0">
-                    {order.items.map((item) => {
+                    {[...order.items].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((item) => {
                         const photos = item.details.filter(detail => detail.photoUrl)
                         const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
                         const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)

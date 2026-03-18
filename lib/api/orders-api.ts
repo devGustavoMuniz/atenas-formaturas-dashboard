@@ -118,12 +118,19 @@ export const cancelOrderByClient = async (
   return data
 }
 
+export interface UpdateFulfillmentStatusResponse {
+  message: string
+  orderItemId: string
+  fulfillmentStatus: FulfillmentStatus
+  productType: OrderItemDto['productType']
+}
+
 export const updateItemFulfillmentStatus = async (
   orderId: string,
   itemId: string,
   fulfillmentStatus: FulfillmentStatus
-): Promise<OrderItemDto> => {
-  const { data } = await api.put<OrderItemDto>(
+): Promise<UpdateFulfillmentStatusResponse> => {
+  const { data } = await api.put<UpdateFulfillmentStatusResponse>(
     `/v1/orders/${orderId}/items/${itemId}/fulfillment-status`,
     { fulfillmentStatus }
   )
