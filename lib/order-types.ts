@@ -1,7 +1,15 @@
 
+export type FulfillmentStatus =
+  | 'ORDER_RECEIVED'
+  | 'PHOTOS_SEPARATED'
+  | 'PRODUCT_MANUFACTURED'
+  | 'IN_TRANSIT'
+  | 'DELIVERED'
+  | 'SENT'
+
 export interface OrderItemDetailsDto {
-  id: string;
-  orderItemId: string;
+  id?: string;
+  orderItemId?: string;
   photoUrl?: string;
   photoName?: string;
   photoId?: string;
@@ -18,6 +26,7 @@ export interface OrderItemDto {
   productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM';
   itemPrice: number;
   quantity: number;
+  fulfillmentStatus: FulfillmentStatus;
   createdAt: string;
   details: OrderItemDetailsDto[];
 }
@@ -30,6 +39,7 @@ export interface OrderDto {
   paymentStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
   paymentGatewayId?: string;
   contractNumber: string;
+  creditUsed?: number;
   shippingAddress: {
     zipCode: string;
     street: string;

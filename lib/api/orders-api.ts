@@ -1,5 +1,5 @@
 import { api } from '@/lib/api/axios-config'
-import { OrderDto, OrderListResponseDto } from '@/lib/order-types'
+import { OrderDto, OrderListResponseDto, FulfillmentStatus, OrderItemDto } from '@/lib/order-types'
 
 interface GetOrdersParams {
   pageIndex?: number
@@ -117,3 +117,16 @@ export const cancelOrderByClient = async (
   const { data } = await api.put<CancelOrderResponse>(`/v1/orders/${orderId}/cancel-by-client`)
   return data
 }
+
+export const updateItemFulfillmentStatus = async (
+  orderId: string,
+  itemId: string,
+  fulfillmentStatus: FulfillmentStatus
+): Promise<OrderItemDto> => {
+  const { data } = await api.put<OrderItemDto>(
+    `/v1/orders/${orderId}/items/${itemId}/fulfillment-status`,
+    { fulfillmentStatus }
+  )
+  return data
+}
+

@@ -7,16 +7,16 @@ import Link from 'next/link'
 import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
 
 import { UserName } from '@/components/users/user-name'
-import { getOrderById, updateOrderStatus, cancelOrder } from '@/lib/api/orders-api'
+import { getOrderById, updateOrderStatus, cancelOrder, updateItemFulfillmentStatus } from '@/lib/api/orders-api'
 import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/use-toast'
-import { OrderDto } from '@/lib/order-types'
+import { OrderDto, FulfillmentStatus } from '@/lib/order-types'
 import { OrderItemPhotos } from '@/components/orders/order-item-photos'
+import { OrderItemTimeline } from '@/components/orders/order-item-timeline'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,11 +30,25 @@ export default function OrderDetailsPage() {
   const [showDriveLinkModal, setShowDriveLinkModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [driveLink, setDriveLink] = useState('')
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn: () => getOrderById(id),
     enabled: !!id,
+  })
+
+  const { mutate: updateFulfillment } = useMutation({
+    mutationFn: ({ itemId, status }: { itemId: string; status: FulfillmentStatus }) =>
+      updateItemFulfillmentStatus(id, itemId, status),
+    onMutate: ({ itemId }) => setUpdatingItemId(itemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] })
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Erro ao atualizar etapa', description: error.message })
+    },
+    onSettled: () => setUpdatingItemId(null),
   })
 
   const { mutate: markAsCompleted, isPending } = useMutation({
@@ -151,18 +165,18 @@ export default function OrderDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Link href="/orders">
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="flex-shrink-0">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">Detalhes do Pedido: {order.displayId}</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Detalhes do Pedido: {order.displayId}</h1>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 sm:flex-row flex-col">
           {(order.paymentStatus === 'APPROVED' || order.paymentStatus === 'PENDING') && (
             <Button
               onClick={() => setShowCancelModal(true)}
@@ -214,109 +228,101 @@ export default function OrderDetailsPage() {
         <CardHeader>
           <CardTitle>Itens do Pedido</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Produto</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">Preço</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {order.items.map((item) => {
-                const photos = item.details.filter(detail => detail.photoUrl)
-                const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
-                const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
-                const isExpanded = expandedItems.has(item.id)
-                const hasPhotos = photos.length > 0
-                const hasPackages = packages.length > 0
-                const hasFullPackage = !!fullPackage
-                const hasDetails = hasPhotos || hasPackages || hasFullPackage
+        <CardContent className="space-y-3 p-3 pt-0">
+          {order.items.map((item) => {
+            const photos = item.details.filter(detail => detail.photoUrl)
+            const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
+            const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
+            const isExpanded = expandedItems.has(item.id)
+            const hasPhotos = photos.length > 0
+            const hasPackages = packages.length > 0
+            const hasFullPackage = !!fullPackage
+            const hasDetails = hasPhotos || hasPackages || hasFullPackage
+            const showTimeline = order.paymentStatus === 'APPROVED' || order.paymentStatus === 'COMPLETED'
 
-                return (
+            return (
+              <div key={item.id} className="rounded-lg border overflow-hidden">
+                {/* Item header */}
+                <div
+                  className={`flex items-start gap-3 px-4 py-3 ${hasDetails ? 'cursor-pointer hover:bg-muted/40' : ''}`}
+                  onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
+                >
+                  {hasDetails && (
+                    <Image className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">
+                        {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                        {item.productName}
+                      </span>
+                      {hasDetails && (
+                        isExpanded
+                          ? <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          : <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-xs font-normal">{translateProductType(item.productType)}</Badge>
+                      {hasPhotos && (
+                        <span className="text-xs text-muted-foreground">{photos.length} foto{photos.length > 1 ? 's' : ''}</span>
+                      )}
+                      {hasPackages && (
+                        <span className="text-xs text-muted-foreground">{packages.length} evento{packages.length > 1 ? 's' : ''}</span>
+                      )}
+                      {hasFullPackage && (
+                        <span className="text-xs text-muted-foreground">Pacote completo</span>
+                      )}
+                      <span className="text-sm font-semibold ml-auto">{formatCurrency(item.itemPrice * item.quantity)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expandable details */}
+                {hasDetails && (
                   <>
-                    <TableRow
-                      key={item.id}
-                      className={hasDetails ? "cursor-pointer hover:bg-muted/50" : ""}
-                      onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {hasDetails && (
-                            <Image className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="font-medium">
-                            {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
-                            {item.productName}
-                          </span>
-                          {hasPhotos && (
-                            <span className="text-xs text-muted-foreground ml-auto">
-                              {photos.length} foto{photos.length > 1 ? 's' : ''}
-                            </span>
-                          )}
-                          {hasPackages && (
-                            <span className="text-xs text-muted-foreground ml-auto">
-                              {packages.length} evento{packages.length > 1 ? 's' : ''}
-                            </span>
-                          )}
-                          {hasFullPackage && (
-                            <span className="text-xs text-muted-foreground ml-auto">
-                              Pacote completo
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{translateProductType(item.productType)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.itemPrice * item.quantity)}</TableCell>
-                      <TableCell>
-                        {hasDetails && (
-                          isExpanded ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          )
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    {hasDetails && (
-                      <TableRow key={`${item.id}-details`}>
-                        <TableCell colSpan={4} className="p-0 border-0">
-                          {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
-                          {(hasPackages || hasFullPackage) && isExpanded && (
-                            <div className="px-4 py-6 bg-muted/20">
-                              {hasFullPackage ? (
-                                <div>
-                                  <h4 className="text-sm font-medium mb-3">Seleção:</h4>
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                    <span className="font-medium">Pacote Completo - Todos os Eventos</span>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div>
-                                  <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
-                                  <ul className="space-y-2">
-                                    {packages.map((pkg, index) => (
-                                      <li key={index} className="flex items-center gap-2 text-sm">
-                                        <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                        <span>{pkg.eventName}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
+                    {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
+                    {(hasPackages || hasFullPackage) && isExpanded && (
+                      <div className="px-4 py-4 bg-muted/20 border-t">
+                        {hasFullPackage ? (
+                          <div>
+                            <h4 className="text-sm font-medium mb-3">Seleção:</h4>
+                            <div className="flex items-center gap-2 text-sm">
+                              <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                              <span className="font-medium">Pacote Completo - Todos os Eventos</span>
                             </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
+                          </div>
+                        ) : (
+                          <div>
+                            <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
+                            <ul className="space-y-2">
+                              {packages.map((pkg, index) => (
+                                <li key={index} className="flex items-center gap-2 text-sm">
+                                  <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                  <span>{pkg.eventName}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </>
-                )
-              })}
-            </TableBody>
-          </Table>
+                )}
+
+                {/* Timeline */}
+                {showTimeline && (
+                  <div className="px-4 py-4 bg-muted/5 border-t">
+                    <OrderItemTimeline
+                      item={item}
+                      onStatusChange={(itemId, status) => updateFulfillment({ itemId, status })}
+                      isLoading={updatingItemId === item.id}
+                    />
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </CardContent>
       </Card>
 

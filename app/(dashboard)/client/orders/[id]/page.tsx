@@ -7,12 +7,12 @@ import Link from 'next/link'
 import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, Image } from 'lucide-react'
 
 import { getOrderById, cancelOrderByClient } from '@/lib/api/orders-api'
+import { OrderItemTimeline } from '@/components/orders/order-item-timeline'
 import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { OrderDto } from '@/lib/order-types'
 import { OrderItemPhotos } from '@/components/orders/order-item-photos'
 import { useAuthStore } from '@/lib/store/auth-store'
@@ -124,7 +124,7 @@ export default function ClientOrderDetailsPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 space-y-4">
+        <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link href="/client/orders">
@@ -190,204 +190,92 @@ export default function ClientOrderDetailsPage() {
                 <CardHeader>
                     <CardTitle>Itens do Pedido</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    {/* Desktop Table View */}
-                    <div className="hidden md:block">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Produto</TableHead>
-                                    <TableHead className="text-right">Preço</TableHead>
-                                    <TableHead className="w-12"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {order.items.map((item) => {
-                                    const photos = item.details.filter(detail => detail.photoUrl)
-                                    const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
-                                    const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
-                                    const isExpanded = expandedItems.has(item.id)
-                                    const hasPhotos = photos.length > 0
-                                    const hasPackages = packages.length > 0
-                                    const hasFullPackage = !!fullPackage
-                                    const hasDetails = hasPhotos || hasPackages || hasFullPackage
+                <CardContent className="space-y-3 p-3 pt-0">
+                    {order.items.map((item) => {
+                        const photos = item.details.filter(detail => detail.photoUrl)
+                        const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
+                        const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
+                        const isExpanded = expandedItems.has(item.id)
+                        const hasPhotos = photos.length > 0
+                        const hasPackages = packages.length > 0
+                        const hasFullPackage = !!fullPackage
+                        const hasDetails = hasPhotos || hasPackages || hasFullPackage
+                        const showTimeline = order.paymentStatus === 'APPROVED' || order.paymentStatus === 'COMPLETED'
 
-                                    return (
-                                        <>
-                                            <TableRow
-                                                key={item.id}
-                                                className={hasDetails ? "cursor-pointer hover:bg-muted/50" : ""}
-                                                onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
-                                            >
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        {hasDetails && (
-                                                            <Image className="h-4 w-4 text-muted-foreground" />
-                                                        )}
-                                                        <span className="font-medium">
-                                                            {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
-                                                            {item.productName}
-                                                        </span>
-                                                        {hasPhotos && (
-                                                            <span className="text-xs text-muted-foreground ml-auto">
-                                                                {photos.length} foto{photos.length > 1 ? 's' : ''}
-                                                            </span>
-                                                        )}
-                                                        {hasPackages && (
-                                                            <span className="text-xs text-muted-foreground ml-auto">
-                                                                {packages.length} evento{packages.length > 1 ? 's' : ''}
-                                                            </span>
-                                                        )}
-                                                        {hasFullPackage && (
-                                                            <span className="text-xs text-muted-foreground ml-auto">
-                                                                Pacote completo
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right">{formatCurrency(item.itemPrice * item.quantity)}</TableCell>
-                                                <TableCell>
-                                                    {hasDetails && (
-                                                        isExpanded ? (
-                                                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                                                        ) : (
-                                                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                                        )
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                            {hasDetails && (
-                                                <TableRow key={`${item.id}-details`}>
-                                                    <TableCell colSpan={3} className="p-0 border-0">
-                                                        {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
-                                                        {(hasPackages || hasFullPackage) && isExpanded && (
-                                                            <div className="px-4 py-6 bg-muted/20">
-                                                                {hasFullPackage ? (
-                                                                    <div>
-                                                                        <h4 className="text-sm font-medium mb-3">Seleção:</h4>
-                                                                        <div className="flex items-center gap-2 text-sm">
-                                                                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                                                            <span className="font-medium">Pacote Completo - Todos os Eventos</span>
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div>
-                                                                        <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
-                                                                        <ul className="space-y-2">
-                                                                            {packages.map((pkg, index) => (
-                                                                                <li key={index} className="flex items-center gap-2 text-sm">
-                                                                                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                                                                    <span>{pkg.eventName}</span>
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
-
-                    {/* Mobile Card View */}
-                    <div className="grid gap-4 md:hidden">
-                        {order.items.map((item) => {
-                            const photos = item.details.filter(detail => detail.photoUrl)
-                            const packages = item.details.filter(detail => detail.isPackage && detail.eventId)
-                            const fullPackage = item.details.find(detail => detail.isPackage && !detail.eventId)
-                            const isExpanded = expandedItems.has(item.id)
-                            const hasPhotos = photos.length > 0
-                            const hasPackages = packages.length > 0
-                            const hasFullPackage = !!fullPackage
-                            const hasDetails = hasPhotos || hasPackages || hasFullPackage
-
-                            return (
+                        return (
+                            <div key={item.id} className="rounded-lg border overflow-hidden">
+                                {/* Item header */}
                                 <div
-                                    key={item.id}
-                                    className={`rounded-lg border bg-card text-card-foreground shadow-sm ${hasDetails ? 'cursor-pointer' : ''}`}
+                                    className={`flex items-center gap-3 px-4 py-3 ${hasDetails ? 'cursor-pointer hover:bg-muted/40' : ''}`}
                                     onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
                                 >
-                                    <div className="p-4 space-y-3">
-                                        <div className="flex items-start justify-between">
-                                            <div className="space-y-1">
-                                                <div className="font-medium">
-                                                    {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
-                                                    {item.productName}
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-2">
-                                                <span className="font-medium">{formatCurrency(item.itemPrice * item.quantity)}</span>
-                                                {hasDetails && (
-                                                    isExpanded ? (
-                                                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                                                    ) : (
-                                                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                                    )
+                                    {hasDetails && (
+                                        <Image className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                    )}
+                                    <span className="font-medium flex-1 min-w-0">
+                                        {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                                        {item.productName}
+                                    </span>
+                                    <div className="flex items-center gap-3 flex-shrink-0">
+                                        {hasPhotos && (
+                                            <span className="text-xs text-muted-foreground">{photos.length} foto{photos.length > 1 ? 's' : ''}</span>
+                                        )}
+                                        {hasPackages && (
+                                            <span className="text-xs text-muted-foreground">{packages.length} evento{packages.length > 1 ? 's' : ''}</span>
+                                        )}
+                                        {hasFullPackage && (
+                                            <span className="text-xs text-muted-foreground">Pacote completo</span>
+                                        )}
+                                        <span className="text-sm font-semibold">{formatCurrency(item.itemPrice * item.quantity)}</span>
+                                        {hasDetails && (
+                                            isExpanded
+                                                ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                                : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Expandable details */}
+                                {hasDetails && (
+                                    <>
+                                        {hasPhotos && <OrderItemPhotos item={item} isExpanded={isExpanded} />}
+                                        {(hasPackages || hasFullPackage) && isExpanded && (
+                                            <div className="px-4 py-4 bg-muted/20 border-t">
+                                                {hasFullPackage ? (
+                                                    <div>
+                                                        <h4 className="text-sm font-medium mb-3">Seleção:</h4>
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                                            <span className="font-medium">Pacote Completo - Todos os Eventos</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
+                                                        <ul className="space-y-2">
+                                                            {packages.map((pkg, index) => (
+                                                                <li key={index} className="flex items-center gap-2 text-sm">
+                                                                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                                                    <span>{pkg.eventName}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
                                                 )}
                                             </div>
-                                        </div>
+                                        )}
+                                    </>
+                                )}
 
-                                        {/* Badges/Indicators */}
-                                        <div className="flex flex-wrap gap-2">
-                                            {hasPhotos && (
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {photos.length} foto{photos.length > 1 ? 's' : ''}
-                                                </Badge>
-                                            )}
-                                            {hasPackages && (
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {packages.length} evento{packages.length > 1 ? 's' : ''}
-                                                </Badge>
-                                            )}
-                                            {hasFullPackage && (
-                                                <Badge variant="secondary" className="text-xs">
-                                                    Pacote Completo
-                                                </Badge>
-                                            )}
-                                        </div>
+                                {/* Timeline */}
+                                {showTimeline && (
+                                    <div className="px-4 py-4 bg-muted/5 border-t">
+                                        <OrderItemTimeline item={item} />
                                     </div>
-
-                                    {/* Expanded Content for Mobile */}
-                                    {hasDetails && isExpanded && (
-                                        <div className="border-t bg-muted/20" onClick={(e) => e.stopPropagation()}>
-                                            {hasPhotos && <OrderItemPhotos item={item} isExpanded={true} />}
-                                            {(hasPackages || hasFullPackage) && (
-                                                <div className="p-4">
-                                                    {hasFullPackage ? (
-                                                        <div>
-                                                            <h4 className="text-sm font-medium mb-3">Seleção:</h4>
-                                                            <div className="flex items-center gap-2 text-sm">
-                                                                <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                                                <span className="font-medium">Pacote Completo - Todos os Eventos</span>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div>
-                                                            <h4 className="text-sm font-medium mb-3">Eventos Selecionados:</h4>
-                                                            <ul className="space-y-2">
-                                                                {packages.map((pkg, index) => (
-                                                                    <li key={index} className="flex items-center gap-2 text-sm">
-                                                                        <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                                                                        <span>{pkg.eventName}</span>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
-                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
                 </CardContent>
             </Card>
 

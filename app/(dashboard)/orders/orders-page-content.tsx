@@ -65,7 +65,9 @@ export function OrdersPageContent() {
   return (
     <>
       <OrderTableToolbar />
-      <div className="mt-4">
+
+      {/* Desktop table */}
+      <div className="mt-4 hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -105,6 +107,33 @@ export function OrdersPageContent() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Mobile cards */}
+      <div className="mt-4 flex flex-col gap-3 md:hidden">
+        {result?.data.map((order) => (
+          <div key={order.id} className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-0.5">
+                <span className="font-mono text-sm font-medium">#{order.displayId}</span>
+                <p className="text-sm text-muted-foreground">
+                  <UserName userId={order.userId} />
+                </p>
+              </div>
+              <Badge variant={getStatusVariant(order.paymentStatus)}>
+                {translatePaymentStatus(order.paymentStatus)}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</span>
+              <span className="text-sm font-semibold">{formatCurrency(order.totalAmount)}</span>
+            </div>
+            <Link href={`/orders/${order.id}`} className="block">
+              <Button size="sm" className="w-full">Detalhes</Button>
+            </Link>
+          </div>
+        ))}
+      </div>
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
           variant="outline"
