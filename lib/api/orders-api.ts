@@ -1,22 +1,25 @@
 import { api } from '@/lib/api/axios-config'
-import { OrderDto, OrderListResponseDto } from '@/lib/order-types'
+import { OrderDto, OrderListResponseDto, FulfillmentStatus, OrderItemDto } from '@/lib/order-types'
 
 interface GetOrdersParams {
   pageIndex?: number
   pageSize?: number
   paymentStatus?: string
+  userId?: string
 }
 
 export const getOrders = async ({
   pageIndex = 0,
   pageSize = 10,
   paymentStatus,
+  userId,
 }: GetOrdersParams): Promise<OrderListResponseDto> => {
   const response = await api.get<OrderListResponseDto>('/v1/orders', {
     params: {
       page: pageIndex + 1, // API is 1-based, table is 0-based
       limit: pageSize,
       paymentStatus: paymentStatus || undefined,
+      userId: userId || undefined,
     },
   })
   return response.data
@@ -36,6 +39,7 @@ export interface CartItemDto {
   productName: string
   productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM'
   totalPrice: number
+  quantity: number
   selectionDetails: {
     photos?: Array<{ id: string; eventId: string }>
     events?: Array<{ id: string; isPackage: boolean }>
@@ -66,12 +70,19 @@ export interface CreateOrderPayload {
   }
 }
 
+export interface CreateOrderResponse {
+  orderId: string
+  mercadoPagoCheckoutUrl: string
+  paymentMethod: 'FREE' | 'CREDIT' | 'MERCADO_PAGO'
+  contractNumber: string
+  creditUsed?: number
+  remainingCredit?: number
+}
+
 export const createOrder = async (
   payload: CreateOrderPayload,
-): Promise<{ orderId: string; mercadoPagoCheckoutUrl: string }> => {
-  const { data } = await api.post<
-    { orderId: string; mercadoPagoCheckoutUrl: string }
-  >('/v1/orders', payload)
+): Promise<CreateOrderResponse> => {
+  const { data } = await api.post<CreateOrderResponse>('/v1/orders', payload)
   return data
 }
 
@@ -86,3 +97,43 @@ export const updateOrderStatus = async (
   })
   return data
 }
+
+export interface CancelOrderResponse {
+  orderId: string
+  creditReleased: number
+  message: string
+}
+
+export const cancelOrder = async (
+  orderId: string
+): Promise<CancelOrderResponse> => {
+  const { data } = await api.put<CancelOrderResponse>(`/v1/orders/${orderId}/cancel`)
+  return data
+}
+
+export const cancelOrderByClient = async (
+  orderId: string
+): Promise<CancelOrderResponse> => {
+  const { data } = await api.put<CancelOrderResponse>(`/v1/orders/${orderId}/cancel-by-client`)
+  return data
+}
+
+export interface UpdateFulfillmentStatusResponse {
+  message: string
+  orderItemId: string
+  fulfillmentStatus: FulfillmentStatus
+  productType: OrderItemDto['productType']
+}
+
+export const updateItemFulfillmentStatus = async (
+  orderId: string,
+  itemId: string,
+  fulfillmentStatus: FulfillmentStatus
+): Promise<UpdateFulfillmentStatusResponse> => {
+  const { data } = await api.put<UpdateFulfillmentStatusResponse>(
+    `/v1/orders/${orderId}/items/${itemId}/fulfillment-status`,
+    { fulfillmentStatus }
+  )
+  return data
+}
+

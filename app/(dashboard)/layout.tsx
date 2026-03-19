@@ -15,6 +15,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 
+import { ClientTutorial } from "@/components/client/client-tutorial"
+
 export default function DashboardLayout({
   children,
 }: {
@@ -24,6 +26,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
+      <ClientTutorial />
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-center gap-2 px-2 py-2">
@@ -48,7 +51,7 @@ export default function DashboardLayout({
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger id="mobile-menu-trigger" className="-ml-1" />
           <div className="flex flex-1 items-center justify-end gap-2">
             <div className="flex items-center gap-2 md:hidden">
               <h1 className="text-lg font-semibold">
@@ -62,7 +65,7 @@ export default function DashboardLayout({
             </div>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">
+        <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 min-w-0">
           {children}
         </div>
       </SidebarInset>

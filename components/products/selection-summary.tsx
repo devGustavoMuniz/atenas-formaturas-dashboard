@@ -76,7 +76,7 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
         }
 
         const isEventValid = selectedCount >= (eventDetail.minPhotos ?? 0) &&
-                             (eventDetail.maxPhotos ? selectedCount <= eventDetail.maxPhotos : true)
+          (eventDetail.maxPhotos ? selectedCount <= eventDetail.maxPhotos : true)
         const isBelowMin = selectedCount < (eventDetail.minPhotos ?? 0)
         const isAboveMax = eventDetail.maxPhotos && selectedCount > eventDetail.maxPhotos
 
@@ -87,7 +87,7 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
           <div key={eventDetail.id} className="rounded-md border p-3">
             <p className="font-medium">{eventDetail.name}</p>
             <p className="text-sm text-muted-foreground">
-              Mínimo: {eventDetail.minPhotos ?? 0} / Máximo: {eventDetail.maxPhotos ?? '∞'}
+              Mínimo: {eventDetail.minPhotos ?? 0} / Máximo: {eventDetail.maxPhotos && eventDetail.maxPhotos > 0 ? eventDetail.maxPhotos : '∞'}
             </p>
             <p className="text-sm text-muted-foreground">
               Selecionadas: {selectedCount}
@@ -103,12 +103,12 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
               )}
             </p>
             <p className="text-sm text-muted-foreground">
-              Valor por foto: {formatCurrency(eventDetail.valorPhoto)}
+              Valor por foto: {formatCurrency(eventDetail.valorPhoto ?? 0)}
             </p>
             <p className="text-sm font-medium mt-2">
               Subtotal: {formatCurrency(eventTotal)}
             </p>
-          </div>
+          </div >
         )
       })
       .filter(Boolean) // Remove as entradas nulas
@@ -122,27 +122,34 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
         {eventSummaries}
         <div className="mt-4 pt-4 border-t space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Quantidade:</span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setQuantity(quantity - 1)}
-                disabled={quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="w-8 text-center font-medium">{quantity}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setQuantity(quantity + 1)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            {product?.flag !== "DIGITAL_FILES" && (
+              <>
+                <span className="text-sm font-medium">Quantidade:</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setQuantity(quantity - 1)}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-8 text-center font-medium">{quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
+            )}
+            {product?.flag === "DIGITAL_FILES" && (
+              <span className="text-sm font-medium text-muted-foreground">Item único</span>
+            )}
           </div>
           <p className="text-xl font-bold">Total: {formatCurrency(totalGeneral * quantity)}</p>
         </div>
@@ -153,7 +160,7 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
   const renderAlbumSummary = () => {
     const details = institutionProduct?.details as AlbumDetails
     const min = details?.minPhoto ?? 0
-    const max = details?.maxPhoto ?? "∞"
+    const max = details?.maxPhoto && details.maxPhoto > 0 ? details.maxPhoto : "∞"
     const isValid = selectedPhotosCount >= min
 
     return (
@@ -180,8 +187,31 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
             Valor por Foto: {formatCurrency(details?.valorFoto ?? 0)}
           </p>
         </div>
-        <div className="mt-4 pt-4 border-t">
-          <p className="text-xl font-bold">Total: {formatCurrency(albumTotal)}</p>
+        <div className="mt-4 pt-4 border-t space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Quantidade:</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setQuantity(quantity - 1)}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="w-8 text-center font-medium">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setQuantity(quantity + 1)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <p className="text-xl font-bold">Total: {formatCurrency(albumTotal * quantity)}</p>
         </div>
       </div>
     )
@@ -227,7 +257,7 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
           renderDigitalFilesSummary()
         ) : (
           (product?.flag === "GENERIC" || product?.flag === "DIGITAL_FILES") &&
-            renderGenericSummary()
+          renderGenericSummary()
         )}
       </CardContent>
     </Card>

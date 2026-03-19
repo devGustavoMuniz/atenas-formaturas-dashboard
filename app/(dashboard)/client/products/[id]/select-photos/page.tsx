@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { useEffect, useState, useMemo, useRef } from "react"
+import { ChevronDown, ChevronUp, ShoppingCart } from "lucide-react"
 import { useProductSelectionStore } from "@/lib/store/product-selection-store"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { fetchUserEventPhotos, type EventGroup } from "@/lib/api/photos-api"
@@ -48,6 +48,17 @@ export default function SelectPhotosPage() {
 
   const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
 
+  // Ref para o resumo de compra
+  const summaryRef = useRef<HTMLDivElement>(null)
+
+  // Função para rolar até o resumo
+  const scrollToSummary = () => {
+    summaryRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    })
+  }
+
   // Verificar se algum evento tem valorPack configurado
   const hasAnyValorPack = useMemo(() => {
     if (!isDigitalFilesPackage || !institutionProduct?.details) return false
@@ -72,7 +83,7 @@ export default function SelectPhotosPage() {
 
         const details = institutionProduct?.details
 
-        if (details?.events) {
+        if (details?.events && details.events.length > 0) {
           const allowedEventIds = new Set(details.events.map((e) => e.id))
           filteredEventGroups = data.eventGroups.filter((group) => allowedEventIds.has(group.eventId))
         }
@@ -197,7 +208,7 @@ export default function SelectPhotosPage() {
     selectedPhotosCount,
   ])
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product || !institutionProduct) return
 
     let selection: CartItemSelection | null = null
@@ -262,33 +273,25 @@ export default function SelectPhotosPage() {
       return
     }
 
-    // Para GENERIC, adicionar múltiplos itens ao carrinho baseado na quantidade
-    if (flag === "GENERIC") {
-      for (let i = 0; i < quantity; i++) {
-        const cartItem: CartItem = {
-          id: `${product.id}-${new Date().getTime()}-${i}`,
-          product,
-          institutionProduct,
-          selection,
-          totalPrice,
-        }
-        addToCart(cartItem)
-      }
-      toast({
-        title: "Produto adicionado!",
-        description: `${quantity} x ${product.name} ${quantity > 1 ? 'foram adicionados' : 'foi adicionado'} ao seu carrinho.`
-      })
-    } else {
-      const cartItem: CartItem = {
-        id: `${product.id}-${new Date().getTime()}`,
-        product,
-        institutionProduct,
-        selection,
-        totalPrice,
-      }
-      addToCart(cartItem)
-      toast({ title: "Produto adicionado!", description: `${product.name} foi adicionado ao seu carrinho.` })
+    // Criar o item do carrinho com a quantidade selecionada
+    const cartItem: CartItem = {
+      id: `${product.id}-${crypto.randomUUID()}`,
+      product,
+      institutionProduct,
+      selection,
+      totalPrice,
+      quantity: quantity
     }
+
+    await addToCart(cartItem)
+
+    const quantityMsg = quantity > 1 ? `${quantity} x ` : ''
+    const pluralMsg = quantity > 1 ? 'foram adicionados' : 'foi adicionado'
+
+    toast({
+      title: "Produto adicionado!",
+      description: `${quantityMsg}${product.name} ${pluralMsg} ao seu carrinho.`
+    })
 
     clearSelections()
     setCartOpen(true)
@@ -399,7 +402,7 @@ export default function SelectPhotosPage() {
                 </div>
                 <CollapsibleContent>
                   <CardContent className="pt-4">
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 place-items-center">
                       {group.photos.map((photo) => {
                         const isPhotoSelected = !!selectedPhotos[photo.id]
 
@@ -441,7 +444,7 @@ export default function SelectPhotosPage() {
           ))}
         </div>
         <div className="order-1 lg:order-2 flex flex-col">
-          <div className="order-1">
+          <div ref={summaryRef} className="order-1">
             <SelectionSummary selectedPhotosCount={selectedPhotosCount} eventGroups={eventGroups} />
           </div>
           <div className="order-2 mt-8">
@@ -482,6 +485,22 @@ export default function SelectPhotosPage() {
           )}
         </div>
       </div>
+
+      {/* Botão Flutuante - Aparece quando há seleção */}
+      {(selectedPhotosCount > 0 || Object.values(selectedEvents).some(Boolean) || isPackageComplete) && (
+        <button
+          onClick={scrollToSummary}
+          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-110 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 animate-in fade-in slide-in-from-bottom-5 duration-300"
+          aria-label="Ver resumo de compra"
+        >
+          <ShoppingCart className="h-6 w-6" />
+          {selectedPhotosCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+              {selectedPhotosCount}
+            </span>
+          )}
+        </button>
+      )}
     </div>
   )
 }

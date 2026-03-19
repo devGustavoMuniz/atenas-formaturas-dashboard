@@ -62,6 +62,11 @@ const clientNavItems: NavItem[] = [
     href: "/client/dashboard",
     icon: LayoutDashboard,
   },
+  {
+    title: "Meus Pedidos",
+    href: "/client/orders",
+    icon: ShoppingCart,
+  },
 ]
 
 export function DashboardNav() {
@@ -79,6 +84,12 @@ export function DashboardNav() {
           return (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
+                id={
+                  item.href === "/client/dashboard" ? "sidebar-home" :
+                    item.href === "/client/products" ? "sidebar-products" :
+                      item.href === "/client/orders" ? "sidebar-orders" :
+                        undefined
+                }
                 asChild
                 isActive={isActive}
                 tooltip={item.title}

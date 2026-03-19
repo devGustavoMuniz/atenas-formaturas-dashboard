@@ -14,4 +14,5 @@ export interface CartItem {
   institutionProduct: InstitutionProduct
   selection: CartItemSelection
   totalPrice: number
+  quantity: number
 }

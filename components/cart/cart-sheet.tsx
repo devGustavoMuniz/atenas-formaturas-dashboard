@@ -1,27 +1,32 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useCartStore } from "@/lib/store/cart-store"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { CartItemCard } from "@/components/cart/cart-item-card"
-import { ShoppingCart } from "lucide-react"
+import { ShoppingCart, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 
-const CartItemCardPlaceholder = ({ name }: { name: string }) => (
-  <div className="flex justify-between items-center p-2 border-b">
-    <span>{name}</span>
-    <Button variant="destructive" size="sm">Remover</Button>
-  </div>
-)
-
 export function CartSheet() {
-  const { items, clearCart, isOpen, setCartOpen } = useCartStore((state) => state)
-  const itemCount = items.length
+  const { items, selectedItemIds, toggleItemSelection, clearCart, isOpen, setCartOpen, fetchCart, isSyncing } = useCartStore((state) => state)
+  const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
+  const selectedCount = items.filter(item => selectedItemIds.has(item.id)).length
   const router = useRouter()
+  const previousIsOpen = useRef(false)
 
-  const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
+  useEffect(() => {
+    if (isOpen && !previousIsOpen.current) {
+      fetchCart()
+    }
+    previousIsOpen.current = isOpen
+  }, [isOpen, fetchCart])
+
+  const subtotal = items
+    .filter(item => selectedItemIds.has(item.id))
+    .reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
 
   const handleCheckout = () => {
     router.push("/checkout")
@@ -31,7 +36,7 @@ export function CartSheet() {
   return (
     <Sheet open={isOpen} onOpenChange={setCartOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button id="cart-trigger" variant="ghost" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
           {itemCount > 0 && (
             <Badge
@@ -48,10 +53,19 @@ export function CartSheet() {
           <SheetTitle>Meu Carrinho</SheetTitle>
         </SheetHeader>
         <div className="flex-grow overflow-y-auto">
-          {items.length > 0 ? (
+          {isSyncing && items.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : items.length > 0 ? (
             <div className="space-y-2">
-              {items.map((item) => (
-                <CartItemCard key={item.id} item={item} />
+              {items.map((item, index) => (
+                <CartItemCard
+                  key={`${item.id}-${index}`}
+                  item={item}
+                  isSelected={selectedItemIds.has(item.id)}
+                  onToggleSelection={() => toggleItemSelection(item.id)}
+                />
               ))}
             </div>
           ) : (
@@ -65,8 +79,10 @@ export function CartSheet() {
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <Button className="w-full" size="lg" onClick={handleCheckout}>
-                Finalizar Compra
+              <Button className="w-full" size="lg" onClick={handleCheckout} disabled={selectedCount === 0}>
+                {selectedCount > 0 && selectedCount < items.length
+                  ? `Finalizar ${selectedCount} ${selectedCount === 1 ? 'item' : 'itens'}`
+                  : 'Finalizar Compra'}
               </Button>
               <Button variant="ghost" onClick={clearCart} className="text-sm">
                 Limpar Carrinho

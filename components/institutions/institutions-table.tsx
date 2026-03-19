@@ -8,8 +8,6 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
-  type SortingState,
-  getSortedRowModel,
   type ColumnFiltersState,
   getFilteredRowModel,
 } from "@tanstack/react-table"
@@ -22,7 +20,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, ArrowUpDown, Pencil, Trash2, Users } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { fetchInstitutions, deleteInstitution } from "@/lib/api/institutions-api"
@@ -37,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { InstitutionTableToolbar } from "./institution-table-toolbar"
 import { InstitutionCard } from "./institution-card"
 
@@ -51,6 +49,11 @@ type Institution = {
   createdAt: string
 }
 
+type SortConfig = {
+  sortBy: string | null
+  order: "asc" | "desc" | null
+}
+
 const getErrorMessage = (error: any): string => {
   if (error?.response?.data?.message) {
     return error.response.data.message
@@ -62,13 +65,13 @@ const getErrorMessage = (error: any): string => {
 }
 
 export function InstitutionsTable() {
-  const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [deleteInstitutionId, setDeleteInstitutionId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ sortBy: null, order: null })
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -83,12 +86,14 @@ export function InstitutionsTable() {
   }, [searchTerm])
 
   const { data: institutions = [], isLoading } = useQuery({
-    queryKey: ["institutions", currentPage, pageSize, debouncedSearchTerm],
+    queryKey: ["institutions", currentPage, pageSize, debouncedSearchTerm, sortConfig.sortBy, sortConfig.order],
     queryFn: () =>
       fetchInstitutions({
         page: currentPage,
         limit: pageSize,
         search: debouncedSearchTerm || undefined,
+        sortBy: sortConfig.sortBy || undefined,
+        order: sortConfig.order || undefined,
       }),
   })
 
@@ -98,7 +103,7 @@ export function InstitutionsTable() {
       queryClient.invalidateQueries({ queryKey: ["institutions"] })
       toast({
         title: "Contrato excluído",
-description: "O contrato foi excluído com sucesso.",
+        description: "O contrato foi excluído com sucesso.",
       })
     },
     onError: (error) => {
@@ -126,25 +131,52 @@ description: "O contrato foi excluído com sucesso.",
     setSearchTerm(search)
   }, [])
 
+  const handleSort = (columnId: string) => {
+    setSortConfig((prev) => {
+      // If clicking the same column
+      if (prev.sortBy === columnId) {
+        // Cycle through: asc -> desc -> null
+        if (prev.order === "asc") {
+          return { sortBy: columnId, order: "desc" }
+        } else if (prev.order === "desc") {
+          return { sortBy: null, order: null }
+        }
+      }
+      // New column or resetting
+      return { sortBy: columnId, order: "asc" }
+    })
+    setCurrentPage(1) // Reset to first page when sorting changes
+  }
+
+  const getSortIcon = (columnId: string) => {
+    if (sortConfig.sortBy !== columnId) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />
+    }
+    if (sortConfig.order === "asc") {
+      return <ArrowUp className="ml-2 h-4 w-4" />
+    }
+    return <ArrowDown className="ml-2 h-4 w-4" />
+  }
+
   const columns: ColumnDef<Institution>[] = [
     {
       accessorKey: "contractNumber",
-      header: ({ column }) => {
+      header: () => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <Button variant="ghost" onClick={() => handleSort("contractNumber")}>
             Nº do Contrato
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {getSortIcon("contractNumber")}
           </Button>
         )
       },
     },
     {
       accessorKey: "name",
-      header: ({ column }) => {
+      header: () => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <Button variant="ghost" onClick={() => handleSort("name")}>
             Nome
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {getSortIcon("name")}
           </Button>
         )
       },
@@ -172,7 +204,14 @@ description: "O contrato foi excluído com sucesso.",
     },
     {
       accessorKey: "createdAt",
-      header: "Data de Criação",
+      header: () => {
+        return (
+          <Button variant="ghost" onClick={() => handleSort("createdAt")}>
+            Data de Criação
+            {getSortIcon("createdAt")}
+          </Button>
+        )
+      },
       cell: ({ row }) => {
         return new Date(row.getValue<string>("createdAt")).toLocaleDateString("pt-BR")
       },
@@ -215,12 +254,9 @@ description: "O contrato foi excluído com sucesso.",
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     state: {
-      sorting,
       columnFilters,
     },
   })
@@ -328,4 +364,3 @@ description: "O contrato foi excluído com sucesso.",
     </div>
   )
 }
-

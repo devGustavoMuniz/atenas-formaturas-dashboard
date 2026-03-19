@@ -20,8 +20,8 @@ import { formatCurrency } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { getAddressByCEP } from "@/lib/api/cep-api"
-import { createPaymentPreference } from "@/lib/api/mercado-pago-api";
 import { createOrder, CreateOrderPayload } from "@/lib/api/orders-api";
 import { fetchUserById } from "@/lib/api/users-api";
 import { Loader2 } from "lucide-react"
@@ -45,15 +45,21 @@ const addressFormSchema = z.object({
 type AddressFormValues = z.infer<typeof addressFormSchema>
 
 export default function CheckoutPage() {
-  const { items, clearCart } = useCartStore()
+  const router = useRouter()
+  const { items, selectedItemIds } = useCartStore()
   const { user } = useAuthStore()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
-  const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0)
+
+  const selectedItems = items.filter((i) => selectedItemIds.has(i.id))
+
+  const subtotal = selectedItems.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0)
 
   // Cálculo do crédito aplicado
-  const userCredit = user?.creditValue ?? 0
-  const creditApplied = Math.min(userCredit, subtotal)
-  const amountToPay = subtotal - creditApplied
+  const availableCreditTotal = user?.creditValue ?? 0
+  const backendReserved = user?.creditReserved ?? 0
+
+  const creditApplied = Math.min(availableCreditTotal, subtotal)
+  const amountToPay = Math.max(0, subtotal - creditApplied)
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
@@ -77,12 +83,12 @@ export default function CheckoutPage() {
       if (user?.id) {
         try {
           const fullUserData = await fetchUserById(user.id)
-          
+
           // Set phone if available
           if (fullUserData.phone) {
             form.setValue("phone", fullUserData.phone)
           }
-          
+
           // Set address fields if available
           if (fullUserData.address) {
             if (fullUserData.address.zipCode) form.setValue("zipCode", fullUserData.address.zipCode)
@@ -148,8 +154,14 @@ export default function CheckoutPage() {
     const areaCode = cleanedPhone.substring(0, 2);
     const phoneNumber = cleanedPhone.substring(2);
 
+    if (selectedItems.length === 0) {
+      toast.error("Selecione ao menos um item para continuar.");
+      setIsCreatingPreference(false);
+      return;
+    }
+
     const orderPayload: CreateOrderPayload = {
-      cartItems: items.map(item => {
+      cartItems: selectedItems.map(item => {
         let productType: 'GENERIC' | 'DIGITAL_FILES' | 'ALBUM';
         if (item.product.flag === 'GENERIC') {
           productType = 'GENERIC';
@@ -185,6 +197,7 @@ export default function CheckoutPage() {
           productName: item.product.name,
           productType: productType,
           totalPrice: item.totalPrice,
+          quantity: item.quantity,
           selectionDetails: selectionDetails,
         };
       }),
@@ -210,15 +223,36 @@ export default function CheckoutPage() {
 
     try {
       // 1. Criar o pedido no backend
-      const { orderId, mercadoPagoCheckoutUrl } = await createOrder(orderPayload);
+      const response = await createOrder(orderPayload);
+      console.log("createOrder response:", response);
 
-      // 2. Criar a preferência de pagamento com o ID do pedido (Mercado Pago)
-      // O backend agora é responsável por criar a preferência de pagamento e retornar a URL
-      // Não precisamos mais construir o payload do Mercado Pago aqui, apenas usar o que o backend retornou.
+      // 2. Verificar o método de pagamento retornado
+      if (response.paymentMethod === 'FREE' || response.paymentMethod === 'CREDIT') {
+        // Atualiza o crédito no store para refletir imediatamente na topbar
+        const currentUser = useAuthStore.getState().user
+        if (currentUser) {
+          useAuthStore.getState().setUser({
+            ...currentUser,
+            creditValue: response.remainingCredit ?? 0,
+          })
+        }
 
-      // 3. Limpar o carrinho e redirecionar para o Mercado Pago
-      clearCart();
-      window.location.href = mercadoPagoCheckoutUrl;
+        // Pedido foi pago com crédito ou é gratuito
+        // Redirecionar para página de confirmação com os dados do crédito
+        const queryParams = new URLSearchParams({
+          orderId: response.orderId,
+          contractNumber: response.contractNumber,
+          paymentMethod: response.paymentMethod,
+          creditUsed: response.creditUsed?.toString() || '0',
+          remainingCredit: response.remainingCredit?.toString() || '0',
+        });
+
+        router.push(`/checkout/credit-confirmed?${queryParams.toString()}`);
+      } else if (response.paymentMethod === 'MERCADO_PAGO') {
+        // Precisa pagar via Mercado Pago
+        // Redirecionar para o checkout do Mercado Pago
+        window.location.href = response.mercadoPagoCheckoutUrl;
+      }
 
     } catch (error) {
       console.error(error);
@@ -345,24 +379,24 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-1">
-                                <FormLabel>Telefone com DDD</FormLabel>
-                                <FormControl>
-                                    <IMaskInput
-                                        mask={["(00) 0000-0000", "(00) 00000-0000"]}
-                                        unmask={false}
-                                        value={field.value}
-                                        onAccept={(value) => field.onChange(value)}
-                                        placeholder="(00) 00000-0000"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-1">
+                          <FormLabel>Telefone com DDD</FormLabel>
+                          <FormControl>
+                            <IMaskInput
+                              mask={["(00) 0000-0000", "(00) 00000-0000"]}
+                              unmask={false}
+                              value={field.value}
+                              onAccept={(value) => field.onChange(value)}
+                              placeholder="(00) 00000-0000"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
                 </form>
@@ -377,23 +411,31 @@ export default function CheckoutPage() {
               <CardTitle>Resumo do Pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.length > 0 ? (
-                items.map(item => (
-                  <div key={item.id} className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold">{item.product.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.selection.type === 'ALBUM' && `${item.selection.selectedPhotos.length} fotos`}
-                        {item.selection.type === 'GENERIC' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
-                        {item.selection.type === 'DIGITAL_FILES_UNIT' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
-                        {item.selection.type === 'DIGITAL_FILES_PACKAGE' && (item.selection.isPackageComplete ? 'Pacote Completo' : `${item.selection.selectedEvents.length} evento(s)`)}
-                      </p>
+              {selectedItems.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedItems.map((item, index) => (
+                    <div
+                      key={`${item.id}-${index}`}
+                      className="flex items-start justify-between gap-2 rounded-md p-2"
+                    >
+                      <div>
+                        <p className="font-semibold leading-tight">
+                          {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}
+                          {item.product.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.selection.type === 'ALBUM' && `${item.selection.selectedPhotos.length} fotos`}
+                          {item.selection.type === 'GENERIC' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
+                          {item.selection.type === 'DIGITAL_FILES_UNIT' && `${Object.values(item.selection.selectedPhotos).flat().length} fotos`}
+                          {item.selection.type === 'DIGITAL_FILES_PACKAGE' && (item.selection.isPackageComplete ? 'Pacote Completo' : `${item.selection.selectedEvents.length} evento(s)`)}
+                        </p>
+                      </div>
+                      <p className="shrink-0 font-medium">{formatCurrency(item.totalPrice * item.quantity)}</p>
                     </div>
-                    <p className="font-medium">{formatCurrency(item.totalPrice)}</p>
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
-                <p className="text-center text-muted-foreground">Seu carrinho está vazio.</p>
+                <p className="text-center text-muted-foreground">Nenhum item selecionado.</p>
               )}
               <Separator />
               <div className="flex justify-between">
@@ -401,13 +443,41 @@ export default function CheckoutPage() {
                 <p className="text-muted-foreground">{formatCurrency(subtotal)}</p>
               </div>
               {creditApplied > 0 && (
-                <div className="flex justify-between items-center text-green-600 dark:text-green-500">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4" />
-                    <p>Crédito aplicado</p>
+                <>
+                  <div className="flex justify-between items-center text-green-600 dark:text-green-500">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-4 w-4" />
+                      <p>Crédito aplicado</p>
+                    </div>
+                    <p className="font-medium">-{formatCurrency(creditApplied)}</p>
                   </div>
-                  <p className="font-medium">-{formatCurrency(creditApplied)}</p>
-                </div>
+
+                  {/* Card informativo sobre o crédito */}
+                  <div className="rounded-md border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-3">
+                    <div className="flex items-start gap-2">
+                      <Wallet className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <p className="text-sm font-semibold text-green-900 dark:text-green-100">
+                          💰 Informações do Seu Crédito
+                        </p>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="text-green-700 dark:text-green-300">Crédito disponível:</span>
+                            <span className="font-semibold text-green-900 dark:text-green-100">{formatCurrency(availableCreditTotal)}</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-green-100 dark:bg-green-900/30 -mx-1 px-1 py-1 rounded">
+                            <span className="text-green-700 dark:text-green-300">Usado nesta compra:</span>
+                            <span className="font-bold text-green-900 dark:text-green-100">{formatCurrency(creditApplied)}</span>
+                          </div>
+                          <div className="flex justify-between items-center pt-1 border-t border-green-200 dark:border-green-800">
+                            <span className="text-green-700 dark:text-green-300">Saldo após compra:</span>
+                            <span className="font-semibold text-green-900 dark:text-green-100">{formatCurrency(availableCreditTotal - creditApplied)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
               <div className="flex justify-between">
                 <p className="text-muted-foreground">Frete</p>
@@ -416,12 +486,20 @@ export default function CheckoutPage() {
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <p>{creditApplied > 0 ? 'Valor a pagar' : 'Total'}</p>
-                <p className="text-green-600 dark:text-green-500">{formatCurrency(amountToPay)}</p>
+                <p className={creditApplied > 0 ? "text-green-600 dark:text-green-500" : ""}>{formatCurrency(amountToPay)}</p>
               </div>
-              <Button 
-                onClick={form.handleSubmit(onSubmit)} 
+
+              {amountToPay === 0 && creditApplied > 0 && (
+                <div className="rounded-md border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-3 text-center">
+                  <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                    🎉 Nada a pagar! Seu crédito cobre todo o valor.
+                  </p>
+                </div>
+              )}
+              <Button
+                onClick={form.handleSubmit(onSubmit)}
                 className="w-full mt-4"
-                disabled={items.length === 0 || isCreatingPreference}
+                disabled={selectedItems.length === 0 || isCreatingPreference}
               >
                 {isCreatingPreference ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

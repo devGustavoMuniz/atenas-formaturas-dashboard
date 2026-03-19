@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
@@ -9,12 +9,22 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createInstitution, updateInstitution, fetchInstitutionById } from "@/lib/api/institutions-api"
+import { createInstitution, updateInstitution, fetchInstitutionById, sendCredentials, deleteInstitutionEvent } from "@/lib/api/institutions-api"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, X, Settings } from "lucide-react"
+import { Plus, X, Settings, Mail, Loader2, Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const institutionFormSchema = z.object({
   contractNumber: z.string().min(1, {
@@ -75,12 +85,16 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     name: "events",
   })
 
+  // Estados para controlar o dialog de confirmação de exclusão
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [eventToDelete, setEventToDelete] = useState<{ index: number; id?: string; name: string } | null>(null)
+
 
   useEffect(() => {
     if (institution && isEditing) {
       const mappedEvents = institution.events && institution.events.length > 0
         ? institution.events.map((event) => ({
-          id: event.id,
+          id: event.id, // Preservar ID para eventos existentes
           name: event.name
         }))
         : [{ name: "" }]
@@ -141,6 +155,90 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
     },
   })
 
+  const sendCredentialsMutation = useMutation({
+    mutationFn: () => sendCredentials(institutionId!),
+    onSuccess: (data) => {
+      if (data.credentialsSent === 0 && data.totalStudents === 0) {
+        toast({
+          title: "Nenhum usuário pendente",
+          description: "Todos os usuários deste contrato já acessaram a plataforma.",
+        })
+      } else if (data.failedEmails > 0) {
+        toast({
+          variant: "destructive",
+          title: "Envio parcial",
+          description: `${data.credentialsSent} de ${data.totalStudents} emails enviados. ${data.failedEmails} falharam.`,
+        })
+      } else {
+        toast({
+          title: "Credenciais enviadas!",
+          description: `${data.credentialsSent} email(s) de boas-vindas enviado(s) com sucesso.`,
+        })
+      }
+    },
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
+      toast({
+        variant: "destructive",
+        title: "Erro ao enviar credenciais",
+        description: errorMessage,
+      })
+    },
+  })
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      return deleteInstitutionEvent(eventId)
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["institution", institutionId] })
+      toast({
+        title: "Evento removido",
+        description: data.message || "O evento foi removido com sucesso.",
+      })
+      setDeleteDialogOpen(false)
+      setEventToDelete(null)
+    },
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error)
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover evento",
+        description: errorMessage,
+      })
+    },
+  })
+
+  // Função para abrir o dialog de confirmação
+  const handleDeleteClick = (index: number) => {
+    const event = form.getValues(`events.${index}`)
+    setEventToDelete({
+      index,
+      id: event.id,
+      name: event.name || "este evento",
+    })
+    setDeleteDialogOpen(true)
+  }
+
+  // Função para confirmar a exclusão
+  const confirmDelete = async () => {
+    if (!eventToDelete) return
+
+    // Se o evento tem ID, é um evento existente no backend - precisa chamar a API
+    if (eventToDelete.id && isEditing) {
+      deleteEventMutation.mutate(eventToDelete.id)
+    } else {
+      // Se não tem ID, é um evento novo que só existe no formulário - remove localmente
+      remove(eventToDelete.index)
+      toast({
+        title: "Evento removido",
+        description: "O evento foi removido do formulário.",
+      })
+      setDeleteDialogOpen(false)
+      setEventToDelete(null)
+    }
+  }
+
   function onSubmit(data: InstitutionFormValues) {
     if (isEditing) {
       updateMutation.mutate({
@@ -182,14 +280,29 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
           </CardDescription>
         </div>
         {isEditing && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push(`/institutions/${institutionId}/products`)}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Configurar Produtos
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => sendCredentialsMutation.mutate()}
+              disabled={sendCredentialsMutation.isPending}
+            >
+              {sendCredentialsMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="mr-2 h-4 w-4" />
+              )}
+              Enviar Credenciais
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/institutions/${institutionId}/products`)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Configurar Produtos
+            </Button>
+          </div>
         )}
       </CardHeader>
       <Form {...form}>
@@ -264,13 +377,13 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
                           </FormControl>
                           <Button
                             type="button"
-                            variant="ghost"
+                            variant="destructive"
                             size="sm"
-                            onClick={() => fields.length > 1 && remove(index)}
+                            onClick={() => fields.length > 1 && handleDeleteClick(index)}
                             disabled={fields.length <= 1}
                             className="shrink-0"
                           >
-                            <X className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Remover</span>
                           </Button>
                         </div>
@@ -296,6 +409,43 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
           </CardFooter>
         </form>
       </Form>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover o evento <strong>"{eventToDelete?.name}"</strong>?
+              {eventToDelete?.id && isEditing && (
+                <> Esta ação não pode ser desfeita e o evento será removido permanentemente do sistema.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteEventMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                confirmDelete()
+              }}
+              disabled={deleteEventMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteEventMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Removendo...
+                </>
+              ) : (
+                "Remover"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }
