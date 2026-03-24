@@ -27,6 +27,7 @@ export interface OrderItemDto {
   itemPrice: number;
   quantity: number;
   fulfillmentStatus: FulfillmentStatus;
+  completedAt?: string;
   createdAt: string;
   details: OrderItemDetailsDto[];
 }

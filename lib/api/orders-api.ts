@@ -128,11 +128,12 @@ export interface UpdateFulfillmentStatusResponse {
 export const updateItemFulfillmentStatus = async (
   orderId: string,
   itemId: string,
-  fulfillmentStatus: FulfillmentStatus
+  fulfillmentStatus: FulfillmentStatus,
+  driveLink?: string
 ): Promise<UpdateFulfillmentStatusResponse> => {
   const { data } = await api.put<UpdateFulfillmentStatusResponse>(
     `/v1/orders/${orderId}/items/${itemId}/fulfillment-status`,
-    { fulfillmentStatus }
+    { fulfillmentStatus, ...(driveLink && { driveLink }) }
   )
   return data
 }

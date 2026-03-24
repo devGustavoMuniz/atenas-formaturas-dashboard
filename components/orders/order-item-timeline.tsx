@@ -12,7 +12,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { FulfillmentStatus, OrderItemDto } from '@/lib/order-types'
-import { cn } from '@/lib/utils'
+import { cn, formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 interface StepConfig {
@@ -161,11 +161,15 @@ export function OrderItemTimeline({ item, onStatusChange, isLoading }: OrderItem
             )}>
               {currentStep?.label}
             </p>
-            {currentStep?.subtitle && (
+            {isCompleted && item.completedAt ? (
+              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                Concluído em {formatDate(item.completedAt)}
+              </p>
+            ) : currentStep?.subtitle ? (
               <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                 {currentStep.subtitle}
               </p>
-            )}
+            ) : null}
           </div>
         </div>
 

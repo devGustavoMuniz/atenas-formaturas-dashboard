@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
 
 import { UserName } from '@/components/users/user-name'
-import { getOrderById, updateOrderStatus, cancelOrder, updateItemFulfillmentStatus } from '@/lib/api/orders-api'
+import { getOrderById, cancelOrder, updateItemFulfillmentStatus } from '@/lib/api/orders-api'
 import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,7 @@ export default function OrderDetailsPage() {
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [driveLink, setDriveLink] = useState('')
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
+  const [pendingFulfillment, setPendingFulfillment] = useState<{ itemId: string; status: FulfillmentStatus } | null>(null)
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
@@ -39,8 +40,8 @@ export default function OrderDetailsPage() {
   })
 
   const { mutate: updateFulfillment } = useMutation({
-    mutationFn: ({ itemId, status }: { itemId: string; status: FulfillmentStatus }) =>
-      updateItemFulfillmentStatus(id, itemId, status),
+    mutationFn: ({ itemId, status, driveLink: link }: { itemId: string; status: FulfillmentStatus; driveLink?: string }) =>
+      updateItemFulfillmentStatus(id, itemId, status, link),
     onMutate: async ({ itemId, status }) => {
       setUpdatingItemId(itemId)
       await queryClient.cancelQueries({ queryKey: ['order', id] })
@@ -56,6 +57,9 @@ export default function OrderDetailsPage() {
       })
       return { previous }
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] })
+    },
     onError: (error: any, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(['order', id], context.previous)
@@ -63,24 +67,6 @@ export default function OrderDetailsPage() {
       toast({ variant: 'destructive', title: 'Erro ao atualizar etapa', description: error.message })
     },
     onSettled: () => setUpdatingItemId(null),
-  })
-
-  const { mutate: markAsCompleted, isPending } = useMutation({
-    mutationFn: (link?: string) => updateOrderStatus(id, 'COMPLETED', link),
-    onSuccess: () => {
-      toast({ title: "Pedido marcado como concluído com sucesso!" })
-      queryClient.invalidateQueries({ queryKey: ['order', id] })
-      queryClient.invalidateQueries({ queryKey: ['orders'] })
-      setShowDriveLinkModal(false)
-      setDriveLink('')
-    },
-    onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: "Erro ao marcar pedido como concluído",
-        description: error.message
-      })
-    },
   })
 
   const { mutate: cancelOrderMutation, isPending: isCancelling } = useMutation({
@@ -107,13 +93,13 @@ export default function OrderDetailsPage() {
     },
   })
 
-  const handleMarkAsCompleted = () => {
-    const hasDigitalFiles = order?.items.some(item => item.productType === 'DIGITAL_FILES')
-
-    if (hasDigitalFiles) {
+  const handleFulfillmentChange = (itemId: string, status: FulfillmentStatus) => {
+    const item = order?.items.find(i => i.id === itemId)
+    if (item?.productType === 'DIGITAL_FILES' && status === 'SENT') {
+      setPendingFulfillment({ itemId, status })
       setShowDriveLinkModal(true)
     } else {
-      markAsCompleted(undefined)
+      updateFulfillment({ itemId, status })
     }
   }
 
@@ -122,11 +108,15 @@ export default function OrderDetailsPage() {
       toast({
         variant: "destructive",
         title: "Link do Google Drive é obrigatório",
-        description: "Por favor, insira o link do Google Drive para pedidos com arquivos digitais."
+        description: "Por favor, insira o link do Google Drive para enviar os arquivos digitais ao cliente."
       })
       return
     }
-    markAsCompleted(driveLink)
+    if (!pendingFulfillment) return
+    updateFulfillment({ itemId: pendingFulfillment.itemId, status: pendingFulfillment.status, driveLink })
+    setShowDriveLinkModal(false)
+    setDriveLink('')
+    setPendingFulfillment(null)
   }
 
   const toggleItemExpansion = (itemId: string) => {
@@ -201,15 +191,6 @@ export default function OrderDetailsPage() {
             </Button>
           )}
 
-          {order.paymentStatus === 'APPROVED' && (
-            <Button
-              onClick={handleMarkAsCompleted}
-              disabled={isPending}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              {isPending ? 'Processando...' : 'Marcar como Concluído'}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -329,7 +310,7 @@ export default function OrderDetailsPage() {
                   <div className="px-4 py-4 bg-muted/5 border-t">
                     <OrderItemTimeline
                       item={item}
-                      onStatusChange={(itemId, status) => updateFulfillment({ itemId, status })}
+                      onStatusChange={handleFulfillmentChange}
                       isLoading={updatingItemId === item.id}
                     />
                   </div>
@@ -345,7 +326,7 @@ export default function OrderDetailsPage() {
           <DialogHeader>
             <DialogTitle>Link do Google Drive</DialogTitle>
             <DialogDescription>
-              Este pedido contém arquivos digitais. Por favor, insira o link do Google Drive com os arquivos para o cliente.
+              Insira o link do Google Drive com os arquivos digitais para o cliente antes de marcar o item como enviado.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -370,17 +351,18 @@ export default function OrderDetailsPage() {
               onClick={() => {
                 setShowDriveLinkModal(false)
                 setDriveLink('')
+                setPendingFulfillment(null)
               }}
-              disabled={isPending}
+              disabled={pendingFulfillment ? updatingItemId === pendingFulfillment.itemId : false}
             >
               Cancelar
             </Button>
             <Button
               onClick={handleConfirmWithDriveLink}
-              disabled={isPending}
+              disabled={pendingFulfillment ? updatingItemId === pendingFulfillment.itemId : false}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
-              {isPending ? 'Processando...' : 'Confirmar e Marcar como Concluído'}
+              Confirmar e Marcar como Enviado
             </Button>
           </DialogFooter>
         </DialogContent>
