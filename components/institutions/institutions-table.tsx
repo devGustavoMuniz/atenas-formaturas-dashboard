@@ -23,7 +23,7 @@ import {
 import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { fetchInstitutions, deleteInstitution } from "@/lib/api/institutions-api"
+import { fetchInstitutions, deleteInstitution, type Institution } from "@/lib/api/institutions-api"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -38,16 +38,6 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { InstitutionTableToolbar } from "./institution-table-toolbar"
 import { InstitutionCard } from "./institution-card"
-
-type Institution = {
-  id: string
-  contractNumber: string
-  name: string
-  observations: string
-  events: string[]
-  userCount: number
-  createdAt: string
-}
 
 type SortConfig = {
   sortBy: string | null
@@ -158,7 +148,7 @@ export function InstitutionsTable() {
     return <ArrowDown className="ml-2 h-4 w-4" />
   }
 
-  const columns: ColumnDef<Institution>[] = [
+  const columns: ColumnDef<Institution, any>[] = [
     {
       accessorKey: "contractNumber",
       header: () => {
@@ -198,7 +188,7 @@ export function InstitutionsTable() {
       accessorKey: "events",
       header: "Eventos",
       cell: ({ row }) => {
-        const events = row.getValue<string[]>("events")
+        const events = row.getValue<Institution["events"]>("events")
         return <Badge variant="outline">{events.length} eventos</Badge>
       },
     },

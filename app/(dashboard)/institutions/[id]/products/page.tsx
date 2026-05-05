@@ -6,11 +6,17 @@ export const metadata: Metadata = {
   description: "Configure quais produtos estão disponíveis para um contrato específico.",
 }
 
-export default function InstitutionProductsPage({ params }: { params: { id: string } }) {
+type InstitutionProductsPageProps = {
+  params: Promise<{ id: string }>
+}
+
+export default async function InstitutionProductsPage({ params }: InstitutionProductsPageProps) {
+  const { id } = await params
+
   return (
     <div className="space-y-6">
       {/* O componente filho cuidará de buscar os dados do contrato */}
-      <ConfiguredProductsList institutionId={params.id} />
+      <ConfiguredProductsList institutionId={id} />
     </div>
   )
 }

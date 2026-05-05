@@ -2,13 +2,13 @@ import { UserPhotosUploadForm } from "@/components/users/user-photos-upload-form
 import { notFound } from "next/navigation";
 
 interface UserPhotosUploadPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function UserPhotosUploadPage({ params }: UserPhotosUploadPageProps) {
-  const { id: userId } = params;
+export default async function UserPhotosUploadPage({ params }: UserPhotosUploadPageProps) {
+  const { id: userId } = await params;
 
   if (!userId) {
     notFound();

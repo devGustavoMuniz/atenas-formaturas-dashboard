@@ -26,8 +26,8 @@ const productFormSchema = z.object({
         required_error: "Selecione uma flag.",
     }),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres." }),
-    photos: z.array(z.string()).default([]),
-    video: z.array(z.string()).default([]),
+    photos: z.array(z.string()),
+    video: z.array(z.string()),
 })
 
 type ProductFormValues = z.infer<typeof productFormSchema>

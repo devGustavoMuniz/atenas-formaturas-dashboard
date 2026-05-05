@@ -8,10 +8,9 @@ import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 interface MobileSidebarProps {
   isOpen: boolean
   setIsOpen: (isOpen: boolean) => void
-  closeSidebar: () => void
 }
 
-export function MobileSidebar({ isOpen, setIsOpen, closeSidebar }: MobileSidebarProps) {
+export function MobileSidebar({ isOpen, setIsOpen }: MobileSidebarProps) {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -21,7 +20,7 @@ export function MobileSidebar({ isOpen, setIsOpen, closeSidebar }: MobileSidebar
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="pr-0">
-        <DashboardNav closeSidebar={closeSidebar} />
+        <DashboardNav />
       </SheetContent>
     </Sheet>
   )

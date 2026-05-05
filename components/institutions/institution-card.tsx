@@ -11,17 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react"
+import type { Institution } from "@/lib/api/institutions-api"
 
 interface InstitutionCardProps {
-  institution: {
-    id: string
-    contractNumber: string
-    name: string
-    observations: string
-    events: string[]
-    userCount: number
-    createdAt: string
-  }
+  institution: Institution
   onDelete: (id: string) => void
 }
 

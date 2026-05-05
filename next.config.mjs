@@ -4,15 +4,7 @@ const nextConfig = {
     domains: ['placeholder.svg'],
     unoptimized: true
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  experimental: {
-    serverComponentsExternalPackages: ['react-image-crop']
-  }
+  serverExternalPackages: ['react-image-crop']
 }
 
 export default nextConfig

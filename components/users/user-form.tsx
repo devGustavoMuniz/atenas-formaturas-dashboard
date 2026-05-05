@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createUser, updateUser, fetchUserById, getPresignedUrl } from "@/lib/api/users-api"
+import { createUser, updateUser, fetchUserById, getPresignedUrl, type User } from "@/lib/api/users-api"
 import { fetchInstitutions } from "@/lib/api/institutions-api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -104,6 +104,7 @@ const userFormSchema = z.object({
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
+type UserPayload = Partial<User> & Record<string, any>
 
 interface UserFormProps {
   userId?: string
@@ -161,7 +162,7 @@ export function UserForm({ userId }: UserFormProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [institutionOpen, setInstitutionOpen] = useState(false)
   const [isCropping, setIsCropping] = useState(false)
-  const [profileImageFilename, setProfileImageFilename] = useState<string | null>(null)
+  const [profileImageFilename, setProfileImageFilename] = useState<string | undefined>(undefined)
   const [showPassword, setShowPassword] = useState(false)
   const [passwordValue, setPasswordValue] = useState("")
   const [isFetchingCep, setIsFetchingCep] = useState(false)
@@ -278,7 +279,7 @@ export function UserForm({ userId }: UserFormProps) {
         state: user.address?.state || "",
       })
       setProfileImage(user.profileImage || null)
-      setProfileImageFilename(user.profileImage || null)
+      setProfileImageFilename(user.profileImage)
       setPasswordValue("********")
     }
   }, [user, form, isEditing])
@@ -309,11 +310,11 @@ export function UserForm({ userId }: UserFormProps) {
     return false
   }
 
-  const cleanFormData = (data: Record<string, any>, isEditMode: boolean) => {
+  const cleanFormData = (data: Record<string, any>, isEditMode: boolean): UserPayload => {
     const cleanedData = { ...data }
 
     // Extract address fields
-    const addressFields = {
+    const addressFields: Record<string, any> = {
       zipCode: cleanedData.zipCode,
       street: cleanedData.street,
       number: cleanedData.number,
@@ -347,7 +348,7 @@ export function UserForm({ userId }: UserFormProps) {
 
     // Clean becaMeasures object
     if (cleanedData.becaMeasures) {
-      const becaMeasuresFields = { ...cleanedData.becaMeasures }
+      const becaMeasuresFields: Record<string, any> = { ...cleanedData.becaMeasures }
 
       // Remove empty fields from becaMeasures
       const hasAnyMeasure = Object.keys(becaMeasuresFields).some((key) => !isFieldEmpty(becaMeasuresFields[key]))
@@ -392,7 +393,7 @@ export function UserForm({ userId }: UserFormProps) {
   }
 
   const createMutation = useMutation({
-    mutationFn: createUser,
+    mutationFn: (data: UserPayload) => createUser(data as Parameters<typeof createUser>[0]),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
       toast({
