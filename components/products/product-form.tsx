@@ -31,7 +31,13 @@ const productFormSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productFormSchema>
 
-export function ProductForm({ productId }: { productId?: string }) {
+type ProductFormProps = {
+    productId?: string
+    onSuccess?: () => void
+    onCancel?: () => void
+}
+
+export function ProductForm({ productId, onSuccess, onCancel }: ProductFormProps) {
     const router = useRouter()
     const { toast } = useToast()
     const queryClient = useQueryClient()
@@ -77,7 +83,11 @@ export function ProductForm({ productId }: { productId?: string }) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
             toast({ title: isEditing ? "Produto atualizado" : "Produto criado", description: `O produto foi salvo com sucesso.` })
-            router.push("/products")
+            if (onSuccess) {
+                onSuccess()
+            } else {
+                router.push("/products")
+            }
         },
         onError: (error) => {
             toast({ variant: "destructive", title: `Erro ao salvar produto`, description: error.message })
@@ -165,24 +175,24 @@ export function ProductForm({ productId }: { productId?: string }) {
     }    
 
     if (isLoading && isEditing) {
-        return <Card><CardHeader><Skeleton className="h-8 w-full" /><Skeleton className="h-4 w-full" /></CardHeader><CardContent><Skeleton className="h-32 w-full" /></CardContent></Card>
+        return <Card className="border-white/10 bg-white/[0.03] text-white shadow-none"><CardHeader><Skeleton className="h-8 w-full bg-zinc-800" /><Skeleton className="h-4 w-full bg-zinc-800" /></CardHeader><CardContent><Skeleton className="h-32 w-full bg-zinc-800" /></CardContent></Card>
     }
     if (isError) {
-        return <Card><CardHeader><CardTitle>Erro</CardTitle><CardDescription>Não foi possível carregar os dados.</CardDescription></CardHeader></Card>
+        return <Card className="border-white/10 bg-white/[0.03] text-white shadow-none"><CardHeader><CardTitle>Erro</CardTitle><CardDescription className="text-zinc-400">Não foi possível carregar os dados.</CardDescription></CardHeader></Card>
     }
 
     const isSubmitting = mutation.isPending;
 
     return (
-        <Card>
+        <Card className="border-white/10 bg-white/[0.03] text-white shadow-none">
             <CardHeader>
-                <CardTitle>{isEditing ? "Editar Produto" : "Novo Produto"}</CardTitle>
-                <CardDescription>{isEditing ? "Atualize as informações." : "Preencha as informações para criar."}</CardDescription>
+                <CardTitle className="text-white">{isEditing ? "Editar Produto" : "Novo Produto"}</CardTitle>
+                <CardDescription className="text-zinc-400">{isEditing ? "Atualize as informações." : "Preencha as informações para criar."}</CardDescription>
             </CardHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-6">
-                        <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome do Produto</FormLabel><FormControl><Input placeholder="Ex: Álbum de Luxo" {...field} /></FormControl><FormMessage /></FormItem>} />
+                        <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel className="text-zinc-200">Nome do Produto</FormLabel><FormControl><Input placeholder="Ex: Álbum de Luxo" className="border-zinc-700 bg-zinc-900 text-zinc-50 placeholder:text-zinc-500 focus-visible:border-yellow-400 focus-visible:ring-yellow-400" {...field} /></FormControl><FormMessage /></FormItem>} />
                         
                         <FormField
                           key={product?.id} // Garante a remontagem do campo quando o produto muda
@@ -190,14 +200,14 @@ export function ProductForm({ productId }: { productId?: string }) {
                           name="flag"
                           render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Categoria</FormLabel>
+                                <FormLabel className="text-zinc-200">Categoria</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value} disabled={isEditing} key={field.value}>
                                   <FormControl>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="border-zinc-700 bg-zinc-900 text-zinc-50 focus:ring-yellow-400">
                                       <SelectValue placeholder="Selecione uma flag" />
                                     </SelectTrigger>
                                   </FormControl>
-                                  <SelectContent>
+                                  <SelectContent className="border-zinc-800 bg-zinc-950 text-zinc-100">
                                     <SelectItem value="ALBUM">Álbum</SelectItem>
                                     <SelectItem value="GENERIC">Produto com seleção de fotos</SelectItem>
                                     <SelectItem value="DIGITAL_FILES">Arquivos Digitais</SelectItem>
@@ -208,9 +218,9 @@ export function ProductForm({ productId }: { productId?: string }) {
                           )}
                         />
 
-                        <FormField control={form.control} name="description" render={({ field }) => <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o produto..." className="min-h-[120px]" {...field} /></FormControl><FormMessage /></FormItem>} />
+                        <FormField control={form.control} name="description" render={({ field }) => <FormItem><FormLabel className="text-zinc-200">Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o produto..." className="min-h-[120px] border-zinc-700 bg-zinc-900 text-zinc-50 placeholder:text-zinc-500 focus-visible:border-yellow-400 focus-visible:ring-yellow-400" {...field} /></FormControl><FormMessage /></FormItem>} />
                         <div className="space-y-2">
-                            <FormLabel>Fotos e Vídeos</FormLabel>
+                            <FormLabel className="text-zinc-200">Fotos e Vídeos</FormLabel>
                             <MediaUploader
                                 onNewFilesChange={handleMediaFilesChange}
                                 onExistingMediaChange={handleExistingMediaChange}
@@ -224,13 +234,27 @@ export function ProductForm({ productId }: { productId?: string }) {
                             {isSubmitting && uploadProgress !== null && (
                                 <div className="flex items-center gap-2">
                                     <Progress value={uploadProgress} className="w-full" />
-                                    <span className="text-sm text-muted-foreground">{Math.round(uploadProgress)}%</span>
+                                    <span className="text-sm text-zinc-400">{Math.round(uploadProgress)}%</span>
                                 </div>
                             )}
                         </div>
                         <div className="flex gap-2 w-full sm:w-auto">
-                            <Button variant="outline" type="button" onClick={() => router.push("/products")} disabled={isSubmitting}>Cancelar</Button>
-                            <Button type="submit" disabled={isSubmitting} className="bg-yellow-500 text-black hover:bg-yellow-400 w-full sm:w-auto">
+                            <Button
+                                variant="outline"
+                                type="button"
+                                className="border-white/10 bg-white/[0.03] text-zinc-200 hover:bg-white/10 hover:text-yellow-300"
+                                onClick={() => {
+                                    if (onCancel) {
+                                        onCancel()
+                                    } else {
+                                        router.push("/products")
+                                    }
+                                }}
+                                disabled={isSubmitting}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={isSubmitting} className="w-full bg-yellow-400 font-semibold text-zinc-950 hover:bg-yellow-300 sm:w-auto">
                                 {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Criar'}
                             </Button>
                         </div>

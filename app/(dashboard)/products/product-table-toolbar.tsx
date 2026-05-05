@@ -2,7 +2,6 @@
 
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,10 +9,10 @@ import { Plus, Search } from "lucide-react"
 
 interface ProductTableToolbarProps {
     onSearchChange: (search: string) => void
+    onCreateClick: () => void
 }
 
-export function ProductTableToolbar({ onSearchChange }: ProductTableToolbarProps) {
-    const router = useRouter()
+export function ProductTableToolbar({ onSearchChange, onCreateClick }: ProductTableToolbarProps) {
     const [searchTerm, setSearchTerm] = useState("")
 
     const handleSearchChange = (value: string) => {
@@ -35,7 +34,7 @@ export function ProductTableToolbar({ onSearchChange }: ProductTableToolbarProps
                     />
                 </div>
             </div>
-            <Button onClick={() => router.push("/products/new")} className="h-10 rounded-xl bg-yellow-400 font-semibold text-zinc-950 shadow-lg shadow-yellow-500/20 hover:bg-yellow-300">
+            <Button onClick={onCreateClick} className="h-10 rounded-xl bg-yellow-400 font-semibold text-zinc-950 shadow-lg shadow-yellow-500/20 hover:bg-yellow-300">
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Produto
             </Button>
