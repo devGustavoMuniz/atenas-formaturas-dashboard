@@ -1,17 +1,16 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useRef } from "react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import Autoplay from "embla-carousel-autoplay"
+import { useQuery } from "@tanstack/react-query"
 import { fetchProductById } from "@/lib/api/products-api"
 import {
   fetchInstitutionProducts,
-  type InstitutionProduct,
 } from "@/lib/api/institution-products-api"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuth } from "@/lib/auth/use-auth"
 import { useProductSelectionStore } from "@/lib/store/product-selection-store"
-import type { Product } from "@/lib/types"
 import {
   Carousel,
   CarouselContent,
@@ -28,7 +27,7 @@ import { Package, Image as ImageIcon, DollarSign } from "lucide-react"
 export default function ProductDetailsPage() {
   const { id: productId } = useParams<{ id: string }>()
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
+  const { user, isLoading: isAuthLoading } = useAuth()
   const setSelectedProduct = useProductSelectionStore(
     (state) => state.setSelectedProduct
   )
@@ -37,54 +36,34 @@ export default function ProductDetailsPage() {
     Autoplay({ delay: 3000, stopOnInteraction: false, stopOnMouseEnter: true })
   )
 
-  const [product, setProduct] = useState<Product | null>(null)
-  const [institutionProduct, setInstitutionProduct] =
-    useState<InstitutionProduct | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["client-product-details", productId, user?.institutionId],
+    queryFn: async () => {
+      const [product, institutionProducts] = await Promise.all([
+        fetchProductById(productId),
+        fetchInstitutionProducts(user!.institutionId),
+      ])
 
-  useEffect(() => {
-    if (!productId || !user) {
-      return
-    }
+      const institutionProduct = institutionProducts.find(
+        (instProduct) => instProduct.product.id === productId
+      )
 
-    if (!user.institutionId) {
-      setError("Usuário não associado a uma instituição.")
-      setIsLoading(false)
-      return
-    }
-
-    const fetchData = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const productData = await fetchProductById(productId)
-        setProduct(productData)
-
-        const institutionProductsData = await fetchInstitutionProducts(
-          user.institutionId
-        )
-        const specificInstitutionProduct = institutionProductsData.find(
-          (instProduct) => instProduct.product.id === productId
-        )
-
-        if (specificInstitutionProduct) {
-          setInstitutionProduct(specificInstitutionProduct)
-        } else {
-          setError(
-            "Detalhes específicos para este produto não encontrados para sua instituição."
-          )
-        }
-      } catch (err) {
-        console.error("Falha ao carregar os detalhes do produto:", err)
-        setError("Falha ao carregar os detalhes do produto.")
-      } finally {
-        setIsLoading(false)
+      if (!institutionProduct) {
+        throw new Error("Detalhes específicos para este produto não encontrados para sua instituição.")
       }
-    }
 
-    fetchData()
-  }, [productId, user])
+      return { product, institutionProduct }
+    },
+    enabled: !!productId && !!user?.institutionId,
+  })
+
+  const product = data?.product
+  const institutionProduct = data?.institutionProduct
 
   const handleAcquireProduct = () => {
     if (product && institutionProduct) {
@@ -93,7 +72,7 @@ export default function ProductDetailsPage() {
     }
   }
 
-  if (isLoading) {
+  if (isAuthLoading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -122,10 +101,18 @@ export default function ProductDetailsPage() {
     )
   }
 
-  if (error) {
+  if (!user?.institutionId) {
     return (
       <div className="container mx-auto px-4 py-8 text-center text-red-500">
-        {error}
+        Usuário não associado a uma instituição.
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center text-red-500">
+        {error instanceof Error ? error.message : "Falha ao carregar os detalhes do produto."}
       </div>
     )
   }

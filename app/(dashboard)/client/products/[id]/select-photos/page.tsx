@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState, useMemo, useRef } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { ChevronDown, ChevronUp, ShoppingCart } from "lucide-react"
 import { useProductSelectionStore } from "@/lib/store/product-selection-store"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuth } from "@/lib/auth/use-auth"
 import { fetchUserEventPhotos, type EventGroup } from "@/lib/api/photos-api"
 import { SelectableImageCard } from "@/components/products/selectable-image-card"
 import { SelectionSummary } from "@/components/products/selection-summary"
@@ -36,17 +37,12 @@ export default function SelectPhotosPage() {
     clearSelections,
     quantity,
   } = useProductSelectionStore((state) => state)
-  const user = useAuthStore((state) => state.user)
-  const [eventGroups, setEventGroups] = useState<EventGroup[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { user, isLoading: isAuthLoading } = useAuth()
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
 
   const isDigitalFilesPackage =
     product?.flag === "DIGITAL_FILES" &&
     (institutionProduct?.details as DigitalFilesDetails)?.isAvailableUnit === false
-
-  const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
 
   // Ref para o resumo de compra
   const summaryRef = useRef<HTMLDivElement>(null)
@@ -68,46 +64,38 @@ export default function SelectPhotosPage() {
     ) ?? false
   }, [isDigitalFilesPackage, institutionProduct])
 
-  useEffect(() => {
-    if (!user?.id) {
-      setError("Usuário não encontrado.")
-      setIsLoading(false)
-      return
-    }
+  const {
+    data: eventGroups = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["select-photos-event-groups", user?.id, institutionProduct?.id],
+    queryFn: async (): Promise<EventGroup[]> => {
+      const data = await fetchUserEventPhotos(user!.id)
+      const details = institutionProduct?.details
 
-    const loadData = async () => {
-      setIsLoading(true)
-      try {
-        const data = await fetchUserEventPhotos(user.id)
-        let filteredEventGroups = data.eventGroups
-
-        const details = institutionProduct?.details
-
-        if (details?.events && details.events.length > 0) {
-          const allowedEventIds = new Set(details.events.map((e) => e.id))
-          filteredEventGroups = data.eventGroups.filter((group) => allowedEventIds.has(group.eventId))
-        }
-
-        setEventGroups(filteredEventGroups)
-
-        const initialOpenStates = filteredEventGroups.reduce(
-          (acc, group) => {
-            acc[group.eventId] = true
-            return acc
-          },
-          {} as Record<string, boolean>
-        )
-        setOpenStates(initialOpenStates)
-      } catch (err) {
-        console.error("Falha ao carregar dados:", err)
-        setError("Falha ao carregar os dados necessários.")
-      } finally {
-        setIsLoading(false)
+      if (details?.events && details.events.length > 0) {
+        const allowedEventIds = new Set(details.events.map((e) => e.id))
+        return data.eventGroups.filter((group) => allowedEventIds.has(group.eventId))
       }
-    }
 
-    loadData()
-  }, [product, institutionProduct, user])
+      return data.eventGroups
+    },
+    enabled: !!user?.id && !!product && !!institutionProduct,
+  })
+
+  const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
+
+  useEffect(() => {
+    const initialOpenStates = eventGroups.reduce(
+      (acc, group) => {
+        acc[group.eventId] = true
+        return acc
+      },
+      {} as Record<string, boolean>
+    )
+    setOpenStates(initialOpenStates)
+  }, [eventGroups])
 
   useEffect(() => {
     if (isDigitalFilesPackage && eventGroups.length === 1) {
@@ -298,7 +286,7 @@ export default function SelectPhotosPage() {
     router.push("/client/products")
   }
 
-  if (isLoading) {
+  if (isAuthLoading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Skeleton className="mb-4 h-8 w-1/4" />
@@ -311,8 +299,12 @@ export default function SelectPhotosPage() {
     )
   }
 
-  if (error) {
-    return <div className="container mx-auto px-4 py-8 text-center text-red-500">{error}</div>
+  if (!user?.id) {
+    return <div className="container mx-auto px-4 py-8 text-center text-red-500">Usuário não encontrado.</div>
+  }
+
+  if (isError) {
+    return <div className="container mx-auto px-4 py-8 text-center text-red-500">Falha ao carregar os dados necessários.</div>
   }
 
   return (

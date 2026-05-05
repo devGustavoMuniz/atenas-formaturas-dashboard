@@ -39,28 +39,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { UserTableToolbar } from "./user-table-toolbar"
 import { UserCard } from "./user-card"
-
-type User = {
-  id: string
-  name: string
-  identifier: string
-  email: string
-  phone: string
-  observations?: string
-  role: "admin" | "client"
-  institutionId: string
-  userContract: string
-  fatherName?: string
-  fatherPhone?: string
-  motherName?: string
-  motherPhone?: string
-  driveLink?: string
-  creditValue?: number
-  profileImage?: string
-  status: "active" | "inactive"
-  createdAt: string
-  lastLoginAt?: string
-}
+import type { User } from "@/lib/types"
 
 type SortConfig = {
   sortBy: string | null

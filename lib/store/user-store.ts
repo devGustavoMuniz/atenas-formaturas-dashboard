@@ -1,5 +1,6 @@
 import { create } from "zustand"
-import { fetchUsers, type User } from "@/lib/api/users-api"
+import { fetchUsers } from "@/lib/api/users-api"
+import type { User } from "@/lib/types"
 
 type UsersState = {
   users: User[]

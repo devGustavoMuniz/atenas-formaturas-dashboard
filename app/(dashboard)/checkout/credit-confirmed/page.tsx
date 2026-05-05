@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle2, Wallet, Loader2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '@/lib/store/cart-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,6 @@ import { Separator } from '@/components/ui/separator'
 import { formatCurrency } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getOrderById } from '@/lib/api/orders-api'
-import type { OrderDto } from '@/lib/order-types'
 
 function CreditConfirmedContent() {
     const router = useRouter()
@@ -22,32 +22,15 @@ function CreditConfirmedContent() {
     const creditUsed = parseFloat(searchParams.get('creditUsed') || '0')
     const remainingCredit = parseFloat(searchParams.get('remainingCredit') || '0')
 
-    const [order, setOrder] = useState<OrderDto | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-
     useEffect(() => {
         fetchCart()
     }, [fetchCart])
 
-    useEffect(() => {
-        if (!orderId) {
-            setIsLoading(false)
-            return
-        }
-
-        const loadOrder = async () => {
-            try {
-                const data = await getOrderById(orderId)
-                setOrder(data)
-            } catch (error) {
-                console.error("Erro ao buscar pedido:", error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        loadOrder()
-    }, [orderId])
+    const { data: order, isLoading } = useQuery({
+        queryKey: ['order', orderId],
+        queryFn: () => getOrderById(orderId),
+        enabled: !!orderId,
+    })
 
     if (isLoading) {
         return (

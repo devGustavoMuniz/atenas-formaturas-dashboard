@@ -1,44 +1,5 @@
 import { api } from "./axios-config"
-
-// Types
-export type User = {
-  id: string
-  name: string
-  identifier: string
-  email: string
-  phone: string
-  observations?: string
-  role: "admin" | "client"
-  institutionId: string
-  userContract: string
-  cpf?: string
-  becaMeasures?: {
-    comprimento?: string
-    cintura?: string
-    busto?: string
-    quadril?: string
-  }
-  fatherName?: string
-  fatherPhone?: string
-  motherName?: string
-  motherPhone?: string
-  driveLink?: string
-  creditValue?: number
-  creditReserved?: number
-  profileImage?: string
-  status: "active" | "inactive"
-  createdAt: string
-  lastLoginAt?: string
-  address?: {
-    zipCode: string
-    street: string
-    number: string
-    complement?: string
-    neighborhood: string
-    city: string
-    state: string
-  }
-}
+import type { User } from "@/lib/types"
 
 export type UserStats = {
   total: number

@@ -1,5 +1,5 @@
 import { api } from "./axios-config"
-import type { User } from "./users-api"
+import type { User } from "@/lib/types"
 
 // Types
 export type ProfileUpdateInput = {

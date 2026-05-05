@@ -1,42 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth/use-auth';
 import { fetchUserEventPhotos } from '@/lib/api/photos-api';
-import { EventGroup } from '@/lib/api/photos-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import Image from 'next/image';
 import { ImagePreviewCard } from "@/components/users/image-preview-card";
-import { cn } from "@/lib/utils";
-
 
 export default function ClientDashboardPage() {
-  const { user } = useAuth();
-  const [eventGroups, setEventGroups] = useState<EventGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const {
+    data,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["user-event-photos", user?.id],
+    queryFn: () => fetchUserEventPhotos(user!.id),
+    enabled: !!user?.id,
+  });
 
-  useEffect(() => {
-    const loadPhotos = async () => {
-      if (user?.id) {
-        try {
-          setLoading(true);
-          const data = await fetchUserEventPhotos(user.id);
-          setEventGroups(data.eventGroups);
-        } catch (err) {
-          console.error('Failed to fetch user photos:', err);
-          setError('Failed to load photos. Please try again later.');
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
+  const eventGroups = data?.eventGroups ?? [];
 
-    loadPhotos();
-  }, [user]);
-
-  if (loading) {
+  if (isAuthLoading || isLoading) {
     return (
       <div className="p-4 space-y-4">
         <Skeleton className="h-10 w-1/4" />
@@ -59,8 +44,8 @@ export default function ClientDashboardPage() {
     );
   }
 
-  if (error) {
-    return <div className="p-4 text-red-500">{error}</div>;
+  if (isError) {
+    return <div className="p-4 text-red-500">Failed to load photos. Please try again later.</div>;
   }
 
   if (!user) {
