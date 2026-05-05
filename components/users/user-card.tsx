@@ -4,33 +4,24 @@ import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2, Upload } from "lucide-react"
+import { Eye, Pencil, Trash2, Upload } from "lucide-react"
+import type { User } from "@/lib/types"
 
 interface UserCardProps {
-  user: {
-    id: string
-    name: string
-    identifier: string
-    email: string
-    role: "admin" | "client"
-    userContract: string
-    profileImage?: string
-  }
+  user: User
+  onView: (user: User) => void
+  onEdit: (user: User) => void
   onDelete: (id: string) => void
 }
 
-export function UserCard({ user, onDelete }: UserCardProps) {
+export function UserCard({ user, onView, onEdit, onDelete }: UserCardProps) {
   const router = useRouter()
 
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm">
+    <div
+      className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm transition-colors hover:bg-white/[0.06]"
+      onClick={() => onView(user)}
+    >
       <div className="flex items-center gap-4">
         <Avatar className="h-12 w-12 ring-1 ring-yellow-400/20">
           <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.name} />
@@ -45,29 +36,44 @@ export function UserCard({ user, onDelete }: UserCardProps) {
           </Badge>
         </div>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:bg-white/5 hover:text-yellow-300">
-            <span className="sr-only">Abrir menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => router.push(`/users/${user.id}/edit`)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Editar
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push(`/users/${user.id}/upload-photos`)}>
-            <Upload className="mr-2 h-4 w-4" />
-            Upload de Fotos
-          </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(user.id)}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            Excluir
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+          onClick={() => onView(user)}
+        >
+          <Eye className="h-4 w-4" />
+          <span className="sr-only">Visualizar</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+          onClick={() => onEdit(user)}
+        >
+          <Pencil className="h-4 w-4" />
+          <span className="sr-only">Editar</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+          onClick={() => router.push(`/users/${user.id}/upload-photos`)}
+        >
+          <Upload className="h-4 w-4" />
+          <span className="sr-only">Upload de fotos</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-red-500/10 hover:text-red-300"
+          onClick={() => onDelete(user.id)}
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Excluir</span>
+        </Button>
+      </div>
     </div>
   )
 }

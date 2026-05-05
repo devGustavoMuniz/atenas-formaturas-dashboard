@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,10 +10,10 @@ import { InstitutionFilter } from "./institution-filter"
 interface UserTableToolbarProps {
   onSearchChange: (search: string) => void
   onInstitutionChange: (institutionId: string | undefined) => void
+  onCreateClick: () => void
 }
 
-export function UserTableToolbar({ onSearchChange, onInstitutionChange }: UserTableToolbarProps) {
-  const router = useRouter()
+export function UserTableToolbar({ onSearchChange, onInstitutionChange, onCreateClick }: UserTableToolbarProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [institutionId, setInstitutionId] = useState<string | undefined>(undefined)
 
@@ -43,7 +42,7 @@ export function UserTableToolbar({ onSearchChange, onInstitutionChange }: UserTa
         </div>
         <InstitutionFilter value={institutionId} onChange={handleInstitutionChange} />
       </div>
-      <Button onClick={() => router.push("/users/new")} className="h-10 rounded-xl bg-yellow-400 font-semibold text-zinc-950 shadow-lg shadow-yellow-500/20 hover:bg-yellow-300">
+      <Button onClick={onCreateClick} className="h-10 rounded-xl bg-yellow-400 font-semibold text-zinc-950 shadow-lg shadow-yellow-500/20 hover:bg-yellow-300">
         <Plus className="mr-2 h-4 w-4" />
         Novo Usuário
       </Button>

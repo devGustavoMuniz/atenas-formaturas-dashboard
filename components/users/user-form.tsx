@@ -97,6 +97,8 @@ type UserPayload = Partial<User> & Record<string, any>
 
 interface UserFormProps {
   userId?: string
+  onSuccess?: () => void
+  onCancel?: () => void
 }
 
 const getErrorMessage = (error: any): string => {
@@ -141,7 +143,7 @@ function PasswordCriteria({ password }: { password: string }) {
   )
 }
 
-export function UserForm({ userId }: UserFormProps) {
+export function UserForm({ userId, onSuccess, onCancel }: UserFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -389,7 +391,11 @@ export function UserForm({ userId }: UserFormProps) {
         title: "Usuário criado",
         description: "O usuário foi criado com sucesso.",
       })
-      router.push("/users")
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push("/users")
+      }
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error)
@@ -413,7 +419,11 @@ export function UserForm({ userId }: UserFormProps) {
         title: "Usuário atualizado",
         description: "O usuário foi atualizado com sucesso.",
       })
-      router.push("/users")
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push("/users")
+      }
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error)
@@ -558,10 +568,10 @@ export function UserForm({ userId }: UserFormProps) {
   }
 
   return (
-    <Card>
+    <Card className="border-white/10 bg-white/[0.03] text-white shadow-none">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <CardDescription>
+          <CardDescription className="text-zinc-400">
             {isEditing
               ? "Atualize as informações do usuário existente."
               : "Preencha as informações para criar um novo usuário."}
@@ -1123,9 +1133,16 @@ export function UserForm({ userId }: UserFormProps) {
               </div>
 
               <div className="flex justify-between mt-4">
-                <Button type="button" variant="outline" onClick={prevStep}>
-                  Voltar
-                </Button>
+                <div className="flex gap-2">
+                  {onCancel && (
+                    <Button type="button" variant="outline" onClick={onCancel}>
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button type="button" variant="outline" onClick={prevStep}>
+                    Voltar
+                  </Button>
+                </div>
                 <Button
                   type="submit"
                   disabled={

@@ -13,14 +13,7 @@ import {
 } from "@tanstack/react-table"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Upload } from "lucide-react"
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Pencil, Trash2, Upload, Mail, Phone, FileText, Building2, Wallet } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -40,11 +33,15 @@ import { useToast } from "@/hooks/use-toast"
 import { UserTableToolbar } from "./user-table-toolbar"
 import { UserCard } from "./user-card"
 import type { User } from "@/lib/types"
+import { UserForm } from "./user-form"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 type SortConfig = {
   sortBy: string | null
   order: "asc" | "desc" | null
 }
+
+type SheetMode = "view" | "create" | "edit"
 
 // Helper function to format relative time
 function formatLastLogin(dateString?: string): string {
@@ -94,6 +91,9 @@ const getErrorMessage = (error: any): string => {
 export function UsersTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [sheetMode, setSheetMode] = useState<SheetMode>("view")
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
   const [searchTerm, setSearchTerm] = useState("")
@@ -149,6 +149,28 @@ export function UsersTable() {
 
   const handleDelete = (id: string) => {
     setDeleteUserId(id)
+  }
+
+  const openCreateSheet = () => {
+    setSelectedUser(null)
+    setSheetMode("create")
+    setIsSheetOpen(true)
+  }
+
+  const openViewSheet = (user: User) => {
+    setSelectedUser(user)
+    setSheetMode("view")
+    setIsSheetOpen(true)
+  }
+
+  const openEditSheet = (user: User) => {
+    setSelectedUser(user)
+    setSheetMode("edit")
+    setIsSheetOpen(true)
+  }
+
+  const closeSheet = () => {
+    setIsSheetOpen(false)
   }
 
   const confirmDelete = () => {
@@ -273,32 +295,44 @@ export function UsersTable() {
         const user = row.original
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:bg-white/5 hover:text-yellow-300">
-                <span className="sr-only">Abrir menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Ações</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => router.push(`/users/${user.id}/edit`)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/users/${user.id}/upload-photos`)}>
-                <Upload className="mr-2 h-4 w-4" />
-                Upload de Fotos
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => handleDelete(user.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center justify-end gap-1" onClick={(event) => event.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+              onClick={() => openViewSheet(user)}
+            >
+              <Eye className="h-4 w-4" />
+              <span className="sr-only">Visualizar</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+              onClick={() => openEditSheet(user)}
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Editar</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+              onClick={() => router.push(`/users/${user.id}/upload-photos`)}
+            >
+              <Upload className="h-4 w-4" />
+              <span className="sr-only">Upload de fotos</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-red-500/10 hover:text-red-300"
+              onClick={() => handleDelete(user.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only">Excluir</span>
+            </Button>
+          </div>
         )
       },
     },
@@ -325,6 +359,7 @@ export function UsersTable() {
             setInstitutionId(id)
             setCurrentPage(1)
           }}
+          onCreateClick={openCreateSheet}
         />
         <div className="rounded-2xl border border-white/10 bg-white/[0.03]">
           <div className="flex h-24 items-center justify-center">
@@ -343,6 +378,7 @@ export function UsersTable() {
           setInstitutionId(id)
           setCurrentPage(1)
         }}
+        onCreateClick={openCreateSheet}
       />
       <div className="hidden overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70 md:block">
         <Table>
@@ -362,7 +398,12 @@ export function UsersTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"} className="border-white/10 hover:bg-white/[0.04]">
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className="cursor-pointer border-white/10 hover:bg-white/[0.04]"
+                  onClick={() => openViewSheet(row.original)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="text-zinc-100">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
@@ -380,7 +421,15 @@ export function UsersTable() {
       </div>
       <div className="block md:hidden space-y-4">
         {users.length > 0 ? (
-          users.map((user) => <UserCard key={user.id} user={user} onDelete={handleDelete} />)
+          users.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onView={openViewSheet}
+              onEdit={openEditSheet}
+              onDelete={handleDelete}
+            />
+          ))
         ) : (
           <div className="flex h-24 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-center text-zinc-400">
             {debouncedSearchTerm ? "Nenhum usuário encontrado para a busca." : "Nenhum resultado encontrado."}
@@ -424,6 +473,128 @@ export function UsersTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className="w-full overflow-y-auto border-l border-yellow-400/20 bg-zinc-950 p-0 text-white sm:max-w-3xl">
+          <div className="border-b border-white/10 bg-white/[0.03] px-6 py-5">
+            <SheetHeader>
+              <SheetTitle className="text-white">
+                {sheetMode === "create" && "Novo usuário"}
+                {sheetMode === "edit" && "Editar usuário"}
+                {sheetMode === "view" && "Detalhes do usuário"}
+              </SheetTitle>
+              <SheetDescription className="text-zinc-400">
+                {sheetMode === "create" && "Cadastre um usuário sem sair da listagem."}
+                {sheetMode === "edit" && "Atualize os dados do usuário selecionado."}
+                {sheetMode === "view" && "Visualize informações de contato, contrato e acesso."}
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+
+          <div className="p-6">
+            {sheetMode === "view" && selectedUser && (
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16 ring-1 ring-yellow-400/25">
+                      <AvatarImage src={selectedUser.profileImage || "/placeholder.svg"} alt={selectedUser.name} />
+                      <AvatarFallback className="bg-zinc-900 text-yellow-300">{selectedUser.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-xl font-semibold text-white">{selectedUser.name}</h3>
+                        <Badge variant="outline" className={selectedUser.role === "admin" ? "border-yellow-400/40 bg-yellow-400/15 text-yellow-200" : "border-white/10 bg-white/10 text-zinc-200"}>
+                          {selectedUser.role === "admin" ? "Administrador" : "Cliente"}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-sm text-zinc-400">{selectedUser.identifier}</p>
+                      <p className="mt-3 text-sm leading-6 text-zinc-400">
+                        {selectedUser.observations || "Nenhuma observação cadastrada."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <Mail className="h-4 w-4 text-yellow-300" />
+                    <p className="mt-3 text-sm font-semibold text-white">{selectedUser.email}</p>
+                    <p className="text-xs text-zinc-400">email</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <Phone className="h-4 w-4 text-yellow-300" />
+                    <p className="mt-3 text-sm font-semibold text-white">{selectedUser.phone || "Não informado"}</p>
+                    <p className="text-xs text-zinc-400">telefone</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <Building2 className="h-4 w-4 text-yellow-300" />
+                    <p className="mt-3 text-sm font-semibold text-white">{selectedUser.userContract}</p>
+                    <p className="text-xs text-zinc-400">contrato</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <Wallet className="h-4 w-4 text-yellow-300" />
+                    <p className="mt-3 text-sm font-semibold text-white">
+                      {selectedUser.creditValue?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "R$ 0,00"}
+                    </p>
+                    <p className="text-xs text-zinc-400">crédito disponível</p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="mb-4 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-yellow-300" />
+                    <h4 className="text-sm font-semibold text-white">Dados complementares</h4>
+                  </div>
+                  <div className="grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="text-zinc-500">CPF</p>
+                      <p className="text-zinc-200">{selectedUser.cpf || "Não informado"}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500">Último login</p>
+                      <p className="text-zinc-200">{formatLastLogin(selectedUser.lastLoginAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500">Criado em</p>
+                      <p className="text-zinc-200">{new Date(selectedUser.createdAt).toLocaleDateString("pt-BR")}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500">Status</p>
+                      <p className="text-zinc-200">{selectedUser.status === "active" ? "Ativo" : "Inativo"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    className="bg-yellow-400 font-semibold text-zinc-950 hover:bg-yellow-300"
+                    onClick={() => setSheetMode("edit")}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar usuário
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-white/10 bg-white/[0.03] text-zinc-200 hover:bg-white/10 hover:text-yellow-300"
+                    onClick={() => router.push(`/users/${selectedUser.id}/upload-photos`)}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload de fotos
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {sheetMode === "create" && (
+              <UserForm onSuccess={closeSheet} onCancel={closeSheet} />
+            )}
+
+            {sheetMode === "edit" && selectedUser && (
+              <UserForm userId={selectedUser.id} onSuccess={closeSheet} onCancel={closeSheet} />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
