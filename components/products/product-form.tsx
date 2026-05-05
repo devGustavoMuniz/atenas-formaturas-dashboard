@@ -16,7 +16,6 @@ import { createProduct, updateProduct, fetchProductById, getPresignedUrlsForProd
 import { api as axiosApi } from "@/lib/api/axios-config"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Product } from "@/lib/types"
 import { MediaUploader, type FilePreview } from "./media-uploader"
 import { Progress } from "../ui/progress"
 
@@ -64,7 +63,12 @@ export function ProductForm({ productId }: { productId?: string }) {
             // --- ALTERAÇÃO AQUI ---
             if (isEditing) {
                 // Remove a propriedade 'flag' do objeto de dados antes de enviar para a atualização
-                const { flag, ...dataToUpdate } = data;
+                const dataToUpdate = {
+                    name: data.name,
+                    description: data.description,
+                    photos: data.photos,
+                    video: data.video,
+                };
                 return updateProduct(productId!, dataToUpdate);
             }
             // A operação de criação continua enviando a 'flag' normalmente
@@ -105,8 +109,8 @@ export function ProductForm({ productId }: { productId?: string }) {
         }
 
         const filesToUpload = [...stagedPhotos, ...stagedVideos];
-        let newPhotoUrls: string[] = [];
-        let newVideoUrls: string[] = [];
+        const newPhotoUrls: string[] = [];
+        const newVideoUrls: string[] = [];
     
         if (filesToUpload.length > 0) {
             setUploadProgress(0);

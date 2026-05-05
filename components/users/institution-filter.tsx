@@ -36,7 +36,6 @@ export function InstitutionFilter({ value, onChange }: InstitutionFilterProps) {
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-        isLoading,
     } = useInfiniteQuery({
         queryKey: ["institutions-filter", debouncedSearch],
         queryFn: async ({ pageParam = 1 }) => {
@@ -56,9 +55,6 @@ export function InstitutionFilter({ value, onChange }: InstitutionFilterProps) {
 
     // Flatten the pages
     const institutions = data?.pages.flatMap((page) => page.data) || []
-
-    const selectedInstitution = institutions.find((i) => i.id === value) ||
-        (value ? { id: value, name: "Carregando...", contractNumber: "" } : null) // Fallback if selected but not in list yet
 
     // Intersection Observer for infinite scroll
     const observerTarget = React.useRef(null)

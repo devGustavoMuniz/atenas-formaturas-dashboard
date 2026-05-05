@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, Image } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, Image as ImageIcon } from 'lucide-react'
 
 import { getOrderById, cancelOrderByClient } from '@/lib/api/orders-api'
 import { OrderItemTimeline } from '@/components/orders/order-item-timeline'
-import { formatDate, formatCurrency, translatePaymentStatus, translateProductType } from '@/lib/utils'
+import { formatDate, formatCurrency, translatePaymentStatus } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -210,7 +210,7 @@ export default function ClientOrderDetailsPage() {
                                     onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
                                 >
                                     {hasDetails && (
-                                        <Image className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                        <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                     )}
                                     <span className="font-medium flex-1 min-w-0">
                                         {item.quantity > 1 && <span className="text-primary mr-1">{item.quantity}x</span>}

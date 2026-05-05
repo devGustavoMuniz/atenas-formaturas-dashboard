@@ -4,12 +4,6 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import type { Product } from "@/lib/types"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { useProductSelectionStore } from "@/lib/store/product-selection-store"
-import { fetchInstitutionProducts } from "@/lib/api/institution-products-api"
-import { useState } from "react"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner"
 
 interface ClientProductCardProps {
   product: Product
@@ -17,14 +11,9 @@ interface ClientProductCardProps {
 
 export function ClientProductCard({ product }: ClientProductCardProps) {
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
-  const setSelectedProduct = useProductSelectionStore(
-    (state) => state.setSelectedProduct
-  )
-  const [isLoading, setIsLoading] = useState(false)
 
-  const handleProductClick = async () => {
-      router.push(`/client/products/${product.id}`)
+  const handleProductClick = () => {
+    router.push(`/client/products/${product.id}`)
   }
 
   return (
@@ -44,11 +33,8 @@ export function ClientProductCard({ product }: ClientProductCardProps) {
       <Button
         onClick={handleProductClick}
         className="mt-auto"
-        disabled={isLoading}
       >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : "Ver Detalhes"}
+        Ver Detalhes
       </Button>
     </div>
   )

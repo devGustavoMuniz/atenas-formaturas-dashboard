@@ -17,7 +17,6 @@ import { IMaskInput } from "react-imask"
 import { getAddressByCEP } from "@/lib/api/cep-api"
 import { useAuth } from "@/lib/auth/use-auth"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import ReactCrop, { type Crop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
@@ -327,7 +326,7 @@ export function ProfileForm() {
     // Mutation for uploading image and updating profile
     const updateProfileMutation = useMutation({
         mutationFn: async ({ data, imageFile }: { data: ProfileUpdateInput; imageFile: File | null }) => {
-            let finalData = { ...data }
+            const finalData = { ...data }
 
             // If there's an image to upload, get presigned URL first
             if (imageFile) {

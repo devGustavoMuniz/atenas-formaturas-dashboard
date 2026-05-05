@@ -125,47 +125,6 @@ export default function ProductDetailsPage() {
     )
   }
 
-  const renderDetail = (key: string, value: any, label?: string) => {
-    const formattedKey =
-      label ||
-      key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())
-    let displayValue = typeof value === "boolean" ? (value ? "Sim" : "Não") : value
-
-    // Formatar valores específicos como moeda (Real Brasileiro)
-    if (
-      typeof value === "number" &&
-      (key === "valorFoto" ||
-        key === "valorPhoto" ||
-        key === "valorEncadernacao")
-    ) {
-      displayValue = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(value)
-    } else if (
-      typeof value === "number" &&
-      (key === "minPhoto" || key === "minPhotos")
-    ) {
-      // Adicionar sufixo "foto" ou "fotos" para mínimo
-      displayValue = value > 0 ? `${value} ${value === 1 ? "foto" : "fotos"}` : "Sem mínimo"
-    } else if (
-      typeof value === "number" &&
-      (key === "maxPhoto" || key === "maxPhotos")
-    ) {
-      // Se for 0, significa ilimitado
-      displayValue = value > 0 ? `${value} ${value === 1 ? "foto" : "fotos"}` : "Ilimitado"
-    }
-
-    return (
-      <div key={key} className="flex justify-between text-sm">
-        <span className="font-medium text-muted-foreground">{formattedKey}:</span>
-        <span className={value === 0 && (key === "maxPhoto" || key === "maxPhotos") ? "italic font-medium" : ""}>
-          {displayValue}
-        </span>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">

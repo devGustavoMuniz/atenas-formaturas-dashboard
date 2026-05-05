@@ -56,7 +56,6 @@ export default function CheckoutPage() {
 
   // Cálculo do crédito aplicado
   const availableCreditTotal = user?.creditValue ?? 0
-  const backendReserved = user?.creditReserved ?? 0
 
   const creditApplied = Math.min(availableCreditTotal, subtotal)
   const amountToPay = Math.max(0, subtotal - creditApplied)
@@ -124,7 +123,7 @@ export default function CheckoutPage() {
           } else {
             toast.error("CEP não encontrado.")
           }
-        } catch (error) {
+        } catch {
           toast.error("Falha ao buscar CEP.")
         } finally {
           setIsFetchingCep(false)
@@ -143,8 +142,6 @@ export default function CheckoutPage() {
     }
 
     setIsCreatingPreference(true);
-
-    console.log("teste deploy");
 
     const nameParts = user.name.trim().split(/\s+/);
     const firstName = nameParts.shift() || '';
@@ -174,7 +171,7 @@ export default function CheckoutPage() {
           productType = 'GENERIC';
         }
 
-        let selectionDetails: any = {};
+        const selectionDetails: CreateOrderPayload["cartItems"][number]["selectionDetails"] = {};
         if (item.selection.type === 'GENERIC' || item.selection.type === 'DIGITAL_FILES_UNIT') {
           selectionDetails.photos = Object.entries(item.selection.selectedPhotos).flatMap(([eventId, photoIds]) =>
             photoIds.map(photoId => ({
@@ -224,7 +221,6 @@ export default function CheckoutPage() {
     try {
       // 1. Criar o pedido no backend
       const response = await createOrder(orderPayload);
-      console.log("createOrder response:", response);
 
       // 2. Verificar o método de pagamento retornado
       if (response.paymentMethod === 'FREE' || response.paymentMethod === 'CREDIT') {

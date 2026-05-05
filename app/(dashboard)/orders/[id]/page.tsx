@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ChevronDown, ChevronUp, Image } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react'
 
 import { UserName } from '@/components/users/user-name'
 import { getOrderById, cancelOrder, updateItemFulfillmentStatus } from '@/lib/api/orders-api'
@@ -243,7 +243,7 @@ export default function OrderDetailsPage() {
                   onClick={hasDetails ? () => toggleItemExpansion(item.id) : undefined}
                 >
                   {hasDetails && (
-                    <Image className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center justify-between gap-2">
