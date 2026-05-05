@@ -1,16 +1,16 @@
 "use client"
 
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuth } from "@/lib/auth/use-auth"
 import { useCartStore } from "@/lib/store/cart-store"
 import { formatCurrency } from "@/lib/utils"
 import { Wallet } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function UserCredit() {
-  const user = useAuthStore((state) => state.user)
+  const { user, isLoading } = useAuth()
   const items = useCartStore((state) => state.items)
 
-  if (!user || user.role !== "client") {
+  if (isLoading || !user || user.role !== "client") {
     return null
   }
 

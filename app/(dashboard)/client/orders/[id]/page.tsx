@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OrderDto } from '@/lib/order-types'
 import { OrderItemPhotos } from '@/components/orders/order-item-photos'
-import { useAuthStore } from '@/lib/store/auth-store'
+import { useAuth } from '@/lib/auth/use-auth'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -25,7 +25,7 @@ export default function ClientOrderDetailsPage() {
     const router = useRouter()
     const { toast } = useToast()
     const queryClient = useQueryClient()
-    const user = useAuthStore((state) => state.user)
+    const { user, isLoading: isAuthLoading } = useAuth()
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
     const [showCancelModal, setShowCancelModal] = useState(false)
 
@@ -94,7 +94,7 @@ export default function ClientOrderDetailsPage() {
         }
     }
 
-    if (isLoading) {
+    if (isAuthLoading || isLoading) {
         return (
             <div className="container mx-auto p-4 space-y-4">
                 <Skeleton className="h-8 w-48" />

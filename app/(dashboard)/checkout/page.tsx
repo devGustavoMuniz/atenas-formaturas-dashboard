@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCartStore } from "@/lib/store/cart-store"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuth } from "@/lib/auth/use-auth"
 import { formatCurrency } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
@@ -47,7 +47,7 @@ type AddressFormValues = z.infer<typeof addressFormSchema>
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, selectedItemIds } = useCartStore()
-  const { user } = useAuthStore()
+  const { user, isLoading: isAuthLoading, updateUser } = useAuth()
   const [isFetchingCep, setIsFetchingCep] = useState(false)
 
   const selectedItems = items.filter((i) => selectedItemIds.has(i.id))
@@ -134,6 +134,14 @@ export default function CheckoutPage() {
   }, [zipCodeValue, form])
 
   const [isCreatingPreference, setIsCreatingPreference] = useState(false)
+
+  if (isAuthLoading) {
+    return (
+      <div className="container mx-auto flex min-h-[calc(100vh-10rem)] items-center justify-center p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   const onSubmit = async (data: AddressFormValues) => {
     if (!user) {
@@ -225,10 +233,9 @@ export default function CheckoutPage() {
       // 2. Verificar o método de pagamento retornado
       if (response.paymentMethod === 'FREE' || response.paymentMethod === 'CREDIT') {
         // Atualiza o crédito no store para refletir imediatamente na topbar
-        const currentUser = useAuthStore.getState().user
-        if (currentUser) {
-          useAuthStore.getState().setUser({
-            ...currentUser,
+        if (user) {
+          updateUser({
+            ...user,
             creditValue: response.remainingCredit ?? 0,
           })
         }

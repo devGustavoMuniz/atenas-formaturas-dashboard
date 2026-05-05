@@ -2,20 +2,19 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuth } from "@/lib/auth/use-auth"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Home() {
   const router = useRouter()
-  const { user, isAuthenticated, _hasHydrated } = useAuthStore()
+  const { user, isLoading } = useAuth()
 
   useEffect(() => {
-    // Don't redirect until the store has been hydrated
-    if (!_hasHydrated) {
+    if (isLoading) {
       return
     }
 
-    if (isAuthenticated && user) {
+    if (user) {
       if (user.role === "admin") {
         router.replace("/dashboard")
       } else {
@@ -24,7 +23,7 @@ export default function Home() {
     } else {
       router.replace("/login")
     }
-  }, [isAuthenticated, user, router, _hasHydrated])
+  }, [isLoading, user, router])
 
   // Show a loading state while the auth store is hydrating
   return (

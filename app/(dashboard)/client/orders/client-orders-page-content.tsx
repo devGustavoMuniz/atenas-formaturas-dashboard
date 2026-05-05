@@ -7,7 +7,7 @@ import Link from "next/link"
 import { getOrders } from "@/lib/api/orders-api"
 import { OrderDto } from "@/lib/order-types"
 import { formatDate, formatCurrency, translatePaymentStatus } from "@/lib/utils"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuth } from "@/lib/auth/use-auth"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,7 @@ import {
 export function ClientOrdersPageContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const user = useAuthStore((state) => state.user)
+    const { user, isLoading: isAuthLoading } = useAuth()
 
     const pageIndex = parseInt(searchParams.get("page") ?? "1")
     // Clientes geralmente não precisam filtrar por status na listagem simples, mas podemos manter se quiser
@@ -59,7 +59,7 @@ export function ClientOrdersPageContent() {
         }
     }
 
-    if (isLoading && !result) {
+    if ((isAuthLoading || isLoading) && !result) {
         return (
             <div className="space-y-2 mt-4">
                 <Skeleton className="h-8 w-full" />

@@ -73,6 +73,10 @@ export function DashboardNav() {
   const pathname = usePathname()
   const { user } = useAuth()
 
+  if (!user) {
+    return null
+  }
+
   const currentNavItems = user?.role === "admin" ? adminNavItems : clientNavItems
 
   return (

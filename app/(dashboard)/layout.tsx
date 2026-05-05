@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { usePathname } from "next/navigation"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { UserNav } from "@/components/dashboard/user-nav"
 import { UserCredit } from "@/components/dashboard/user-credit"
@@ -17,12 +18,31 @@ import {
 
 import { ClientTutorial } from "@/components/client/client-tutorial"
 
+const clientOnlyPrefixes = ["/client", "/checkout", "/payment"]
+const adminOnlyPrefixes = ["/dashboard", "/users", "/orders", "/products", "/institutions"]
+
+function isRoute(pathname: string | null, routes: string[]) {
+  return routes.some((route) => pathname === route || pathname?.startsWith(`${route}/`))
+}
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
+  const pathname = usePathname()
+  const isRoleMismatch =
+    (user?.role === "client" && isRoute(pathname, adminOnlyPrefixes)) ||
+    (user?.role === "admin" && isRoute(pathname, clientOnlyPrefixes))
+
+  if (isLoading || !user || isRoleMismatch) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-yellow-500" />
+      </div>
+    )
+  }
 
   return (
     <SidebarProvider>
