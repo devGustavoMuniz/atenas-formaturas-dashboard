@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,10 +7,10 @@ import { Plus, Search } from "lucide-react"
 
 interface InstitutionTableToolbarProps {
   onSearchChange: (search: string) => void
+  onCreateClick: () => void
 }
 
-export function InstitutionTableToolbar({ onSearchChange }: InstitutionTableToolbarProps) {
-  const router = useRouter()
+export function InstitutionTableToolbar({ onSearchChange, onCreateClick }: InstitutionTableToolbarProps) {
   const [searchTerm, setSearchTerm] = useState("")
 
   const handleSearchChange = (value: string) => {
@@ -33,7 +32,7 @@ export function InstitutionTableToolbar({ onSearchChange }: InstitutionTableTool
           />
         </div>
       </div>
-      <Button onClick={() => router.push("/institutions/new")} className="h-10 rounded-xl bg-yellow-400 font-semibold text-zinc-950 shadow-lg shadow-yellow-500/20 hover:bg-yellow-300">
+      <Button onClick={onCreateClick} className="h-10 rounded-xl bg-yellow-400 font-semibold text-zinc-950 shadow-lg shadow-yellow-500/20 hover:bg-yellow-300">
         <Plus className="mr-2 h-4 w-4" />
         Novo Contrato
       </Button>

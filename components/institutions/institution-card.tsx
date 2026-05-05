@@ -1,52 +1,54 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react"
+import { Eye, Pencil, Trash2, Users } from "lucide-react"
 import type { Institution } from "@/lib/api/institutions-api"
 
 interface InstitutionCardProps {
   institution: Institution
+  onView: (institution: Institution) => void
+  onEdit: (institution: Institution) => void
   onDelete: (id: string) => void
 }
 
-export function InstitutionCard({ institution, onDelete }: InstitutionCardProps) {
-  const router = useRouter()
-
+export function InstitutionCard({ institution, onView, onEdit, onDelete }: InstitutionCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm">
+    <div
+      className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm transition-colors hover:bg-white/[0.06]"
+      onClick={() => onView(institution)}
+    >
       <div className="flex items-center justify-between">
         <div className="font-semibold text-white">{institution.name}</div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:bg-white/5 hover:text-yellow-300">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => router.push(`/institutions/${institution.id}/edit`)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(institution.id)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+            onClick={() => onView(institution)}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="sr-only">Visualizar</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-white/5 hover:text-yellow-300"
+            onClick={() => onEdit(institution)}
+          >
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Editar</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg text-zinc-400 hover:bg-red-500/10 hover:text-red-300"
+            onClick={() => onDelete(institution.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="sr-only">Excluir</span>
+          </Button>
+        </div>
       </div>
       <div className="text-sm text-zinc-400">Contrato: {institution.contractNumber}</div>
       <div className="flex items-center gap-2 text-sm text-zinc-400">

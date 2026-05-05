@@ -11,10 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createInstitution, updateInstitution, fetchInstitutionById, sendCredentials, deleteInstitutionEvent } from "@/lib/api/institutions-api"
+import { createInstitution, updateInstitution, fetchInstitutionById, deleteInstitutionEvent } from "@/lib/api/institutions-api"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, Settings, Mail, Loader2, Trash2 } from "lucide-react"
+import { Plus, Loader2, Trash2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +46,8 @@ type InstitutionFormValues = z.infer<typeof institutionFormSchema>
 
 interface InstitutionFormProps {
   institutionId?: string
+  onSuccess?: () => void
+  onCancel?: () => void
 }
 
 const getErrorMessage = (error: any): string => {
@@ -58,7 +60,7 @@ const getErrorMessage = (error: any): string => {
   return "Ocorreu um erro inesperado. Tente novamente."
 }
 
-export function InstitutionForm({ institutionId }: InstitutionFormProps) {
+export function InstitutionForm({ institutionId, onSuccess, onCancel }: InstitutionFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -119,7 +121,11 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
         title: "Contrato criado",
         description: "O contrato foi criado com sucesso.",
       })
-      router.push("/institutions")
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push("/institutions")
+      }
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error)
@@ -143,44 +149,17 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
         title: "Contrato atualizado",
         description: "O contrato foi atualizado com sucesso.",
       })
-      router.push("/institutions")
-    },
-    onError: (error) => {
-      const errorMessage = getErrorMessage(error)
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar contrato",
-        description: errorMessage,
-      })
-    },
-  })
-
-  const sendCredentialsMutation = useMutation({
-    mutationFn: () => sendCredentials(institutionId!),
-    onSuccess: (data) => {
-      if (data.credentialsSent === 0 && data.totalStudents === 0) {
-        toast({
-          title: "Nenhum usuário pendente",
-          description: "Todos os usuários deste contrato já acessaram a plataforma.",
-        })
-      } else if (data.failedEmails > 0) {
-        toast({
-          variant: "destructive",
-          title: "Envio parcial",
-          description: `${data.credentialsSent} de ${data.totalStudents} emails enviados. ${data.failedEmails} falharam.`,
-        })
+      if (onSuccess) {
+        onSuccess()
       } else {
-        toast({
-          title: "Credenciais enviadas!",
-          description: `${data.credentialsSent} email(s) de boas-vindas enviado(s) com sucesso.`,
-        })
+        router.push("/institutions")
       }
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error)
       toast({
         variant: "destructive",
-        title: "Erro ao enviar credenciais",
+        title: "Erro ao atualizar contrato",
         description: errorMessage,
       })
     },
@@ -252,16 +231,16 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
 
   if (isLoading && isEditing) {
     return (
-      <Card>
+      <Card className="border-white/10 bg-white/[0.03] text-white">
         <CardHeader>
-          <Skeleton className="h-8 w-[200px]" />
-          <Skeleton className="h-4 w-[300px]" />
+          <Skeleton className="h-8 w-[200px] bg-zinc-800" />
+          <Skeleton className="h-4 w-[300px] bg-zinc-800" />
         </CardHeader>
         <CardContent className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-[100px]" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-4 w-[100px] bg-zinc-800" />
+              <Skeleton className="h-10 w-full bg-zinc-800" />
             </div>
           ))}
         </CardContent>
@@ -270,40 +249,15 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
   }
 
   return (
-    <Card>
+    <Card className="border-white/10 bg-white/[0.03] text-white shadow-none">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <CardDescription>
+          <CardDescription className="text-zinc-400">
             {isEditing
               ? "Atualize as informações do contrato existente."
               : "Preencha as informações para criar um novo contrato."}
           </CardDescription>
         </div>
-        {isEditing && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => sendCredentialsMutation.mutate()}
-              disabled={sendCredentialsMutation.isPending}
-            >
-              {sendCredentialsMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Mail className="mr-2 h-4 w-4" />
-              )}
-              Enviar Credenciais
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(`/institutions/${institutionId}/products`)}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Configurar Produtos
-            </Button>
-          </div>
-        )}
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -313,9 +267,9 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
               name="contractNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Número do Contrato</FormLabel>
+                  <FormLabel className="text-zinc-200">Número do Contrato</FormLabel>
                   <FormControl>
-                    <Input placeholder="CONT-0000" {...field} />
+                    <Input placeholder="CONT-0000" className="border-zinc-700 bg-zinc-900 text-zinc-50 placeholder:text-zinc-500 focus-visible:border-yellow-400 focus-visible:ring-yellow-400" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -326,9 +280,9 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel className="text-zinc-200">Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome da instituição" {...field} />
+                    <Input placeholder="Nome da instituição" className="border-zinc-700 bg-zinc-900 text-zinc-50 placeholder:text-zinc-500 focus-visible:border-yellow-400 focus-visible:ring-yellow-400" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -339,9 +293,9 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
               name="observations"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observações</FormLabel>
+                  <FormLabel className="text-zinc-200">Observações</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Observações sobre a instituição" className="min-h-[100px]" {...field} />
+                    <Textarea placeholder="Observações sobre a instituição" className="min-h-[100px] border-zinc-700 bg-zinc-900 text-zinc-50 placeholder:text-zinc-500 focus-visible:border-yellow-400 focus-visible:ring-yellow-400" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -350,12 +304,12 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
 
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-                <h3 className="text-sm font-medium">Eventos</h3>
+                <h3 className="text-sm font-medium text-zinc-200">Eventos</h3>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1"
+                  className="h-8 gap-1 border-white/10 bg-white/[0.03] text-zinc-200 hover:bg-white/10 hover:text-yellow-300"
                   onClick={() => append({ name: "" })}
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -373,7 +327,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
                       <FormItem>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                           <FormControl>
-                            <Input placeholder="Nome do evento" {...field} className="w-full" />
+                            <Input placeholder="Nome do evento" {...field} className="w-full border-zinc-700 bg-zinc-900 text-zinc-50 placeholder:text-zinc-500 focus-visible:border-yellow-400 focus-visible:ring-yellow-400" />
                           </FormControl>
                           <Button
                             type="button"
@@ -396,13 +350,24 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2">
-            <Button variant="outline" type="button" onClick={() => router.push("/institutions")}>
+            <Button
+              variant="outline"
+              type="button"
+              className="border-white/10 bg-white/[0.03] text-zinc-200 hover:bg-white/10 hover:text-yellow-300"
+              onClick={() => {
+                if (onCancel) {
+                  onCancel()
+                } else {
+                  router.push("/institutions")
+                }
+              }}
+            >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="bg-yellow-500 text-black hover:bg-yellow-400"
+              className="bg-yellow-400 font-semibold text-zinc-950 hover:bg-yellow-300"
             >
               {createMutation.isPending || updateMutation.isPending ? "Salvando..." : isEditing ? "Atualizar" : "Criar"}
             </Button>
