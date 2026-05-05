@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
@@ -12,63 +13,61 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="container relative flex h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 px-4 py-6 text-zinc-950 sm:px-6">
       <Link
         href="https://atenasformaturas.com.br"
         className={cn(
           buttonVariants({ variant: "ghost" }),
-          "absolute right-4 top-4 flex items-center md:right-8 md:top-8"
+          "absolute left-4 top-4 z-10 h-9 gap-2 rounded-full bg-zinc-900 px-4 text-sm text-zinc-200 ring-1 ring-yellow-400/20 hover:bg-zinc-800 hover:text-yellow-300 sm:left-8 sm:top-8"
         )}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" />
         Voltar para a home
       </Link>
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-        <div className="absolute inset-0 bg-zinc-900" />
-        <div className="relative z-20 flex items-center text-lg font-medium">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#FFEA00"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 h-6 w-6"
-          >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </svg>
-            Atenas Formaturas
-        </div>
-        <div className="relative z-20 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              &ldquo;Esta plataforma simplificou nossa gestão de usuários e melhorou nossa produtividade.&rdquo;
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.26),transparent_58%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(250,204,21,0.08)_0,transparent_32%,rgba(250,204,21,0.04)_100%)]" />
+
+      <section className="relative w-full max-w-[440px]">
+        <div className="rounded-[1.5rem] border border-yellow-400/25 bg-zinc-950/92 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.55)] ring-1 ring-white/5 backdrop-blur sm:p-6">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-[#999] shadow-lg shadow-yellow-500/20 ring-1 ring-yellow-400/25">
+              <Image
+                src="/favicon.png"
+                alt="Atenas Formaturas"
+                width={64}
+                height={62}
+                priority
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <p className="text-sm font-medium text-yellow-300">Atenas Formaturas</p>
+            <h1 className="mt-2 text-2xl font-semibold text-white">Acesse sua conta</h1>
+            <p className="mt-1.5 max-w-[320px] text-sm leading-5 text-zinc-400">
+              Entre para gerenciar contratos, pedidos, produtos e seleções da plataforma.
             </p>
-            <footer className="text-sm">Sofia Oliveira</footer>
-          </blockquote>
-        </div>
-      </div>
-      <div className="lg:p-8">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Entrar na conta</h1>
-            <p className="text-sm text-muted-foreground">Digite seu e-mail e senha para acessar o dashboard</p>
           </div>
+
           <LoginForm />
-          <p className="px-4 text-center text-sm text-muted-foreground">
+
+          <p className="mt-6 text-center text-xs leading-5 text-zinc-400">
             Ao continuar, você concorda com nossos{" "}
-            <Link href="/terms" className="underline underline-offset-4 hover:text-yellow-500">
-              Termos de Serviço
+            <Link href="/terms" className="font-medium text-zinc-100 underline underline-offset-4 hover:text-yellow-300">
+              Termos
             </Link>{" "}
             e{" "}
-            <Link href="/privacy" className="underline underline-offset-4 hover:text-yellow-500">
-              Política de Privacidade
+            <Link href="/privacy" className="font-medium text-zinc-100 underline underline-offset-4 hover:text-yellow-300">
+              Privacidade
             </Link>
             .
           </p>
         </div>
-      </div>
-    </div>
+
+        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-500">
+          <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+          <span className="text-zinc-300">Ambiente seguro para clientes e administradores</span>
+        </div>
+      </section>
+    </main>
   )
 }
