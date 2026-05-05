@@ -194,21 +194,21 @@ export function UsersTable() {
       accessorKey: "userContract",
       header: () => {
         return (
-          <Button variant="ghost" onClick={() => handleSort("userContract")}>
+          <Button variant="ghost" className="text-zinc-300 hover:bg-white/5 hover:text-yellow-300" onClick={() => handleSort("userContract")}>
             Nº do Contrato
             {getSortIcon("userContract")}
           </Button>
         )
       },
       cell: ({ row }) => {
-        return <div>{row.getValue("userContract")}</div>
+        return <div className="text-zinc-300">{row.getValue("userContract")}</div>
       },
     },
     {
       accessorKey: "name",
       header: () => {
         return (
-          <Button variant="ghost" onClick={() => handleSort("name")}>
+          <Button variant="ghost" className="text-zinc-300 hover:bg-white/5 hover:text-yellow-300" onClick={() => handleSort("name")}>
             Nome
             {getSortIcon("name")}
           </Button>
@@ -217,11 +217,11 @@ export function UsersTable() {
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-8 w-8 ring-1 ring-yellow-400/20">
               <AvatarImage src={row.original.profileImage || "/placeholder.svg"} alt={row.getValue("name")} />
               <AvatarFallback>{row.getValue<string>("name").charAt(0)}</AvatarFallback>
             </Avatar>
-            <div className="font-medium">{row.getValue("name")}</div>
+            <div className="font-medium text-zinc-100">{row.getValue("name")}</div>
           </div>
         )
       },
@@ -230,7 +230,7 @@ export function UsersTable() {
       accessorKey: "email",
       header: () => {
         return (
-          <Button variant="ghost" onClick={() => handleSort("email")}>
+          <Button variant="ghost" className="text-zinc-300 hover:bg-white/5 hover:text-yellow-300" onClick={() => handleSort("email")}>
             Email
             {getSortIcon("email")}
           </Button>
@@ -243,7 +243,7 @@ export function UsersTable() {
       cell: ({ row }) => {
         const role = row.getValue<"admin" | "client">("role")
         return (
-          <Badge variant={role === "admin" ? "default" : "secondary"}>
+          <Badge variant="outline" className={role === "admin" ? "border-yellow-400/40 bg-yellow-400/15 text-yellow-200" : "border-white/10 bg-white/10 text-zinc-200"}>
             {role === "admin" ? "Administrador" : "Cliente"}
           </Badge>
         )
@@ -253,7 +253,7 @@ export function UsersTable() {
       accessorKey: "lastLoginAt",
       header: () => {
         return (
-          <Button variant="ghost" onClick={() => handleSort("lastLoginAt")}>
+          <Button variant="ghost" className="text-zinc-300 hover:bg-white/5 hover:text-yellow-300" onClick={() => handleSort("lastLoginAt")}>
             Último Login
             {getSortIcon("lastLoginAt")}
           </Button>
@@ -261,7 +261,7 @@ export function UsersTable() {
       },
       cell: ({ row }) => {
         return (
-          <span className="text-muted-foreground text-sm">
+          <span className="text-sm text-zinc-400">
             {formatLastLogin(row.original.lastLoginAt)}
           </span>
         )
@@ -275,7 +275,7 @@ export function UsersTable() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
+              <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:bg-white/5 hover:text-yellow-300">
                 <span className="sr-only">Abrir menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -326,9 +326,9 @@ export function UsersTable() {
             setCurrentPage(1)
           }}
         />
-        <div className="rounded-md border">
-          <div className="h-24 flex items-center justify-center">
-            <Skeleton className="h-8 w-[200px]" />
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03]">
+          <div className="flex h-24 items-center justify-center">
+            <Skeleton className="h-8 w-[200px] bg-zinc-800" />
           </div>
         </div>
       </div>
@@ -344,14 +344,14 @@ export function UsersTable() {
           setCurrentPage(1)
         }}
       />
-      <div className="hidden md:block rounded-md border">
+      <div className="hidden overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70 md:block">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-white/[0.04]">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="border-white/10 hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="text-zinc-400">
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   )
@@ -362,15 +362,15 @@ export function UsersTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"} className="border-white/10 hover:bg-white/[0.04]">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id} className="text-zinc-100">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns.length} className="h-24 text-center text-zinc-400">
                   {debouncedSearchTerm ? "Nenhum usuário encontrado para a busca." : "Nenhum resultado encontrado."}
                 </TableCell>
               </TableRow>
@@ -382,15 +382,16 @@ export function UsersTable() {
         {users.length > 0 ? (
           users.map((user) => <UserCard key={user.id} user={user} onDelete={handleDelete} />)
         ) : (
-          <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+          <div className="flex h-24 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-center text-zinc-400">
             {debouncedSearchTerm ? "Nenhum usuário encontrado para a busca." : "Nenhum resultado encontrado."}
           </div>
         )}
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-end space-x-2 py-2">
         <Button
           variant="outline"
           size="sm"
+          className="rounded-xl border-white/10 bg-white/[0.03] text-zinc-200 hover:bg-white/10 hover:text-yellow-300"
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
         >
@@ -399,6 +400,7 @@ export function UsersTable() {
         <Button
           variant="outline"
           size="sm"
+          className="rounded-xl border-white/10 bg-white/[0.03] text-zinc-200 hover:bg-white/10 hover:text-yellow-300"
           onClick={() => setCurrentPage((prev) => prev + 1)}
           disabled={users.length < pageSize}
         >

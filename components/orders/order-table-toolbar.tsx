@@ -28,13 +28,13 @@ export function OrderTableToolbar() {
   }
 
   return (
-    <div className="flex items-center justify-between p-4 border-b">
+    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-3">
       <div className="flex items-center gap-2">
         <Select value={statusFilter} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="h-10 w-[180px] rounded-xl border-zinc-700 bg-zinc-900 text-zinc-200 focus:ring-yellow-400">
             <SelectValue placeholder="Filtrar por status..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="border-zinc-800 bg-zinc-950 text-zinc-100">
             <SelectItem value="all">Todos os Status</SelectItem>
             <SelectItem value="PENDING">Pendente</SelectItem>
             <SelectItem value="APPROVED">Aprovado</SelectItem>
@@ -45,7 +45,7 @@ export function OrderTableToolbar() {
         </Select>
 
         {statusFilter !== 'all' && (
-          <Button variant="ghost" onClick={clearFilters} className="h-8 px-2 lg:px-3">
+          <Button variant="ghost" onClick={clearFilters} className="h-8 px-2 text-zinc-300 hover:bg-white/5 hover:text-yellow-300 lg:px-3">
             Limpar
           </Button>
         )}

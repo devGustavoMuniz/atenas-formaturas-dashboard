@@ -83,7 +83,7 @@ export function InstitutionFilter({ value, onChange }: InstitutionFilterProps) {
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between sm:w-[300px]"
+                    className="h-10 w-full justify-between rounded-xl border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 hover:text-yellow-300 sm:w-[300px]"
                 >
                     <span className="truncate">
                         {value
@@ -95,7 +95,7 @@ export function InstitutionFilter({ value, onChange }: InstitutionFilterProps) {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0">
+            <PopoverContent className="w-[300px] border-zinc-800 bg-zinc-950 p-0 text-zinc-100">
                 <Command shouldFilter={false}>
                     <CommandInput
                         placeholder="Buscar contrato..."

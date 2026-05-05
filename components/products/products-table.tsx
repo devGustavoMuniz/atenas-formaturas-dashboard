@@ -116,7 +116,7 @@ export function ProductsTable() {
         {
             accessorKey: "name",
             header: ({ column }) => (
-                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                <Button variant="ghost" className="text-zinc-300 hover:bg-white/5 hover:text-yellow-300" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
                     Nome
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
@@ -127,7 +127,7 @@ export function ProductsTable() {
             header: "Categoria",
             cell: ({ row }) => {
                 const flag = row.getValue<"ALBUM" | "GENERIC" | "DIGITAL_FILES">("flag");
-                return <Badge variant="outline">{ProductFlag[flag]}</Badge>;
+                return <Badge variant="outline" className="border-yellow-400/30 bg-yellow-400/10 text-yellow-200">{ProductFlag[flag]}</Badge>;
             },
         },
         {
@@ -137,7 +137,7 @@ export function ProductsTable() {
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:bg-white/5 hover:text-yellow-300">
                                 <span className="sr-only">Abrir menu</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
@@ -172,9 +172,9 @@ export function ProductsTable() {
         return (
             <div className="space-y-4">
                 <ProductTableToolbar onSearchChange={handleSearchChange} />
-                <div className="rounded-md border">
-                    <div className="h-24 flex items-center justify-center">
-                        <Skeleton className="h-8 w-[200px]" />
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03]">
+                    <div className="flex h-24 items-center justify-center">
+                        <Skeleton className="h-8 w-[200px] bg-zinc-800" />
                     </div>
                 </div>
             </div>
@@ -184,13 +184,13 @@ export function ProductsTable() {
     return (
         <div className="space-y-4">
             <ProductTableToolbar onSearchChange={handleSearchChange} />
-            <div className="hidden md:block rounded-md border">
+            <div className="hidden overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70 md:block">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-white/[0.04]">
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
+                            <TableRow key={headerGroup.id} className="border-white/10 hover:bg-transparent">
                                 {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id}>
+                                    <TableHead key={header.id} className="text-zinc-400">
                                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                                     </TableHead>
                                 ))}
@@ -200,15 +200,15 @@ export function ProductsTable() {
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id}>
+                                <TableRow key={row.id} className="border-white/10 hover:bg-white/[0.04]">
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                        <TableCell key={cell.id} className="text-zinc-100">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                                     ))}
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                <TableCell colSpan={columns.length} className="h-24 text-center text-zinc-400">
                                     Nenhum resultado encontrado.
                                 </TableCell>
                             </TableRow>
@@ -220,7 +220,7 @@ export function ProductsTable() {
                 {products.length > 0 ? (
                     products.map((product) => <ProductCard key={product.id} product={product} onDelete={handleDelete} />)
                 ) : (
-                    <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+                    <div className="flex h-24 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-center text-zinc-400">
                         {debouncedSearchTerm ? "Nenhum produto encontrado para a busca." : "Nenhum resultado encontrado."}
                     </div>
                 )}
