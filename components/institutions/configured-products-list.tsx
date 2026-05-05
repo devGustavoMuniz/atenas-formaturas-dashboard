@@ -102,7 +102,7 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
                             <AlertDialogHeader>
                               <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Esta ação irá desvincular o produto "{instProduct.product.name}" deste contrato.
+                                Esta ação irá desvincular o produto &quot;{instProduct.product.name}&quot; deste contrato.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -117,7 +117,7 @@ export function ConfiguredProductsList({ institutionId }: { institutionId: strin
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={3} className="h-24 text-center">Nenhum produto vinculado. Clique em "Vincular Produto" para começar.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="h-24 text-center">Nenhum produto vinculado. Clique em &quot;Vincular Produto&quot; para começar.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createUser, updateUser, fetchUserById, getPresignedUrl } from "@/lib/api/users-api"
 import { fetchInstitutions } from "@/lib/api/institutions-api"
 import type { User } from "@/lib/types"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ImageCropper } from "@/components/users/image-cropper"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -36,18 +36,6 @@ const parseCurrency = (value: string | number | undefined): number | undefined =
   const numberValue = parseFloat(stringValue)
   return isNaN(numberValue) ? undefined : numberValue
 }
-
-// Função para formatar um número para o padrão de moeda BRL para exibição inicial
-const formatCurrency = (value: number | undefined): string => {
-    if (value === undefined || value === null) return ""
-    // Garante que o valor seja tratado como número
-    const numberValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(numberValue)
-}
-
 
 const userFormSchema = z.object({
   institutionId: z.string({
@@ -238,7 +226,7 @@ export function UserForm({ userId }: UserFormProps) {
               title: "CEP não encontrado",
             })
           }
-        } catch (error) {
+        } catch {
           toast({
             variant: "destructive",
             title: "Falha ao buscar CEP",
@@ -474,7 +462,7 @@ export function UserForm({ userId }: UserFormProps) {
               profileImage: presignedData.urls[0].filename,
             })
           }
-        } catch (uploadError) {
+        } catch {
           toast({
             variant: "destructive",
             title: "Erro ao fazer upload da imagem",

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Upload, X } from "lucide-react"
+import { Upload } from "lucide-react"
 
 // Importação da biblioteca de recorte e seu CSS
 import ReactCrop, { type Crop } from "react-image-crop"

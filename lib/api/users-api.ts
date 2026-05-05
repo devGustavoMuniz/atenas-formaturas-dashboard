@@ -63,7 +63,8 @@ export async function createUser(userData: Omit<User, "id" | "createdAt" | "user
 
 export async function updateUser(id: string, userData: Partial<Omit<User, "id">>): Promise<User> {
   // Remover o campo 'id' do userData se ele existir
-  const { id: _, ...dataWithoutId } = userData as any
+  const { id: _removedId, ...dataWithoutId } = userData as Partial<User>
+  void _removedId
 
   const response = await api.put(`/v1/users/${id}`, dataWithoutId)
   return response.data

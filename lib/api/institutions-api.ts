@@ -1,6 +1,4 @@
 import { api } from "./axios-config"
-import type { PaginationParams } from "./users-api"
-
 // Types
 export type InstitutionEvent = {
   id: string
@@ -80,7 +78,8 @@ export async function updateInstitution(
   institutionData: Partial<InstitutionInput>,
 ): Promise<Institution> {
   // Remover o campo 'id' do institutionData se ele existir
-  const { id: _, ...dataWithoutId } = institutionData as any
+  const { id: _removedId, ...dataWithoutId } = institutionData as Partial<InstitutionInput> & { id?: string }
+  void _removedId
 
   const response = await api.put(`/v1/institutions/${id}`, dataWithoutId)
   return response.data

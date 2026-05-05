@@ -8,12 +8,9 @@ import {
     type ColumnDef,
     flexRender,
     getCoreRowModel,
-    getPaginationRowModel,
     useReactTable,
     type SortingState,
     getSortedRowModel,
-    type ColumnFiltersState,
-    getFilteredRowModel,
 } from "@tanstack/react-table"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -54,7 +51,6 @@ const getErrorMessage = (error: any): string => {
 
 export function ProductsTable() {
     const [sorting, setSorting] = useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [deleteProductId, setDeleteProductId] = useState<string | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize] = useState(10)

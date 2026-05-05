@@ -12,9 +12,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createInstitution, updateInstitution, fetchInstitutionById, sendCredentials, deleteInstitutionEvent } from "@/lib/api/institutions-api"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, X, Settings, Mail, Loader2, Trash2 } from "lucide-react"
+import { Plus, Settings, Mail, Loader2, Trash2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -416,7 +416,7 @@ export function InstitutionForm({ institutionId }: InstitutionFormProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover o evento <strong>"{eventToDelete?.name}"</strong>?
+              Tem certeza que deseja remover o evento <strong>&quot;{eventToDelete?.name}&quot;</strong>?
               {eventToDelete?.id && isEditing && (
                 <> Esta ação não pode ser desfeita e o evento será removido permanentemente do sistema.</>
               )}

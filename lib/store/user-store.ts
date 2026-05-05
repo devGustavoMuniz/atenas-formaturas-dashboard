@@ -18,7 +18,7 @@ export const useUsersStore = create<UsersState>((set) => ({
     try {
       const users = await fetchUsers()
       set({ users, isLoading: false })
-    } catch (error) {
+    } catch {
       set({ error: "Failed to fetch users", isLoading: false })
     }
   },

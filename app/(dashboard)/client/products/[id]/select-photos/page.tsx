@@ -87,17 +87,6 @@ export default function SelectPhotosPage() {
   const shouldShowPackageOption = isDigitalFilesPackage && eventGroups.length > 1
 
   useEffect(() => {
-    const initialOpenStates = eventGroups.reduce(
-      (acc, group) => {
-        acc[group.eventId] = true
-        return acc
-      },
-      {} as Record<string, boolean>
-    )
-    setOpenStates(initialOpenStates)
-  }, [eventGroups])
-
-  useEffect(() => {
     if (isDigitalFilesPackage && eventGroups.length === 1) {
       setSelectedEvent(eventGroups[0].eventId, true)
     }
@@ -350,7 +339,7 @@ export default function SelectPhotosPage() {
           {eventGroups.map((group) => (
             <Collapsible
               key={group.eventId}
-              open={openStates[group.eventId] || false}
+              open={openStates[group.eventId] ?? true}
               onOpenChange={() => toggleCollapsible(group.eventId)}
             >
               <Card>
@@ -361,7 +350,7 @@ export default function SelectPhotosPage() {
                         <CardTitle>{group.eventName}</CardTitle>
                       </CardHeader>
                       <div className="pr-4">
-                        {openStates[group.eventId] ? (
+                        {(openStates[group.eventId] ?? true) ? (
                           <ChevronUp className="h-4 w-4" />
                         ) : (
                           <ChevronDown className="h-4 w-4" />

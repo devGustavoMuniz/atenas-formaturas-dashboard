@@ -1,5 +1,4 @@
 import { api } from './axios-config';
-import { CartItem } from '../cart-types';
 
 interface Payer {
   name: string;

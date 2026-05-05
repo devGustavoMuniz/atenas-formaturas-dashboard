@@ -75,8 +75,6 @@ export function SelectionSummary({ selectedPhotosCount, eventGroups }: Selection
           return null
         }
 
-        const isEventValid = selectedCount >= (eventDetail.minPhotos ?? 0) &&
-          (eventDetail.maxPhotos ? selectedCount <= eventDetail.maxPhotos : true)
         const isBelowMin = selectedCount < (eventDetail.minPhotos ?? 0)
         const isAboveMax = eventDetail.maxPhotos && selectedCount > eventDetail.maxPhotos
 

@@ -1,12 +1,5 @@
 import { api } from "./axios-config";
 
-interface PresignedUrlRequest {
-  contentType: string;
-  quantity: number;
-  mediaType: 'image' | 'video';
-  customIdentifier: string;
-}
-
 interface PresignedUrlResponse {
   uploadUrl: string;
   filename: string;

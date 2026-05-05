@@ -1,6 +1,6 @@
 "use client"
 
-import { useForm, useFieldArray, Controller } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -15,7 +15,6 @@ import { Switch } from "../ui/switch"
 import { Checkbox } from "../ui/checkbox"
 import { useEffect } from "react"
 import { IMaskInput } from "react-imask"
-import { AlbumDetails, EventConfiguration, GenericDetails, DigitalFilesDetails } from "@/lib/product-details-types"
 
 // --- UTILS ---
 const parseCurrency = (value: string | number | undefined): number | undefined => {
@@ -73,11 +72,7 @@ const digitalFilesDetailsSchema = z.object({
   isAvailableUnit: z.boolean(),
   valorPackTotal: z.any().transform(v => parseCurrency(v)).optional(),
   events: z.array(
-    eventConfigurationSchema.refine(data => {
-        // Se isAvailableUnit for true, validar minPhotos e valorPhoto
-        // Se for false (modo pacote), validar valorPack
-        return true; // Validação condicional será feita no refine abaixo
-    })
+    eventConfigurationSchema
   ).default([]),
 }).superRefine((data, ctx) => {
   data.events.forEach((event, index) => {

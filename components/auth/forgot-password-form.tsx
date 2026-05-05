@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -43,7 +43,6 @@ const resetPasswordSchema = z.object({
 export function ForgotPasswordForm() {
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState("")
-  const [isCodeFieldReady, setIsCodeFieldReady] = useState(false)
   const router = useRouter()
 
   const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
@@ -61,22 +60,6 @@ export function ForgotPasswordForm() {
     },
   })
 
-  useEffect(() => {
-    if (step === 2) {
-      // Limpa os campos quando muda para step 2
-      setIsCodeFieldReady(false)
-      resetPasswordForm.setValue("code", "")
-      resetPasswordForm.setValue("newPassword", "")
-
-      // Habilita o campo após um pequeno delay para prevenir autofill
-      const timer = setTimeout(() => {
-        setIsCodeFieldReady(true)
-      }, 100)
-
-      return () => clearTimeout(timer)
-    }
-  }, [step, resetPasswordForm])
-
   const onForgotPasswordSubmit = async (
     values: z.infer<typeof forgotPasswordSchema>,
   ) => {
@@ -86,7 +69,7 @@ export function ForgotPasswordForm() {
       setEmail(values.email)
       resetPasswordForm.reset()
       setStep(2)
-    } catch (error) {
+    } catch {
       toast.error("Falha ao enviar o e-mail. Verifique o e-mail e tente novamente.")
     }
   }
@@ -102,7 +85,7 @@ export function ForgotPasswordForm() {
       } else {
         toast.error(response.message || "Ocorreu um erro ao redefinir a senha.")
       }
-    } catch (error) {
+    } catch {
       toast.error("Código inválido ou expirado. Tente novamente.")
     }
   }
@@ -185,13 +168,6 @@ export function ForgotPasswordForm() {
                           type="text"
                           autoComplete="off"
                           name="verification-code"
-                          readOnly={!isCodeFieldReady}
-                          onFocus={(e) => {
-                            if (!isCodeFieldReady) {
-                              e.target.readOnly = false
-                              setIsCodeFieldReady(true)
-                            }
-                          }}
                           disabled={resetPasswordForm.formState.isSubmitting}
                         />
                       </FormControl>
