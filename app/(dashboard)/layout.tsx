@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { UserNav } from "@/components/dashboard/user-nav"
@@ -47,34 +48,37 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <ClientTutorial />
-      <Sidebar collapsible="icon">
-        <SidebarHeader>
-          <div className="flex items-center justify-center gap-2 px-2 py-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#FFEA00"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6 shrink-0"
-            >
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-            </svg>
-            <h1 className="text-lg font-semibold group-data-[collapsible=icon]:hidden">Atenas Formaturas</h1>
+      <Sidebar collapsible="icon" className="border-r border-yellow-400/15">
+        <SidebarHeader className="border-b border-white/10">
+          <div className="flex items-center gap-3 px-3 py-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#999] ring-1 ring-yellow-400/25">
+              <Image
+                src="/favicon.png"
+                alt="Atenas Formaturas"
+                width={44}
+                height={42}
+                priority
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+              <h1 className="truncate text-sm font-semibold text-white">Atenas Formaturas</h1>
+              <p className="truncate text-xs text-yellow-300/80">
+                {user?.role === "client" ? "Área do cliente" : "Painel administrativo"}
+              </p>
+            </div>
           </div>
         </SidebarHeader>
         <SidebarContent>
           <DashboardNav />
         </SidebarContent>
       </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger id="mobile-menu-trigger" className="-ml-1" />
+      <SidebarInset className="bg-zinc-950">
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-white/10 bg-zinc-950/95 px-4 text-white backdrop-blur supports-[backdrop-filter]:bg-zinc-950/85">
+          <SidebarTrigger id="mobile-menu-trigger" className="-ml-1 text-zinc-300 hover:bg-white/5 hover:text-yellow-300" />
           <div className="flex flex-1 items-center justify-end gap-2">
             <div className="flex items-center gap-2 md:hidden">
-              <h1 className="text-lg font-semibold">
+              <h1 className="text-lg font-semibold text-white">
                 {user?.role === 'client' ? 'Atenas Formaturas' : 'Dashboard'}
               </h1>
             </div>
@@ -85,7 +89,7 @@ export default function DashboardLayout({
             </div>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 min-w-0">
+        <div className="min-w-0 flex flex-1 flex-col gap-4 bg-zinc-950 p-4 md:p-8">
           {children}
         </div>
       </SidebarInset>

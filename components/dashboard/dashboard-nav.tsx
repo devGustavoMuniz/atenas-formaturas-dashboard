@@ -80,7 +80,7 @@ export function DashboardNav() {
   const currentNavItems = user?.role === "admin" ? adminNavItems : clientNavItems
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="px-2 py-3">
       <SidebarMenu className="gap-2">
         {currentNavItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -97,10 +97,14 @@ export function DashboardNav() {
                 asChild
                 isActive={isActive}
                 tooltip={item.title}
-                className={isActive ? "bg-muted text-yellow-500 data-[active=true]:text-yellow-500 px-3 py-5" : "hover:bg-muted px-3 py-5"}
+                className={
+                  isActive
+                    ? "rounded-xl border border-yellow-400/30 bg-yellow-400/15 px-3 py-5 font-semibold text-yellow-200 data-[active=true]:bg-yellow-400/15 data-[active=true]:text-yellow-200 hover:bg-yellow-400/20"
+                    : "rounded-xl px-3 py-5 text-zinc-300 hover:bg-white/5 hover:text-yellow-300"
+                }
               >
                 <Link href={item.href}>
-                  <item.icon className={isActive ? "text-yellow-500" : ""} />
+                  <item.icon className={isActive ? "text-yellow-300" : "text-zinc-400"} />
                   <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                 </Link>
               </SidebarMenuButton>

@@ -34,14 +34,14 @@ export function CartSheet() {
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={setCartOpen}>
+      <Sheet open={isOpen} onOpenChange={setCartOpen}>
       <SheetTrigger asChild>
-        <Button id="cart-trigger" variant="ghost" size="icon" className="relative">
+        <Button id="cart-trigger" variant="ghost" size="icon" className="relative rounded-xl text-zinc-300 hover:bg-white/5 hover:text-yellow-300">
           <ShoppingCart className="h-5 w-5" />
           {itemCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full p-2"
+              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400 p-2 text-zinc-950 hover:bg-yellow-400"
             >
               {itemCount}
             </Badge>
