@@ -179,9 +179,17 @@ export default function ClientOrderDetailsPage() {
                         <CardTitle>Endereço de Entrega</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p>{order.shippingAddress.street}, {order.shippingAddress.number} {order.shippingAddress.complement}</p>
-                        <p>{order.shippingAddress.neighborhood} - {order.shippingAddress.city}, {order.shippingAddress.state}</p>
-                        <p>CEP: {order.shippingAddress.zipCode}</p>
+                        {order.shippingAddress ? (
+                            <>
+                                <p>{order.shippingAddress.street}, {order.shippingAddress.number} {order.shippingAddress.complement}</p>
+                                <p>{order.shippingAddress.neighborhood} - {order.shippingAddress.city}, {order.shippingAddress.state}</p>
+                                <p>CEP: {order.shippingAddress.zipCode}</p>
+                            </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                Endereço ainda não informado para este pedido.
+                            </p>
+                        )}
                     </CardContent>
                 </Card>
             </div>

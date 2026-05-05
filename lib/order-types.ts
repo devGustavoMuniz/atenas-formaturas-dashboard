@@ -41,7 +41,7 @@ export interface OrderDto {
   paymentGatewayId?: string;
   contractNumber: string;
   creditUsed?: number;
-  shippingAddress: {
+  shippingAddress?: {
     zipCode: string;
     street: string;
     number: string;
@@ -49,7 +49,7 @@ export interface OrderDto {
     neighborhood: string;
     city: string;
     state: string;
-  };
+  } | null;
   createdAt: string;
   updatedAt: string;
   items: OrderItemDto[];
