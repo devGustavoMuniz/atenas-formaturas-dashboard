@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react'
+import { ChevronDown, ChevronUp, FileText, Image as ImageIcon } from 'lucide-react'
 
 import { OrderItemPhotos } from '@/components/orders/order-item-photos'
 import { OrderItemTimeline } from '@/components/orders/order-item-timeline'
@@ -23,6 +23,8 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/components/ui/use-toast'
 import { cancelOrder, getOrderById, updateItemFulfillmentStatus } from '@/lib/api/orders-api'
+import { useAuth } from '@/lib/auth/use-auth'
+import { generateOrderReportPdf } from '@/lib/order-report-pdf'
 import { FulfillmentStatus, OrderDto } from '@/lib/order-types'
 import { cn, formatCurrency, formatDate, translatePaymentStatus, translateProductType } from '@/lib/utils'
 
@@ -33,6 +35,7 @@ interface OrderDetailsContentProps {
 
 export function OrderDetailsContent({ orderId, compact = false }: OrderDetailsContentProps) {
   const { toast } = useToast()
+  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [showDriveLinkModal, setShowDriveLinkModal] = useState(false)
@@ -197,16 +200,26 @@ export function OrderDetailsContent({ orderId, compact = false }: OrderDetailsCo
           </div>
         </div>
 
-        {(order.paymentStatus === 'APPROVED' || order.paymentStatus === 'PENDING') && (
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button
-            onClick={() => setShowCancelModal(true)}
-            disabled={isCancelling}
-            variant="destructive"
-            className="rounded-xl"
+            onClick={() => generateOrderReportPdf(order, { fallbackBuyerCpf: user?.cpf })}
+            className="rounded-xl bg-yellow-400 font-semibold text-zinc-950 hover:bg-yellow-300"
           >
-            {isCancelling ? 'Cancelando...' : 'Cancelar Pedido'}
+            <FileText className="mr-2 h-4 w-4" />
+            Gerar PDF
           </Button>
-        )}
+
+          {(order.paymentStatus === 'APPROVED' || order.paymentStatus === 'PENDING') && (
+            <Button
+              onClick={() => setShowCancelModal(true)}
+              disabled={isCancelling}
+              variant="destructive"
+              className="rounded-xl"
+            >
+              {isCancelling ? 'Cancelando...' : 'Cancelar Pedido'}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className={cn('grid grid-cols-1 gap-4', !compact && 'lg:grid-cols-2')}>

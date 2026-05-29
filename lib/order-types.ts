@@ -54,6 +54,7 @@ export interface OrderDto {
   updatedAt: string;
   items: OrderItemDto[];
   checkoutUrl?: string;
+  report?: OrderReportDto;
 }
 
 export interface OrderListResponseDto {
@@ -65,4 +66,45 @@ export interface OrderListResponseDto {
     totalPages: number;
     currentPage: number;
   };
+}
+
+export interface OrderReportDto {
+  saleDate: string;
+  contractNumber: string;
+  student: {
+    name: string;
+  };
+  buyer: {
+    name: string;
+    cpf?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  };
+  amounts: {
+    orderAmount: number;
+    atenasCreditUsed: number;
+    mercadoPagoFee?: number | null;
+    netReceivedAmount?: number | null;
+    totalPaidAmount?: number | null;
+  };
+  payment: {
+    provider: 'MERCADO_PAGO' | 'CREDIT' | 'FREE' | 'UNKNOWN';
+    status: string;
+    methodId?: string | null;
+    methodType?: string | null;
+    installments?: number | null;
+    installmentAmount?: number | null;
+    description: string;
+  };
+  delivery?: {
+    zipCode: string;
+    street: string;
+    number: string;
+    complement?: string | null;
+    neighborhood: string;
+    city: string;
+    state: string;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
 }
